@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="900" viewBox="0 0 1320 900">
+<rect width="1320" height="900" fill="#f8fafc"/>
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="none" stroke="#475569"/></marker></defs>
+<text x="35" y="48.0" font-family="Arial,sans-serif" font-size="28" fill="#0f172a">SuperSports | S1-M02 local bootstrap and trust boundaries</text>
+<text x="35" y="82.0" font-family="Arial,sans-serif" font-size="17" fill="#0f172a">Proposed deployment - Docker core first - No cloud runtime - Current stable pinned ARM64 images</text>
+<rect x="35" y="120" width="380" height="95" rx="12" fill="#ede9fe" stroke="#475569"/>
+<text x="49" y="152.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">devops + repository .venv</text>
+<text x="49" y="180.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">Build / test / start / release / rollback</text>
+<rect x="470" y="120" width="380" height="95" rx="12" fill="#dbeafe" stroke="#475569"/>
+<text x="484" y="152.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Host client / local test runner</text>
+<text x="484" y="180.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">Loopback-only published API ports</text>
+<rect x="905" y="120" width="380" height="95" rx="12" fill="#fee2e2" stroke="#475569"/>
+<text x="919" y="152.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Ignored local bootstrap secrets</text>
+<text x="919" y="180.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">0700 directory / 0600 file / no output</text>
+<rect x="35" y="310" width="380" height="115" rx="12" fill="#dcfce7" stroke="#475569"/>
+<text x="49" y="342.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Catalog | :8081</text>
+<text x="49" y="370.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">Independent Java / Maven project</text>
+<text x="49" y="390.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">Flyway + JWT issuer / audience / role</text>
+<rect x="470" y="310" width="380" height="115" rx="12" fill="#dcfce7" stroke="#475569"/>
+<text x="484" y="342.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Configuration | :8082</text>
+<text x="484" y="370.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">Read-only categorized settings registry</text>
+<text x="484" y="390.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">Platform-admin access / no secret values</text>
+<rect x="905" y="310" width="380" height="115" rx="12" fill="#dcfce7" stroke="#475569"/>
+<text x="919" y="342.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Keycloak | :8180</text>
+<text x="919" y="370.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">Synthetic users / API audience</text>
+<text x="919" y="390.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">Internal keys; public issuer stays exact</text>
+<rect x="35" y="540" width="1250" height="125" rx="12" fill="#fef3c7" stroke="#475569"/>
+<text x="49" y="572.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Private PostgreSQL | no host port</text>
+<text x="49" y="600.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">catalog DB/user       configuration DB/user       identity DB/user</text>
+<text x="49" y="620.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">PUBLIC CONNECT revoked; each service owns migrations and tables. One named persistent volume.</text>
+<rect x="35" y="745" width="1250" height="110" rx="12" fill="#ede9fe" stroke="#475569"/>
+<text x="49" y="777.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Alternate deployment and operational checks</text>
+<text x="49" y="805.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">Helm / local kind and Terraform local-only skeleton. Not a duplicate always-on stack.</text>
+<text x="49" y="825.0" font-family="Arial,sans-serif" font-size="16" fill="#0f172a">Real-stack checks: auth / DB isolation / restart / readiness recovery / known-image rollback.</text>
+<line x1="225" y1="215" x2="225" y2="310" stroke="#475569" marker-end="url(#a)"/>
+<line x1="660" y1="215" x2="660" y2="310" stroke="#475569" marker-end="url(#a)"/>
+<line x1="1095" y1="215" x2="1095" y2="310" stroke="#475569" marker-end="url(#a)"/>
+<line x1="225" y1="425" x2="225" y2="540" stroke="#475569" marker-end="url(#a)"/>
+<line x1="660" y1="425" x2="660" y2="540" stroke="#475569" marker-end="url(#a)"/>
+<line x1="1095" y1="425" x2="1095" y2="540" stroke="#475569" marker-end="url(#a)"/>
+<text x="35" y="477.0" font-family="Arial,sans-serif" font-size="17" fill="#0f172a">Services validate JWTs with Keycloak JWKS over the private network. Database credentials never cross service boundaries.</text>
+</svg>
