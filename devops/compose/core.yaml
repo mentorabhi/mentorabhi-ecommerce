@@ -1,0 +1,127 @@
+name: supersports
+x-app-environment: &app-environment
+  JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m -XX:MaxMetaspaceSize=160m"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "4"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+  SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "3000"
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://localhost:8180/realms/supersports"
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "http://identity:8080/realms/supersports/protocol/openid-connect/certs"
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUDIENCES: "supersports-api"
+
+x-app-runtime: &app-runtime
+  restart: unless-stopped
+  mem_limit: 512m
+  cpus: 1.0
+  read_only: true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=67108864
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  stop_grace_period: 30s
+  depends_on:
+    postgres: {condition: service_healthy}
+    identity: {condition: service_healthy}
+
+services:
+  postgres:
+    image: "${POSTGRES_IMAGE:?Use devops/scripts/supersports}"
+    restart: unless-stopped
+    mem_limit: 384m
+    cpus: 1.0
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Run configure}"
+      POSTGRES_DB: postgres
+      CATALOG_DB_PASSWORD: "${CATALOG_DB_PASSWORD:?Run configure}"
+      CONFIGURATION_DB_PASSWORD: "${CONFIGURATION_DB_PASSWORD:?Run configure}"
+      IDENTITY_DB_PASSWORD: "${IDENTITY_DB_PASSWORD:?Run configure}"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./devops/postgres/init.sh:/docker-entrypoint-initdb.d/10-supersports.sh:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
+
+  identity:
+    image: "${KEYCLOAK_IMAGE:?Use devops/scripts/supersports}"
+    command: ["start-dev", "--import-realm"]
+    restart: unless-stopped
+    mem_limit: 768m
+    cpus: 1.0
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/identity
+      KC_DB_USERNAME: supersports_identity
+      KC_DB_PASSWORD: "${IDENTITY_DB_PASSWORD:?Run configure}"
+      KC_BOOTSTRAP_ADMIN_USERNAME: bootstrap-admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD:?Run configure}"
+      KC_HOSTNAME: http://localhost:8180
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      JAVA_OPTS_KC_HEAP: "-Xms64m -Xmx384m"
+      DEMO_CUSTOMER_PASSWORD: "${DEMO_CUSTOMER_PASSWORD:?Run configure}"
+      DEMO_PLATFORM_ADMIN_PASSWORD: "${DEMO_PLATFORM_ADMIN_PASSWORD:?Run configure}"
+      DEMO_CATALOG_ADMIN_PASSWORD: "${DEMO_CATALOG_ADMIN_PASSWORD:?Run configure}"
+    ports: ["127.0.0.1:8180:8080"]
+    volumes:
+      - ./devops/identity/supersports-realm.json:/opt/keycloak/data/import/supersports-realm.json:ro
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          bash -ec 'exec 3<>/dev/tcp/127.0.0.1/9000;
+          printf "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3;
+          IFS= read -r status <&3; [[ "$$status" == *" 200 "* ]]'
+      interval: 10s
+      timeout: 5s
+      retries: 24
+      start_period: 60s
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  catalog:
+    <<: *app-runtime
+    image: "${CATALOG_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args:
+        BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}"
+        JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}"
+        SERVICE_NAME: catalog
+        RELEASE_VERSION: "${RELEASE_VERSION:-s1-m02}"
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/catalog
+      SPRING_DATASOURCE_USERNAME: supersports_catalog
+      SPRING_DATASOURCE_PASSWORD: "${CATALOG_DB_PASSWORD:?Run configure}"
+    ports: ["127.0.0.1:8081:8080"]
+
+  configuration:
+    <<: *app-runtime
+    image: "${CONFIGURATION_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args:
+        BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}"
+        JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}"
+        SERVICE_NAME: configuration
+        RELEASE_VERSION: "${RELEASE_VERSION:-s1-m02}"
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/configuration
+      SPRING_DATASOURCE_USERNAME: supersports_configuration
+      SPRING_DATASOURCE_PASSWORD: "${CONFIGURATION_DB_PASSWORD:?Run configure}"
+    ports: ["127.0.0.1:8082:8080"]
+
+volumes:
+  postgres-data:

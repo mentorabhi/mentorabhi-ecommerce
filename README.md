@@ -7,8 +7,10 @@ See the [current architecture](design/S1-M01/architecture.md), [editable ownersh
 The [original architecture gallery](architecture/index.html) is preserved as historical planning input; current decisions supersede its cloud and Rufus terminology.
 
 ## Current state
-S1-M01 requirements/design baseline. No commerce services, storefront or Nova runtime exists yet.
-The seven-lens design review and verification evidence are recorded in the milestone. Next is S1-M02 platform bootstrap.
+S1-M02 runnable local bootstrap: independent Catalog and Configuration Java projects, private PostgreSQL, local Keycloak and Docker/operational tooling. Customer storefront and Nova are later milestones.
+Read [bootstrap operations](devops/README.md), [setup prerequisites](docs/setup/prerequisites.md), and [S1-M02 evidence](docs/milestones/S1-M02/README.md).
+Start with devops/scripts/supersports doctor, configure, validate and up; then run devops/scripts/supersports test. No host Java or cloud account is needed.
+Existing host-installed Ollama is a Nova prerequisite only; no Ollama container is used.
 
 ## Python environment
 Use the local virtual environment for every Python command. Activate with source .venv/bin/activate, or invoke .venv/bin/python directly; install dependencies through .venv/bin/python -m pip.

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: supersports
+description: Local S1-M02 Catalog, Configuration, PostgreSQL and Keycloak
+version: 0.1.0
+appVersion: s1-m02
+type: application

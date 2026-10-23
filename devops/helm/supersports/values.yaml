@@ -1,0 +1,36 @@
+# Supply names of resources in the release namespace; no secret data belongs here.
+existingSecret: ""
+bootstrap:
+  postgresExistingConfigMap: ""
+  realmExistingConfigMap: ""
+publicIssuer: http://localhost:8180/realms/supersports
+postgres:
+  image: postgres:18.6-alpine@sha256:898c60cb390d1085bc97bdd6a1ae968757421df394b071848b52b1c09c89d6a5
+  storage: 2Gi
+  resources:
+    requests: {cpu: 100m, memory: 192Mi}
+    limits: {cpu: "1", memory: 384Mi}
+identity:
+  image: quay.io/keycloak/keycloak:26.8.1@sha256:79c623a22abacf3fe6c00a5fb30f5b7843d717b234033b80995891c06116d244
+  resources:
+    requests: {cpu: 100m, memory: 384Mi}
+    limits: {cpu: "1", memory: 768Mi}
+apps:
+  catalog:
+    image: supersports/catalog:s1-m02
+    imagePullPolicy: Never
+    database: catalog
+    username: supersports_catalog
+    passwordKey: CATALOG_DB_PASSWORD
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {cpu: "1", memory: 512Mi}
+  configuration:
+    image: supersports/configuration:s1-m02
+    imagePullPolicy: Never
+    database: configuration
+    username: supersports_configuration
+    passwordKey: CONFIGURATION_DB_PASSWORD
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {cpu: "1", memory: 512Mi}

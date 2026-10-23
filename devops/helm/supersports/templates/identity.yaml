@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "supersports.prefix" . }}-identity
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app.kubernetes.io/instance: {{ .Release.Name | quote }}, app.kubernetes.io/component: identity}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/instance: {{ .Release.Name | quote }}, app.kubernetes.io/component: identity}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: identity
+          image: {{ .Values.identity.image | quote }}
+          args: [start-dev, --import-realm]
+          ports: [{name: http, containerPort: 8080}, {name: management, containerPort: 9000}]
+          env:
+            - {name: KC_DB, value: postgres}
+            - name: KC_DB_URL
+              value: {{ printf "jdbc:postgresql://%s-postgres:5432/identity" (include "supersports.prefix" .) | quote }}
+            - {name: KC_DB_USERNAME, value: supersports_identity}
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: {{ include "supersports.secret" . | quote }}, key: IDENTITY_DB_PASSWORD}
+            - {name: KC_BOOTSTRAP_ADMIN_USERNAME, value: admin}
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: {{ include "supersports.secret" . | quote }}, key: KEYCLOAK_ADMIN_PASSWORD}
+            - {name: KC_HEALTH_ENABLED, value: "true"}
+            - {name: KC_HTTP_ENABLED, value: "true"}
+            - {name: KC_HOSTNAME, value: {{ trimSuffix "/realms/supersports" .Values.publicIssuer | quote }}}
+            - {name: JAVA_OPTS_KC_HEAP, value: "-Xms64m -Xmx384m"}
+{{- range $key := list "DEMO_CUSTOMER_PASSWORD" "DEMO_PLATFORM_ADMIN_PASSWORD" "DEMO_CATALOG_ADMIN_PASSWORD" }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef: {name: {{ include "supersports.secret" $ | quote }}, key: {{ $key }}}
+{{- end }}
+          startupProbe:
+            httpGet: {path: /health/started, port: management}
+            periodSeconds: 5
+            failureThreshold: 120
+          livenessProbe:
+            httpGet: {path: /health/live, port: management}
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: {path: /health/ready, port: management}
+            periodSeconds: 5
+          resources: {{ toYaml .Values.identity.resources | nindent 12 }}
+          volumeMounts:
+            - {name: realm, mountPath: /opt/keycloak/data/import, readOnly: true}
+      volumes:
+        - name: realm
+          configMap:
+            name: {{ required "bootstrap.realmExistingConfigMap is required" .Values.bootstrap.realmExistingConfigMap | quote }}
+            items: [{key: supersports-realm.json, path: supersports-realm.json}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "supersports.prefix" . }}-identity
+spec:
+  type: ClusterIP
+  selector: {app.kubernetes.io/instance: {{ .Release.Name | quote }}, app.kubernetes.io/component: identity}
+  ports: [{name: http, port: 8080, targetPort: http}]

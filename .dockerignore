@@ -1,0 +1,13 @@
+**
+!services/
+!services/catalog/
+!services/catalog/pom.xml
+!services/catalog/src/
+!services/catalog/src/**
+!services/configuration/
+!services/configuration/pom.xml
+!services/configuration/src/
+!services/configuration/src/**
+!devops/
+!devops/docker/
+!devops/docker/healthcheck.sh

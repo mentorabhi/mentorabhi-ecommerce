@@ -8,7 +8,7 @@ The original plan allowed cloud and hosted inference. The user requires local se
 Use a monorepo with explicit service ownership and no cross-service table access. Share a PostgreSQL host locally, with isolated databases/users.
 Keep all infrastructure/build/deployment/operational automation in devops. Use Compose for daily work and local Kubernetes as a separate teaching/deployment target.
 Support selective workload profiles and a larger self-hosted machine. Use local adapters for replaceable storage/messaging/search/model implementations.
-Use host Ollama as the local accelerated adapter, plus containerized Ollama for portability. No hosted inference fallback.
+Use the existing host-installed Ollama only. The user's later instruction explicitly excludes an Ollama container. No hosted inference fallback.
 Keep exact dependency choices open until current stable compatibility is verified. Pin tested versions and immutable image references; do not use floating latest tags.
 
 ## Alternatives

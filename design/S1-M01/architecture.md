@@ -142,12 +142,11 @@ flowchart TB
   DOCKER --> DATA[Optional graph / analytics jobs and reporting]
   DOCKER --> AGENT[Optional Nova API / local retrieval]
   AGENT --> OLLAMA
-  AGENT -. portable CPU option .-> OC[Containerized Ollama]
   DOCKER -. separate exercise .-> K8S[Local kind or k3d with Helm]
 ```
 Proposed envelopes, not benchmark results: reserve at least 4 GB for macOS/tools; target core container RSS below 6 GB using small JVM heaps; run inference or heavy data jobs selectively in the remaining space. Do not allocate independent 6 GB limits to each profile and claim their sum fits. First bootstrap must measure RSS, pressure, startup time and architecture support; reduce active workloads/heap/process counts before accepting the envelope.
 Core starts selected services needed for the current lesson, rather than all ten JVMs from day one. Full commerce integration must be demonstrated on the Mac without Nova/data workloads. If it cannot fit, resolve the architecture before declaring the local requirement met. Larger-machine profile may combine workloads; it is still local/self-hosted.
-Kubernetes is an alternate deployment target, not an additional always-on cluster beside Compose. Native Ollama endpoint is restricted to the Docker host bridge/private local boundary; document firewall and bind configuration. Container Ollama is portable CPU fallback, with no promise of Apple GPU acceleration.
+Kubernetes is an alternate deployment target, not an additional always-on cluster beside Compose. Host-installed Ollama is the only inference runtime; do not create or run an Ollama container. Native Ollama endpoint is restricted to the Docker host bridge/private local boundary; document firewall and bind configuration. A containerized Ollama option is superseded by the user's host-only instruction.
 Terraform manages documented local/self-hosted resources where meaningful; Helm owns workload deployment. Never add a cloud provider just to demonstrate Terraform.
 
 ## Repository layout

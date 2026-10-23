@@ -6,7 +6,7 @@ Scope: R10–R13, R16/R17/R19; initial AE12/AE13 foundation, not full business/U
 ## Outcome and limits
 A clean checkout can initialize local secrets, independently build/test two Java service projects, start a private Docker core profile, authenticate against local Keycloak, read a migrated configuration database, and run health/auth/isolation/recovery regressions.
 No product CRUD, storefront, pricing engine, checkout or Nova is implemented here. Those retain their milestone owners. Configuration edits/activation UI are S1-M04 work. Bootstrap adds a read-only typed settings registry plus migration-owned initial revision.
-All app/dependency containers are ARM64-native with bounded memory. Java builds/tests run in containers; Python operational scripts run only through the repository .venv. Setup downloads are allowed; no cloud runtime dependency.
+All app/dependency containers are ARM64-native with bounded memory. Existing host-installed Ollama is the explicit inference exception; no Ollama container will be created or run. Java builds/tests run in containers; Python operational scripts run only through the repository .venv. Setup downloads are allowed; no cloud runtime dependency.
 
 ## Chosen baseline and sources
 - Spring Boot 4.1.2: latest stable official reference, Java 17–27 compatibility. https://docs.spring.io/spring-boot/system-requirements.html
@@ -53,7 +53,7 @@ Both expose:
 - Other actuator endpoints are not exposed.
 Catalog: GET /api/v1/catalog/status returns {service:"catalog",status:"ready",schemaVersion:1}; requires customer or catalog-admin role and a valid API audience.
 Configuration: GET /api/v1/configuration returns {revision:1,categories:[...],settings:[...]}; requires platform-admin role.
-Categories are store-localization, commerce-simulations, storage, search-cache, messaging-workflows, identity-access, observability, nova-models. Settings are allowlisted migration-defined records with key, category, value (string representation), valueType, activationMode and revision. Initial values: INR, IN, en, supported currencies INR/USD, simulated payment/shipping/tax, local storage, local identity, local-only Nova endpoint kind. No URL/credential editing or dynamic write endpoint yet. Metadata must not imply supported runtime actions which do not exist.
+Categories are store-localization, commerce-simulations, storage, search-cache, messaging-workflows, identity-access, observability, nova-models. Settings are allowlisted migration-defined records with key, category, value (string representation), valueType, activationMode and revision. Initial values: INR, IN, en, supported currencies INR/USD, simulated payment/shipping/tax, local storage, local identity, local-only Nova endpoint kind. Bootstrap valueType is STRING, STRING_LIST (JSON array represented as text), or BOOLEAN; activationMode is MIGRATION_ONLY so metadata does not imply a dynamic activation capability. No URL/credential editing or dynamic write endpoint yet. Metadata must not imply supported runtime actions which do not exist.
 Unsupported HTTP methods/routes do not mutate settings. Error/auth responses must not contain secrets.
 
 ## Authentication

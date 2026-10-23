@@ -8,7 +8,7 @@ Original requirements and architecture are historical inputs; accepted requireme
 Use a monorepo with each microservice as an independent project under services/. Frontend belongs in apps/storefront; data projects in data/pipelines; public schemas in contracts.
 All Dockerfiles, Compose/Kubernetes/Helm/Terraform configuration, CI implementation and operational scripts belong under devops/. Keep tests near owning code; cross-service orchestration belongs under devops.
 Use .venv/bin/python for Python commands, including pip via -m pip. Do not install project dependencies globally. .venv is ignored; documented interpreter/dependencies must be reproducible.
-No cloud services, hosted model fallback, real payments or real fulfillment. Existing host Ollama is supported alongside a containerized option.
+No cloud services, hosted model fallback, real payments or real fulfillment. Use existing host-installed Ollama only; do not create or run an Ollama container.
 
 ## Design before implementation
 For each milestone or major feature: save requirements/design and editable diagrams, review, resolve blockers, then implement.

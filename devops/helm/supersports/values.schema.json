@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "existingSecret",
+    "bootstrap",
+    "publicIssuer",
+    "postgres",
+    "identity",
+    "apps"
+  ],
+  "properties": {
+    "existingSecret": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bootstrap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "postgresExistingConfigMap",
+        "realmExistingConfigMap"
+      ],
+      "properties": {
+        "postgresExistingConfigMap": {
+          "type": "string",
+          "minLength": 1
+        },
+        "realmExistingConfigMap": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "publicIssuer": {
+      "type": "string",
+      "pattern": "^http://(localhost|127\\.0\\.0\\.1):[0-9]+/realms/supersports$"
+    },
+    "postgres": {
+      "type": "object",
+      "required": [
+        "image",
+        "storage",
+        "resources"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "storage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resources": {
+          "$ref": "#/definitions/resources"
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "required": [
+        "image",
+        "resources"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resources": {
+          "$ref": "#/definitions/resources"
+        }
+      }
+    },
+    "apps": {
+      "type": "object",
+      "required": [
+        "catalog",
+        "configuration"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "catalog": {
+          "type": "object",
+          "required": [
+            "image",
+            "imagePullPolicy",
+            "database",
+            "username",
+            "passwordKey",
+            "resources"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "image": {
+              "type": "string",
+              "minLength": 1
+            },
+            "imagePullPolicy": {
+              "enum": [
+                "Never",
+                "IfNotPresent"
+              ]
+            },
+            "database": {
+              "const": "catalog"
+            },
+            "username": {
+              "const": "supersports_catalog"
+            },
+            "passwordKey": {
+              "const": "CATALOG_DB_PASSWORD"
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            }
+          }
+        },
+        "configuration": {
+          "type": "object",
+          "required": [
+            "image",
+            "imagePullPolicy",
+            "database",
+            "username",
+            "passwordKey",
+            "resources"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "image": {
+              "type": "string",
+              "minLength": 1
+            },
+            "imagePullPolicy": {
+              "enum": [
+                "Never",
+                "IfNotPresent"
+              ]
+            },
+            "database": {
+              "const": "configuration"
+            },
+            "username": {
+              "const": "supersports_configuration"
+            },
+            "passwordKey": {
+              "const": "CONFIGURATION_DB_PASSWORD"
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "resources": {
+      "type": "object",
+      "required": [
+        "requests",
+        "limits"
+      ],
+      "properties": {
+        "requests": {
+          "type": "object",
+          "required": [
+            "cpu",
+            "memory"
+          ],
+          "properties": {
+            "cpu": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "memory": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "required": [
+            "cpu",
+            "memory"
+          ],
+          "properties": {
+            "cpu": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "memory": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

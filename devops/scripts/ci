@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+set -eu
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+"$repo_root/devops/scripts/supersports" doctor
+"$repo_root/devops/scripts/supersports" validate
+"$repo_root/devops/scripts/supersports" unit
+"$repo_root/.venv/bin/python" "$repo_root/devops/scripts/check_deployment.py"
+"$repo_root/devops/scripts/supersports" up
+"$repo_root/devops/scripts/supersports" test --recovery

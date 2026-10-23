@@ -1,5 +1,5 @@
 # S1-M01 — Scope, domain and architecture
-Revision 2 · 2026-10-23 · Status: design reviewed; structural checks passed; Git checkpoint pending.
+Revision 2 · 2026-10-23 · Status: complete — reviewed design checkpoint s1-m01-design-v1.
 
 ## Objective
 Translate the original three-stage plan and subsequent user decisions into a consistent, implementable SuperSports baseline. Establish ownership and acceptance examples before deploying services.
@@ -198,3 +198,6 @@ PY
 ```
 
 Next step: S1-M02 design and bootstrap, including official version/compatibility verification. No prerequisite application implementation is claimed by this package.
+
+## Git checkpoint
+The reviewed design was committed as 7ef04c4 and tagged s1-m01-design-v1 before bootstrap implementation. Earlier verification statements above describe the pre-commit inspection; this entry closes the pending checkpoint.

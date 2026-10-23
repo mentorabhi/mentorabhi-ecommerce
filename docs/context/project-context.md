@@ -17,7 +17,7 @@ Existing architecture/ diagrams are proposals from that baseline, not implemente
 - Simulate payments, refunds, fulfillment, taxes, shipping and product-eligible coupon codes.
 - 16 GB Mac baseline; all application and dependency workloads containerized, deployable to larger machines.
 - No cloud services. Use local adapters; keep replaceable infrastructure interfaces. Categorized administration UI for configurations.
-- Existing native Ollama is available; generation and other models must be open-source, lightweight and locally deployable. Native Ollama is an explicit hardware-acceleration adapter; a containerized CPU-compatible option must also exist.
+- Use the existing host-installed Ollama only. Do not create or run an Ollama container. Generation and other models must remain open-source, lightweight and locally deployable. This is the explicit exception to Dockerizing application/dependency workloads.
 - Propose technology versions; verify latest stable compatible releases at implementation time, pin exact tested versions, record compatibility and licensing.
 - Monorepo; every microservice is its own project; all infrastructure and operational automation under devops/.
 - Design document and editable diagram first, review second, implementation third. Maintain context and revision history throughout.
@@ -29,7 +29,7 @@ Existing architecture/ diagrams are proposals from that baseline, not implemente
 Use the repository-local .venv for all Python execution and package management: .venv/bin/python and .venv/bin/python -m pip. Never install project dependencies globally. Bootstrap the environment with python3 -m venv .venv. Current verified local interpreter is Python 3.14.7, recorded in verification evidence; dependency/version selection remains S1-M02 work.
 
 ## Current state
-S1-M01 requirements/design package has been authored and reviewed; structural checks passed; Git checkpoint remains pending. No runnable application, deployment, benchmark, model evaluation or automated feature test exists yet. No remote repository has been specified.
+S1-M01 is checkpointed as s1-m01-design-v1 (7ef04c4). S1-M02 has a runnable Docker bootstrap: PostgreSQL, Keycloak, Catalog and Configuration, with unit and real-stack API/isolation checks passing; recovery/release/rollback and final review are being completed. No storefront or Nova/model implementation exists yet. No remote repository has been specified.
 Scope now: domain ownership, acceptance scenarios, local profiles, repository conventions and review. S1-M02 implements bootstrap. S1-M03 implements catalog, pricing administration and inventory fixtures; S1-M04 implements the storefront.
 Application code must wait for the corresponding reviewed design. Do not interpret the full roadmap as implemented or claim S1-M01 runtime tests passed.
 
@@ -43,3 +43,6 @@ Single retailer, one store, one initial warehouse; no marketplace or cross-borde
 Store-wide currency selection at first, not per-customer currency switching. Explicit currency-specific price books; no implicit live exchange-rate service. Currency changes affect new quotes, not historical orders.
 No public exposure by default. Local identity and role boundaries still required.
 All numeric capacity targets remain proposed until measured. No cloud or hosted model fallback.
+
+## Setup prerequisite
+Native host Ollama setup/server/model/connectivity is a Nova prerequisite, documented in docs/setup/prerequisites.md. Commerce bootstrap must not require Ollama to be running.

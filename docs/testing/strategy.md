@@ -29,3 +29,11 @@ Unit/integration/E2E/load: not applicable to this documentation-only milestone; 
 
 ## Proposed targets and recovery
 Critical invariants must have explicit tests regardless of line coverage. Coverage thresholds per module and numeric latency/quality/recovery targets are agreed when a runnable baseline exists. Record measured values and hardware; never claim the design meets unmeasured targets.
+
+## S1-M02 delivered verification entry points
+- devops/scripts/supersports unit: Python operational tests and each project's independent Maven verify in the pinned container; Java reports under services/<name>/target/surefire-reports.
+- devops/scripts/supersports test: real PostgreSQL/Keycloak authorization, audience/signature, migrations, owner isolation, health and loopback port checks.
+- devops/scripts/supersports test --recovery: restart persistence, database outage/liveness/readiness and token issuance recovery.
+- .venv/bin/python devops/scripts/check_deployment.py: Helm lint/render/expected schema rejection and Terraform fmt/init/validate/native tests, without cluster provisioning.
+- devops/scripts/ci: local pipeline including all of the above.
+Exact observed counts/results and known limitations are recorded in docs/milestones/S1-M02/README.md. No hosted CI, security scanner, Kubernetes runtime or Nova evaluation is implied.

@@ -54,6 +54,6 @@
 <rect x="40" y="855" width="1400" height="110" rx="12" fill="#ede9fe" stroke="#475569" stroke-width="1.5"/>
 <text x="56" y="890.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">devops | Selective local profiles; no cloud services</text>
 <text x="56" y="919.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Core -&gt; streaming/search -&gt; graph/lakehouse/reporting -&gt; Nova. Derived stores receive committed events.</text>
-<text x="56" y="939.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">16 GB Mac: resource budgets must be measured. Native Ollama adapter or container CPU option; larger self-hosted target.</text>
+<text x="56" y="939.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">16 GB Mac: resource budgets must be measured. Existing native Ollama only; larger self-hosted target.</text>
 <text x="40" y="1000.0" font-family="Arial,sans-serif" font-size="15" fill="#475569">Lines show access/layer boundaries, not every business dependency. Detailed flows and ownership are in architecture.md.</text>
 </svg>

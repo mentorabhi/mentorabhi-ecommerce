@@ -14,10 +14,10 @@ Revision 1 · 2026-10-23. User decisions override the original planning baseline
 | R09 | Catalog, pricing and inventory administration with role enforcement. | S1-M03; AE11 |
 | R10 | Categorized configuration administration: commerce/localization, simulations, storage, search/cache, messaging/workflows, identity, observability, Nova. | S1-M02 foundation; S1-M04 UI; AE12 |
 | R11 | Monorepo with independent microservice projects and devops as the sole infrastructure project. | S1-M02; AE13 |
-| R12 | Dockerized application/dependencies, ARM64-compatible local profiles on a 16 GB Mac and larger-machine deployment path; Kubernetes, Helm, Terraform and repeatable scripts. | S1-M02/M09; AE13 |
+| R12 | Dockerized application/dependencies except existing host Ollama, ARM64-compatible local profiles on a 16 GB Mac and larger-machine deployment path; Kubernetes, Helm, Terraform and repeatable scripts. | S1-M02/M09; AE13 |
 | R13 | Local services only; no cloud services or hosted AI. Provisioning must not contact a cloud provider. Downloads needed for setup are distinct from runtime dependencies. | S1-M02 onward; AE13/AE16 |
 | R14 | PostgreSQL transactional authority, service ownership, Saga, outbox/CDC/Kafka and CQRS; Redis, search, graph, lakehouse and reporting each need explicit ownership and purpose. | S1-M05/M06/M08; AE08/AE14/AE15 |
-| R15 | Nova uses local Ollama and local lightweight open-source models; includes prompting, LangChain, orchestration, RAG, MCP, semantics, memory, context/loop engineering, guardrails, human approval, evaluation, caching and observability. | S2 design; S3 implementation; AE16–AE19 |
+| R15 | Nova uses the existing host-installed Ollama only (no Ollama container) and local lightweight open-source models; includes prompting, LangChain, orchestration, RAG, MCP, semantics, memory, context/loop engineering, guardrails, human approval, evaluation, caching and observability. | S2 design; S3 implementation; AE16–AE19 |
 | R16 | Unit tests for every feature; integration, contract, regression, E2E and risk-specific tests; CI/CD, reproducible evidence and Git checkpoints. | Every implementation milestone |
 | R17 | Design documents and editable diagrams reviewed before implementation; context, ADRs, revisions, lessons and guided execution maintained. | Every milestone |
 | R18 | Logo, modern responsive pages and original product imagery; realistic synthetic prices/descriptions, accessibility and mobile verification. | S1-M03 assets; S1-M04 UI; AE20 |
