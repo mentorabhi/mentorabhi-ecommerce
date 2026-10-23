@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="1020" viewBox="0 0 1480 1020">
+<rect width="1480" height="1020" fill="#f8fafc"/>
+<defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="none" stroke="#475569"/></marker></defs>
+<text x="40" y="50.0" font-family="Arial,sans-serif" font-size="28" fill="#0f172a">SuperSports + Nova | S1-M01 ownership and local boundaries</text>
+<text x="40" y="83.0" font-family="Arial,sans-serif" font-size="17" fill="#475569">Revision 1 - Proposed design - Each service is an independent project; infrastructure lives in devops</text>
+<rect x="40" y="120" width="420" height="105" rx="12" fill="#dbeafe" stroke="#475569" stroke-width="1.5"/>
+<text x="56" y="155.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">SuperSports storefront</text>
+<text x="56" y="184.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Customer and staff routes</text>
+<text x="56" y="204.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">English / INR / Indian defaults</text>
+<rect x="530" y="120" width="420" height="105" rx="12" fill="#dbeafe" stroke="#475569" stroke-width="1.5"/>
+<text x="546" y="155.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Nova | stages 2 and 3</text>
+<text x="546" y="184.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Local Ollama + authorized tools</text>
+<text x="546" y="204.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">No private commerce table access</text>
+<rect x="1020" y="120" width="420" height="105" rx="12" fill="#fee2e2" stroke="#475569" stroke-width="1.5"/>
+<text x="1036" y="155.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Configuration administration</text>
+<text x="1036" y="184.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Typed revisions / validation / audit</text>
+<text x="1036" y="204.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Secret references; deployment pending</text>
+<rect x="40" y="300" width="1400" height="95" rx="12" fill="#dcfce7" stroke="#475569" stroke-width="1.5"/>
+<text x="56" y="335.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Authenticated APIs and contracts</text>
+<text x="56" y="364.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">REST / OpenAPI - Actor ownership and role checks - MCP adapters in stage 3</text>
+<rect x="40" y="465" width="420" height="110" rx="12" fill="#dcfce7" stroke="#475569" stroke-width="1.5"/>
+<text x="56" y="500.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Catalog + Pricing</text>
+<text x="56" y="529.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Categories / SKUs / price books</text>
+<text x="56" y="549.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Coupon holds / quote rules</text>
+<rect x="530" y="465" width="420" height="110" rx="12" fill="#dcfce7" stroke="#475569" stroke-width="1.5"/>
+<text x="546" y="500.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Inventory + Cart</text>
+<text x="546" y="529.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Stock / reservations / movements</text>
+<text x="546" y="549.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Owner-scoped carts / wishlist</text>
+<rect x="1020" y="465" width="420" height="110" rx="12" fill="#dcfce7" stroke="#475569" stroke-width="1.5"/>
+<text x="1036" y="500.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Orders + Saga workers</text>
+<text x="1036" y="529.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Accepted snapshots / idempotency</text>
+<text x="1036" y="549.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Checkout and recovery state</text>
+<rect x="40" y="665" width="420" height="110" rx="12" fill="#dcfce7" stroke="#475569" stroke-width="1.5"/>
+<text x="56" y="700.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Payments + Fulfillment</text>
+<text x="56" y="729.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Simulated ledger / shipments</text>
+<text x="56" y="749.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Refunds / tracking</text>
+<rect x="530" y="665" width="420" height="110" rx="12" fill="#dcfce7" stroke="#475569" stroke-width="1.5"/>
+<text x="546" y="700.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Engagement</text>
+<text x="546" y="729.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Reviews / moderation / support</text>
+<text x="546" y="749.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Explicit module boundaries</text>
+<rect x="1020" y="665" width="420" height="110" rx="12" fill="#fef3c7" stroke="#475569" stroke-width="1.5"/>
+<text x="1036" y="700.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">Owned PostgreSQL databases</text>
+<text x="1036" y="729.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">One host; isolated users/databases</text>
+<text x="1036" y="749.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">No cross-service table queries</text>
+<line x1="250" y1="225" x2="250" y2="300" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="740" y1="225" x2="740" y2="300" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="1230" y1="225" x2="1230" y2="300" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="250" y1="395" x2="250" y2="465" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="740" y1="395" x2="740" y2="465" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="1230" y1="395" x2="1230" y2="465" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="250" y1="575" x2="250" y2="665" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="740" y1="575" x2="740" y2="665" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="1230" y1="575" x2="1230" y2="665" stroke="#475569" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="40" y="855" width="1400" height="110" rx="12" fill="#ede9fe" stroke="#475569" stroke-width="1.5"/>
+<text x="56" y="890.0" font-family="Arial,sans-serif" font-size="20" fill="#0f172a">devops | Selective local profiles; no cloud services</text>
+<text x="56" y="919.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">Core -&gt; streaming/search -&gt; graph/lakehouse/reporting -&gt; Nova. Derived stores receive committed events.</text>
+<text x="56" y="939.0" font-family="Arial,sans-serif" font-size="16" fill="#334155">16 GB Mac: resource budgets must be measured. Native Ollama adapter or container CPU option; larger self-hosted target.</text>
+<text x="40" y="1000.0" font-family="Arial,sans-serif" font-size="15" fill="#475569">Lines show access/layer boundaries, not every business dependency. Detailed flows and ownership are in architecture.md.</text>
+</svg>

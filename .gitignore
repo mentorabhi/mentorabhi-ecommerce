@@ -1,0 +1,44 @@
+# Local secrets and configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.jks
+secrets/
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+htmlcov/
+# Java and frontend builds
+target/
+build/
+.gradle/
+node_modules/
+.next/
+dist/
+coverage/
+playwright-report/
+test-results/
+# Local infrastructure state
+devops/.local/
+devops/volumes/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform.lock.hcl.tmp
+# Editor and machine files
+.DS_Store
+.idea/
+.vscode/
+*.log
+.compound-engineering/config.local.yaml

@@ -1,0 +1,37 @@
+Build a world-class enterprise agentic system that can run locally at small scale and scale to larger deployments.
+
+Cover LangChain, prompting, guardrails, evaluations, observability, caching, semantic layers, RAG, MCP, orchestration, human-in-the-loop workflows, memory architecture, context engineering, and loop engineering.
+
+Use an Amazon Rufus-like shopping assistant as the reference agent application.
+
+First build a working virtual e-commerce application using realistic synthetic data.
+
+Include common customer features such as product search, product details, cart management, purchasing, and reviews.
+
+Include backend administration for catalog, inventory, and other essential commerce operations.
+
+Use suitable real-world databases, languages, APIs, and infrastructure technologies.
+
+Include Kafka streaming, graph databases, a data lakehouse, analytics, and reporting.
+
+Use Kubernetes, microservices, Saga, CQRS, and other relevant distributed-system patterns.
+
+Organize the project into three stages: build the e-commerce system; define and design the Rufus-like assistant; identify and implement commerce extensions required to support the assistant.
+
+Structure the project for self-learning and step-by-step knowledge sharing with students.
+
+Include multiple design and architecture diagrams, explanations, and learning documentation throughout every stage.
+
+Write backend code in Java or Python according to the requirements.
+
+Provide proper automated test coverage.
+
+Implement CI/CD pipelines, with Terraform for infrastructure provisioning and scripts for repeatable operations.
+
+Use Git for source control and incremental project development.
+
+Document the complete discussion and project plan neatly in a Google Doc.
+
+Divide each stage into milestones covering design, infrastructure setup, development, testing, success criteria, and other necessary activities.
+
+Create separate editable Excalidraw design and architecture diagrams for every stage and major milestone.

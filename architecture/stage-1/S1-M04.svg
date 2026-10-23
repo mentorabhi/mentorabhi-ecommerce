@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="1016" viewBox="0 0 1480 1016">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#334155"/></marker></defs><rect width="100%" height="100%" fill="white"/>
+<text x="60" y="58.0" text-anchor="start" font-family="Arial,sans-serif" font-size="28" fill="#0f172a">S1-M04 | Storefront, search and cart</text>
+<text x="60" y="92.0" text-anchor="start" font-family="Arial,sans-serif" font-size="16" fill="#64748b">MentorAbhi • Architecture proposal • Editable components and connectors • v1</text>
+<polyline points="740.0,247 740.0,288.5 515.0,288.5 515.0,330" fill="none" stroke="#334155" stroke-width="1.5"  marker-end="url(#arrow)"/>
+<text x="627.5" y="277.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#475569">sign in</text>
+<polyline points="740.0,247 740.0,288.5 965.0,288.5 965.0,330" fill="none" stroke="#334155" stroke-width="1.5"  marker-end="url(#arrow)"/>
+<text x="852.5" y="295.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#475569">token + request</text>
+<polyline points="965.0,442 965.0,483.5 515.0,483.5 515.0,525" fill="none" stroke="#334155" stroke-width="1.5"  marker-end="url(#arrow)"/>
+<text x="740.0" y="472.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#475569">search</text>
+<polyline points="965.0,442 965.0,525" fill="none" stroke="#334155" stroke-width="1.5"  marker-end="url(#arrow)"/>
+<text x="965.0" y="490.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#475569">cart actions</text>
+<polyline points="515.0,637 515.0,678.5 290.0,678.5 290.0,720" fill="none" stroke="#334155" stroke-width="1.5"  marker-end="url(#arrow)"/>
+<text x="402.5" y="667.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#475569">query</text>
+<polyline points="965.0,637 965.0,678.5 740.0,678.5 740.0,720" fill="none" stroke="#334155" stroke-width="1.5"  marker-end="url(#arrow)"/>
+<text x="852.5" y="667.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#475569">read / write</text>
+<polyline points="515.0,637 515.0,678.5 1190.0,678.5 1190.0,720" fill="none" stroke="#334155" stroke-width="1.5"  marker-end="url(#arrow)"/>
+<text x="852.5" y="685.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#475569">cache</text>
+<rect x="565.0" y="135" width="350" height="112" rx="12" fill="#dbeafe" stroke="#334155" stroke-width="1.5"/>
+<text x="740.0" y="186.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Storefront</text>
+<text x="740.0" y="209.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Customer session</text>
+<rect x="340.0" y="330" width="350" height="112" rx="12" fill="#fee2e2" stroke="#334155" stroke-width="1.5"/>
+<text x="515.0" y="381.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Identity provider</text>
+<text x="515.0" y="404.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Authentication</text>
+<rect x="790.0" y="330" width="350" height="112" rx="12" fill="#ede9fe" stroke="#334155" stroke-width="1.5"/>
+<text x="965.0" y="381.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">API gateway</text>
+<text x="965.0" y="404.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Routing / authorization</text>
+<rect x="340.0" y="525" width="350" height="112" rx="12" fill="#dcfce7" stroke="#334155" stroke-width="1.5"/>
+<text x="515.0" y="576.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Product query API</text>
+<text x="515.0" y="599.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Filters / facets</text>
+<rect x="790.0" y="525" width="350" height="112" rx="12" fill="#dcfce7" stroke="#334155" stroke-width="1.5"/>
+<text x="965.0" y="576.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Cart API</text>
+<text x="965.0" y="599.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Owner-scoped cart</text>
+<rect x="115.0" y="720" width="350" height="112" rx="12" fill="#fef3c7" stroke="#334155" stroke-width="1.5"/>
+<text x="290.0" y="771.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">OpenSearch</text>
+<text x="290.0" y="794.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Product projection</text>
+<rect x="565.0" y="720" width="350" height="112" rx="12" fill="#fef3c7" stroke="#334155" stroke-width="1.5"/>
+<text x="740.0" y="771.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Cart database</text>
+<text x="740.0" y="794.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Durable cart</text>
+<rect x="1015.0" y="720" width="350" height="112" rx="12" fill="#fef3c7" stroke="#334155" stroke-width="1.5"/>
+<text x="1190.0" y="771.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Redis</text>
+<text x="1190.0" y="794.0" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#0f172a">Optional scoped cache</text>
+<text x="60" y="894.0" text-anchor="start" font-family="Arial,sans-serif" font-size="17" fill="#334155">Search price and availability may lag. Checkout revalidates authoritative price and inventory. Cache keys must respect relevant</text>
+<text x="60" y="915.25" text-anchor="start" font-family="Arial,sans-serif" font-size="17" fill="#334155">user scope.</text>
+<text x="60" y="965.0" text-anchor="start" font-family="Arial,sans-serif" font-size="14" fill="#64748b">Blue: user interface   Green: application   Yellow: data   Purple: infrastructure   Red: control / policy   Dashed: asynchronous event</text>
+</svg>

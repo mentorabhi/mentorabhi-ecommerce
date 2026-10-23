@@ -1,0 +1,163 @@
+[
+  {
+    "code": "S1-00",
+    "title": "Stage 1 \u2014 Working commerce platform",
+    "stage": 1,
+    "file": "stage-1/S1-00.excalidraw",
+    "note": "PostgreSQL owns transactional truth. Derived stores are eventually consistent. Kubernetes and telemetry span all workloads. Analytics ends in Superset dashboards."
+  },
+  {
+    "code": "S1-M01",
+    "title": "Domain boundaries and ownership",
+    "stage": 1,
+    "file": "stage-1/S1-M01.excalidraw",
+    "note": "Logical services may share a local PostgreSQL host, but never each other\u2019s private tables. Payments, Fulfillment and Reviews are additional bounded contexts."
+  },
+  {
+    "code": "S1-M02",
+    "title": "Infrastructure and delivery bootstrap",
+    "stage": 1,
+    "file": "stage-1/S1-M02.excalidraw",
+    "note": "Terraform provisions infrastructure; Helm deploys application workloads. Secrets stay outside Git. Migrations require a compatibility and rollback strategy."
+  },
+  {
+    "code": "S1-M03",
+    "title": "Catalog, stock and synthetic fixtures",
+    "stage": 1,
+    "file": "stage-1/S1-M03.excalidraw",
+    "note": "Seed relationships and constraints, not independent random rows. Prices, orders and stock must reconcile. Dataset reset must be deterministic."
+  },
+  {
+    "code": "S1-M04",
+    "title": "Storefront, search and cart",
+    "stage": 1,
+    "file": "stage-1/S1-M04.excalidraw",
+    "note": "Search price and availability may lag. Checkout revalidates authoritative price and inventory. Cache keys must respect relevant user scope."
+  },
+  {
+    "code": "S1-M05",
+    "title": "Checkout Saga and compensation",
+    "stage": 1,
+    "file": "stage-1/S1-M05.excalidraw",
+    "note": "Workflow records outcomes and updates Orders through its API. Capture timing is an explicit policy. Compensation is not rollback and may require manual resolution."
+  },
+  {
+    "code": "S1-M06",
+    "title": "Outbox, Kafka and CQRS",
+    "stage": 1,
+    "file": "stage-1/S1-M06.excalidraw",
+    "note": "Delivery can repeat. Enforce deduplication and document ordering scope. CQRS does not require event sourcing. Rebuild projections from retained events or an authoritative snapshot."
+  },
+  {
+    "code": "S1-M07",
+    "title": "Post-purchase workflows",
+    "stage": 1,
+    "file": "stage-1/S1-M07.excalidraw",
+    "note": "Refund and restock are independent business steps. Validate order ownership, return windows and duplicate requests. Cancellation and partial returns require explicit policies."
+  },
+  {
+    "code": "S1-M08",
+    "title": "Graph, lakehouse and reporting",
+    "stage": 1,
+    "file": "stage-1/S1-M08.excalidraw",
+    "note": "Iceberg also needs a catalog service selected during implementation. Reconcile financial totals to commerce. Add ClickHouse only for a justified low-latency analytical workload."
+  },
+  {
+    "code": "S1-M09",
+    "title": "Reliability, scaling and recovery",
+    "stage": 1,
+    "file": "stage-1/S1-M09.excalidraw",
+    "note": "Stateful failover is not solved by application replicas. Publish measured capacity, recovery objectives and actual restore results for the declared environment."
+  },
+  {
+    "code": "S2-00",
+    "title": "Stage 2 \u2014 Rufus requirements and design",
+    "stage": 2,
+    "file": "stage-2/S2-00.excalidraw",
+    "note": "Design stage only: candidate components are not implemented capabilities. Requirements trace back to working stage-1 services."
+  },
+  {
+    "code": "S2-M01",
+    "title": "Journeys, permissions and autonomy",
+    "stage": 2,
+    "file": "stage-2/S2-M01.excalidraw",
+    "note": "Define when to clarify, refuse, escalate or ask approval. Purchasing requires approval bound to the actual proposed action."
+  },
+  {
+    "code": "S2-M02",
+    "title": "Knowledge, semantic layer and memory",
+    "stage": 2,
+    "file": "stage-2/S2-M02.excalidraw",
+    "note": "Current prices and stock come from authoritative tools. Memory has retention, correction and deletion policies. Context selects what the model sees; it is not the memory store."
+  },
+  {
+    "code": "S2-M03",
+    "title": "Bounded agent runtime and MCP tools",
+    "stage": 2,
+    "file": "stage-2/S2-M03.excalidraw",
+    "note": "Tool results return to persisted graph state for the next bounded step. Stop on completion, budget exhaustion or escalation. MCP exposes tools; it does not replace authorization."
+  },
+  {
+    "code": "S2-M04",
+    "title": "Quality, guardrails and caching design",
+    "stage": 2,
+    "file": "stage-2/S2-M04.excalidraw",
+    "note": "Cache classes: response, retrieval, embedding, tool result, semantic and provider-supported prefix caches. Similar meaning alone is insufficient for a safe cache hit."
+  },
+  {
+    "code": "S2-M05",
+    "title": "Design review and gap traceability",
+    "stage": 2,
+    "file": "stage-2/S2-M05.excalidraw",
+    "note": "Exit gate: reviewed architecture, feasible local profile and measurable evaluation targets. No invented implementation status."
+  },
+  {
+    "code": "S3-00",
+    "title": "Stage 3 \u2014 Extend and integrate the assistant",
+    "stage": 3,
+    "file": "stage-3/S3-00.excalidraw",
+    "note": "Stage 3 implements stage-2 gaps. The agent does not access private service tables or directly own stock/payment transactions."
+  },
+  {
+    "code": "S3-M01",
+    "title": "Safe commerce extensions",
+    "stage": 3,
+    "file": "stage-3/S3-M01.excalidraw",
+    "note": "Extend provenance, structured errors, freshness and missing events according to the gap matrix. Maintain storefront and event backward compatibility."
+  },
+  {
+    "code": "S3-M02",
+    "title": "Read-only shopping assistant",
+    "stage": 3,
+    "file": "stage-3/S3-M02.excalidraw",
+    "note": "Evaluate qualifying recommendations, missing evidence, conflicting reviews, stale projections and injection attempts before enabling writes."
+  },
+  {
+    "code": "S3-M03",
+    "title": "Approval and durable action execution",
+    "stage": 3,
+    "file": "stage-3/S3-M03.excalidraw",
+    "note": "An expired or stale proposal cannot authorize a different purchase. Decline/expiry ends or revises the proposal; worker restart resumes from durable state."
+  },
+  {
+    "code": "S3-M04",
+    "title": "Memory, context and cache correctness",
+    "stage": 3,
+    "file": "stage-3/S3-M04.excalidraw",
+    "note": "Valid cached answers may bypass generation only under explicit policy. Never cache personalized or live transactional answers solely by semantic similarity."
+  },
+  {
+    "code": "S3-M05",
+    "title": "Enterprise roles and specialist capabilities",
+    "stage": 3,
+    "file": "stage-3/S3-M05.excalidraw",
+    "note": "Specialist workflows do not require separate agents. Add delegation only when it beats the simpler baseline and preserves role/tenant isolation."
+  },
+  {
+    "code": "S3-M06",
+    "title": "Integrated quality and release gates",
+    "stage": 3,
+    "file": "stage-3/S3-M06.excalidraw",
+    "note": "Measure p95 latency, successful task cost and recovery on declared hardware and data. Quality gates compare versioned datasets, not a hand-picked demo."
+  }
+]

@@ -1,0 +1,222 @@
+Commerce & Enterprise Agents
+MentorAbhi • Three-stage learning, architecture and implementation plan • 23 October 2026
+1. Purpose and agreed direction
+Build a realistic e-commerce platform, design a Rufus-like assistant against it, and then extend and integrate the platform to support that design. The primary purposes are self-learning and teaching students through reproducible, incremental lessons. The result should work at small scale locally and have a documented path to larger deployments.
+This document records the discussion and proposes a milestone structure. It is a planning baseline, not a claim that any implementation or benchmark is complete. Technology choices are candidates; versions, licensing, resource requirements and compatibility will be checked during implementation. The sports-equipment store is a proposed reference domain, with cricket products providing useful examples.
+Stage 1: Working e-commerce setup. Stage 2: Define Rufus requirements and design it. Stage 3: Identify and implement commerce extensions needed by that design, then integrate and validate the assistant. Stage 1 will have sound business APIs, events and observability, but will not anticipate every agent feature.
+Guiding principles
+Business correctness belongs in deterministic services and workflows. Agents interpret goals and request authorized operations. Every data store must have an explicit purpose and owner. Introduce distributed-system complexity through concrete scenarios. Prefer a small set of meaningful microservices over premature fragmentation. Preserve runnable checkpoints and document both successful and failed approaches.
+Local execution and fully local model inference are separate modes. A 16 GB M1 can run selected profiles, but the complete data platform plus local inference requires a larger environment. Performance and quality targets must identify the hardware, dataset and workload on which they are measured.
+2. Learning and engineering contract
+Deliverables required for every milestone
+Each milestone includes: learning objectives and prerequisites; requirements and acceptance scenarios; architecture decisions and alternatives; relevant diagrams; infrastructure/configuration changes; working implementation; automated tests; operational verification; a guided walkthrough; student exercises with expected outcomes; known limitations; and a tagged Git checkpoint.
+Use context and container diagrams for boundaries, component diagrams for internals, sequence diagrams for interactions, entity diagrams for data, state diagrams for lifecycles, and deployment diagrams for runtime topology. Each diagram must explain a question and match the code at its associated release. Keep editable diagram sources in Git.
+Testing and definition of done
+Use unit tests for domain rules, integration tests with real dependencies for storage and messaging, contract tests for APIs and events, and end-to-end tests for critical journeys. Add concurrency, recovery, security, data-quality and load tests where the milestone introduces those risks. Agree coverage thresholds by module; critical invariants need explicit tests regardless of the percentage.
+A milestone is done when its acceptance scenarios pass, deployment is reproducible, relevant CI checks pass, documentation and diagrams match the release, the walkthrough runs from a clean setup, and limitations are recorded. No unresolved critical correctness or security failures may be hidden by a successful demo.
+Git and delivery practices
+Start with one repository containing independently buildable services, frontend, contracts, data jobs, infrastructure, documentation and lessons. Use short-lived branches, focused pull requests, reviewable commits and release tags. Maintain architecture decision records, migration notes and a changelog. Example tags: s1-m03-catalog, s1-m05-checkout-saga, s2-design-v1 and s3-agent-v1.
+CI builds, lints, tests, checks contracts, scans dependencies and containers, and publishes immutable images. CD deploys those images, applies controlled migrations, performs smoke checks and supports rollback. Terraform provisions infrastructure; Helm and Kubernetes manifests deploy workloads; scripts provide repeatable bootstrap, seed, reset, validation and cleanup commands. Store secrets outside Git and manage Terraform state securely.
+3. Proposed architecture and technology map
+The following is a candidate stack, not a requirement to install everything immediately. Java and Python are the primary backend languages; TypeScript is used for the browser application. Exact products and versions will be confirmed through architecture decisions.
+Commerce — Java + Spring Boot. Domain rules, transactions, service APIs and event consumers.
+Agents and data — Python + FastAPI; LangChain/LangGraph candidates. Agent APIs, workflow graphs, evaluation, ingestion and synthetic data.
+Web — TypeScript + React/Next.js. Customer storefront and administration.
+Transactions — PostgreSQL. Service-owned authoritative records; separate databases/users may share one local instance.
+Cache — Redis. Measured caching, rate limiting and short-lived coordination; not the authority for orders or stock.
+Streaming — Kafka + Debezium + transactional outbox. Committed domain events, replay and downstream projections.
+Search — OpenSearch. Lexical search, filtering, facets and later hybrid retrieval.
+Graph — Neo4j. Explicit compatibility, accessory, substitute and knowledge relationships.
+Lakehouse — S3-compatible object storage + Iceberg + Spark + Trino. Raw history, curated analytical tables, transformation and SQL.
+Reporting — Superset; ClickHouse when justified. Business dashboards; low-latency event analytics as a later extension.
+Durable workflows — Temporal candidate. Checkout/return Saga orchestration and later durable agent approvals.
+Platform — Docker, Kubernetes, Helm, Terraform. Local profiles, portable workloads and cloud infrastructure.
+Observability — OpenTelemetry, Prometheus, Grafana and a trace/log backend. Correlated service, message, workflow and agent telemetry.
+Interfaces and ownership
+REST/OpenAPI serves commerce commands and queries; Kafka/AsyncAPI documents asynchronous contracts; SSE streams agent progress and responses; MCP exposes selected agent capabilities. Add gRPC only when a specific communication requirement warrants it. Services do not query each other’s private tables.
+Catalog owns products and variants; Inventory owns stock and reservations; Pricing owns price and promotion rules; Cart owns carts; Orders owns the order lifecycle; Payments simulates authorization/capture/refunds; Fulfillment simulates shipments; Reviews owns ratings and moderation. Identity, support and notifications may begin as small supporting modules with explicit boundaries.
+CQRS separates command models from query projections without requiring event sourcing. An orchestrated Saga coordinates checkout and compensation. The outbox connects database commits to Kafka. Search, graph and analytical stores are derived views with documented freshness and recovery behavior.
+4. Stage 1 — Build a working e-commerce platform
+Outcome: a usable store and admin experience backed by real domain behavior, synthetic data, streaming and analytical workflows. Payments, refunds and fulfillment are simulations. Agent requirements and implementation remain in stages 2 and 3.
+S1-M01 — Scope, domain and architecture
+Objective: Define the store, personas, business rules, scope and nonfunctional goals.
+Design and diagrams: Context, service boundaries, ownership map, core entity model and happy/failure checkout sequences. Record consistency, Saga and CQRS decisions.
+Infrastructure: Define core, streaming/search and data profiles; estimate resource needs; select local Kubernetes approach and cloud target.
+Development: Create requirements, API/event conventions, repository structure and backlog. Choose a proposed sports-equipment catalog.
+Testing: Review invariants and acceptance examples before implementation; define reproducibility and load-test methodology.
+Success criteria: Every initial journey has an owner, data source and acceptance scenario; major unresolved choices are visible.
+Teaching checkpoint: Lesson: derive service boundaries from business responsibilities. Deliver domain glossary, diagrams and ADRs.
+S1-M02 — Repository, platform bootstrap and delivery
+Objective: Establish a repeatable development and deployment foundation.
+Design and diagrams: Local/cloud deployment diagrams, networking, configuration, identity and secret boundaries.
+Infrastructure: Set up Docker profiles, kind or k3d, Helm, namespaces, PostgreSQL, image registry integration and Terraform skeleton for the chosen cloud.
+Development: Add service templates, health endpoints, configuration conventions, migration tooling, seed/reset scripts and initial CI/CD pipeline.
+Testing: Run a clean bootstrap, deploy a sample service, verify health, execute CI and test rollback. Check secret exposure and permissions.
+Success criteria: A new checkout can build, deploy and smoke-test the core profile using documented commands; infrastructure cleanup is documented.
+Teaching checkpoint: Lesson: distinguish provisioning, deployment and application release. Tag the bootstrap release.
+S1-M03 — Catalog, inventory administration and synthetic data
+Objective: Create realistic, internally consistent merchandise and stock.
+Design and diagrams: Catalog/variant and stock/reservation models; admin sequences; synthetic-data relationships.
+Infrastructure: Provision service databases/users and asset storage; establish migrations and backup/reset procedures.
+Development: Build category, product, SKU, attribute, price and warehouse administration; bulk import validation; seeded generators for customers, merchandise and initial stock.
+Testing: Validate referential integrity, money precision, SKU uniqueness, admin access, imports and repeatable seeds.
+Success criteria: Admins can create and update products and stock; fixtures reproduce identical scenarios and reconcile initial quantities.
+Teaching checkpoint: Lesson: service data ownership, schema migrations and coherent synthetic datasets.
+S1-M04 — Storefront, identity, search and cart
+Objective: Make the store browsable and usable by authenticated customers.
+Design and diagrams: Customer navigation, authentication/authorization flow, search projection and cart sequences.
+Infrastructure: Deploy frontend, gateway/ingress, identity integration, Redis and search profile.
+Development: Implement product pages, categories, filters, sorting, wishlist, cart and customer profile. Index products and explain price/availability freshness.
+Testing: Test API contracts, UI journeys, user isolation, invalid variants, cart totals and index updates; establish a basic latency baseline.
+Success criteria: Customers can discover products and maintain isolated carts; authoritative checkout validation is clearly separated from search data.
+Teaching checkpoint: Lesson: query models, browser/API contracts and cache invalidation.
+S1-M05 — Checkout, Saga and simulated payments
+Objective: Complete purchases reliably across service boundaries.
+Design and diagrams: Order/payment/reservation state machines; Saga happy path, compensation and timeout sequences.
+Infrastructure: Deploy durable workflow infrastructure if selected; configure retry budgets, reservation expiry and worker recovery.
+Development: Implement idempotent checkout, stock reservation, payment authorization, order confirmation, capture policy and simulated shipment scheduling.
+Testing: Test simultaneous buyers, duplicate requests, failed authorization, expired reservation, worker restart, compensation failure and manual resolution.
+Success criteria: Stock never goes negative; the same idempotency key cannot create duplicate purchases; failures converge to an explicit recoverable state.
+Teaching checkpoint: Lesson: distributed transactions, Saga compensation and the limits of exactly-once claims.
+S1-M06 — Kafka, outbox, CDC and CQRS projections
+Objective: Make committed commerce events available for independent consumers.
+Design and diagrams: Event flow, outbox lifecycle, contracts, partition keys, ordering scope, consumer ownership and replay sequences.
+Infrastructure: Deploy Kafka, Debezium, schema validation/registry as selected, dead-letter handling and consumer monitoring.
+Development: Publish versioned events; build order-history/search projections; add idempotent consumers, replay tooling and reconciliation jobs.
+Testing: Test duplicate and delayed delivery, consumer crashes, incompatible schemas, connector restart, poison events and projection rebuild.
+Success criteria: No committed business event is silently lost within the tested recovery model; projections rebuild and reconcile with authoritative data.
+Teaching checkpoint: Lesson: delivery guarantees, eventual consistency, ordering and replay.
+S1-M07 — Post-purchase and administration
+Objective: Complete common store operations beyond checkout.
+Design and diagrams: Cancellation/return/refund lifecycles, review eligibility and support workflows.
+Infrastructure: Add workers, moderation/admin permissions and notification simulation.
+Development: Implement order tracking, cancellation, return requests, refund simulation, reviews/ratings, verified-purchase checks, moderation and support tickets.
+Testing: Test ownership, policy boundaries, repeat refunds, partial returns where supported, rating aggregation and workflow recovery.
+Success criteria: End-to-end purchase, review, cancellation and return scenarios pass; unsupported cases are explicitly documented.
+Teaching checkpoint: Lesson: policy-driven state transitions, audit trails and business invariants.
+S1-M08 — Graph, lakehouse and business reporting
+Objective: Demonstrate useful relationship queries and historical analytics.
+Design and diagrams: Graph schema, event-to-lakehouse lineage, raw/curated/serving layers, analytical models and reconciliation.
+Infrastructure: Enable Neo4j and the object-storage/Iceberg/Spark/Trino/Superset data profile; add ClickHouse only for an identified latency workload.
+Development: Build compatibility/substitute relationships, event ingestion, deduplication, curated sales/stock tables and dashboards for sales, returns, stock and conversion.
+Testing: Test graph relationship validity, schema evolution, late events, deduplication, financial reconciliation and data freshness.
+Success criteria: Representative graph questions work; reports reconcile against reference transactions; data can be regenerated from documented inputs.
+Teaching checkpoint: Lesson: operational versus analytical workloads, lakehouse design and data quality.
+S1-M09 — Reliability, security, scale and stage release
+Objective: Validate the commerce platform and package it for teaching.
+Design and diagrams: Trust boundaries, observability topology, capacity model, failure matrix and deployment/recovery diagrams.
+Infrastructure: Complete telemetry, dashboards, alerts, resource requests/limits, scaling configuration, backups and cloud Terraform modules.
+Development: Finish pipelines, runbooks, load generators, profile documentation and release automation.
+Testing: Run critical E2E, authorization, concurrency, load, backup/restore and outage tests; verify migration and rollback compatibility.
+Success criteria: All stage-1 journeys pass on declared profiles; latency/capacity baselines and recovery results are published; unresolved limitations are recorded.
+Teaching checkpoint: Lesson: operate the system under failure. Release a reproducible stage-1 tag and guided course walkthrough.
+Stage 1 exit gate
+A student can bootstrap a supported profile, seed data, browse, search, purchase, track an order, review a purchase and exercise a cancellation/return. An admin can manage catalog and inventory. Events, projections and analytical reports reconcile. CI is green, deployment is repeatable, and the documentation explains both design and observed limits.
+5. Stage 2 — Define and design the Rufus-like system
+Outcome: an executable design specification and evaluation plan grounded in the working store. Rufus is a functional inspiration, not a promise to reproduce Amazon’s private architecture, data or scale. This stage defines requirements before changing commerce contracts.
+S2-M01 — Personas, journeys and autonomy requirements
+Objective: Define what customers, support users and administrators should accomplish.
+Design and diagrams: Journey maps and capability boundaries: discovery, comparisons, recommendations, cart assistance, checkout approval, order support and admin assistance.
+Infrastructure: Create isolated design/evaluation fixtures using stage-1 data; no production agent infrastructure is required.
+Development: Specify supported intents, refusal/clarification behavior, approval rules, permissions, languages and initial scope.
+Testing: Write task scenarios with expected outcomes and forbidden actions, including ambiguous and adversarial cases.
+Success criteria: Every intended capability has examples, authoritative evidence, authorization rules and measurable acceptance conditions.
+Teaching checkpoint: Lesson: convert an assistant idea into testable product requirements.
+S2-M02 — Knowledge, semantic layer and memory design
+Objective: Define what the assistant knows, retrieves, remembers and forgets.
+Design and diagrams: Entity/relationship map, ingestion lineage, retrieval pipeline, context assembly and memory lifecycle diagrams.
+Infrastructure: Select candidate indexes/stores and isolated retrieval experiments; plan model access for local and hosted modes.
+Development: Specify hybrid retrieval, reranking, citations, freshness, business terminology, structured queries, graph usage, working/session/preference/episodic/procedural memory and deletion.
+Testing: Design tests for conflicting sources, stale stock, permissions, poisoning, cross-user leakage and preference correction.
+Success criteria: Each fact has an authority and freshness rule; each memory class has ownership, retention and permitted use.
+Teaching checkpoint: Lesson: separate RAG, semantics, memory and context engineering.
+S2-M03 — Agent runtime, tools and loop engineering
+Objective: Design controlled execution from user intent to authorized action.
+Design and diagrams: Agent state graph, tool/MCP boundaries, workflow integration, approval/resume and failure sequences.
+Infrastructure: Specify runtime persistence, tool credentials, model gateway and durable execution requirements.
+Development: Define typed tools, routing, prompting/versioning, planning, context budgets, bounded loops, progress checks, retries, cancellation and human escalation. Compare graph orchestration with durable business workflows.
+Testing: Specify tests for malformed tool calls, repeated actions, timeout, restart, stale approval and exhausted budgets.
+Success criteria: All action paths terminate, escalate or resume predictably; business validation and transaction control stay in commerce services.
+Teaching checkpoint: Lesson: frameworks support the architecture; multiple agents require a demonstrated need.
+S2-M04 — Guardrails, caching, evaluations and observability
+Objective: Define measurable quality, safety, cost and operational behavior.
+Design and diagrams: Threat model, guardrail points, cache boundaries, trace model and evaluation lifecycle.
+Infrastructure: Plan evaluation datasets, trace storage, model configurations and cost/latency instrumentation.
+Development: Specify input/output/tool guardrails, injection defenses, PII controls, tenant scoping, response/retrieval/embedding/tool/semantic/prefix caching and invalidation rules. Prefix caching depends on model-serving support.
+Testing: Define retrieval, groundedness, tool-use, task completion, approval, isolation, regression and adversarial evaluations; calibrate human and model-assisted judging.
+Success criteria: Targets have explicit datasets and workloads; caches respect identity, freshness and model/prompt versions; traces support failure attribution.
+Teaching checkpoint: Lesson: measure end-to-end task success, not only answer fluency.
+S2-M05 — Architecture review and commerce gap analysis
+Objective: Complete the design and identify exactly what stage 1 lacks.
+Design and diagrams: End-to-end context, components, sequences, data ownership and local/cloud deployment diagrams.
+Infrastructure: Produce dependency, capacity and cost estimates for minimal and full profiles.
+Development: Map each requirement to existing capability, required extension, owner, priority and acceptance test; document alternatives and open decisions.
+Testing: Walk through representative successful and failed tasks against API/event contracts; review feasibility on the local profile.
+Success criteria: A reviewed design baseline, evaluation plan and prioritized stage-3 backlog exist; must-have and later capabilities are separated.
+Teaching checkpoint: Lesson: requirements traceability and architecture review. Tag the design baseline.
+Stage 2 exit gate
+Requirements, autonomy boundaries, architecture, model/runtime choices, evaluation criteria and the commerce gap matrix are explicit. Quality and latency thresholds are agreed before implementation. Major feasibility issues have an owner and resolution path.
+6. Stage 3 — Extend commerce and implement the agent experience
+Outcome: implement the gaps identified in stage 2, integrate a progressively capable assistant, and validate it against the agreed scenarios. Scope is driven by the gap matrix rather than speculative platform expansion.
+S3-M01 — Commerce contracts and data extensions
+Objective: Provide the missing business capabilities safely.
+Design and diagrams: Updated API/event schemas, permission model, freshness boundaries and compatibility plan.
+Infrastructure: Add migrations, service identities and supporting indexes/queues only where required.
+Development: Implement scoped product/policy queries, tool-friendly errors, provenance, idempotency, approval-bound action contracts and missing events identified in stage 2.
+Testing: Run contract, backward-compatibility, authorization, migration and replay tests alongside commerce regressions.
+Success criteria: Every initial agent requirement has a supported authorized interface; the original storefront continues to work.
+Teaching checkpoint: Lesson: evolve a platform without bypassing its business rules.
+S3-M02 — Read-only assistant and grounded retrieval
+Objective: Deliver discovery, comparison and policy answers first.
+Design and diagrams: Retrieval and response-stream sequences, evidence selection and structured-result rendering.
+Infrastructure: Deploy agent API, model adapter, ingestion/retrieval workers and trace collection.
+Development: Implement hybrid retrieval, structured filters, reranking, citations, streamed answers and product cards with versioned prompts.
+Testing: Run answer/retrieval evaluations, missing-evidence tests, stale-price cases, injection cases and latency measurements.
+Success criteria: The agreed read-only quality thresholds pass; insufficient evidence produces an appropriate clarification or qualified answer.
+Teaching checkpoint: Lesson: grounded generation and evaluation-driven iteration.
+S3-M03 — Controlled actions and human approval
+Objective: Enable cart updates and selected order operations.
+Design and diagrams: Tool execution, approval binding/expiry, interruption, resume and business Saga integration.
+Infrastructure: Enable durable state, scoped credentials and approval UI/backend support.
+Development: Implement cart actions, checkout handoff, order tracking, permitted cancellation/returns, audit trails and bounded execution loops.
+Testing: Test repeated calls, changed price after approval, expired authorization, worker restart, cross-user access and failed compensation.
+Success criteria: No purchase occurs without the defined approval; replay cannot duplicate side effects; interrupted actions recover visibly.
+Teaching checkpoint: Lesson: distinguish agent decisions from transaction execution.
+S3-M04 — Memory, context, semantics and caching
+Objective: Improve continuity and efficiency while preserving correctness.
+Design and diagrams: Memory lifecycle, token-budget policy, semantic mappings and cache-key/invalidation diagrams.
+Infrastructure: Provision only the stores and cache tiers justified by the design.
+Development: Implement preference correction/deletion, summaries, context compression, graph-assisted queries and measured cache tiers. Add procedural/episodic memory only for approved use cases.
+Testing: Test isolation, forgetting, conflicting preferences, token overflow, invalidation, permission changes and cached stale results.
+Success criteria: Memory respects retention and user scope; context stays within budget; caching reduces measured cost/latency without failing quality checks.
+Teaching checkpoint: Lesson: evaluate memory and caching as correctness-sensitive features.
+S3-M05 — Advanced enterprise capabilities
+Objective: Extend beyond the initial shopping assistant where evidence supports it.
+Design and diagrams: Role-specific workflows, escalation, optional multi-agent delegation and knowledge-governance diagrams.
+Infrastructure: Add specialist workers, policy configuration or tenant separation only when required.
+Development: Implement selected admin/catalog assistance, inventory investigation, support escalation and richer guardrails; use deterministic routing or one agent before adding specialist agents.
+Testing: Run role/tenant isolation, approval, adversarial, delegation and business-impact evaluations.
+Success criteria: Each added capability passes a distinct benchmark and provides a demonstrated improvement over the simpler baseline.
+Teaching checkpoint: Lesson: justify autonomy and specialization through evidence.
+S3-M06 — Scale, recovery, release and teaching package
+Objective: Validate the integrated platform and publish reproducible learning material.
+Design and diagrams: Final local/cloud topology, capacity, SLO, incident and recovery diagrams.
+Infrastructure: Complete CI evaluation gates, deployment automation, resource/cost dashboards and recovery procedures.
+Development: Finalize model routing/fallback, concurrency limits, backpressure, release controls, documentation and lesson checkpoints.
+Testing: Run mixed commerce/agent load, dependency outages, replay, restore, deletion and regression suites; compare against stage-2 targets.
+Success criteria: Declared task-success, correctness, latency and cost targets pass on specified environments; reproducible course releases and limitations are available.
+Teaching checkpoint: Lesson: operate and evaluate a complete commerce-plus-agent system.
+Stage 3 exit gate
+An authorized user can discover and compare products, receive grounded advice, use approved actions and resume supported workflows. Commerce invariants remain intact. Evaluation and operational results are published alongside reproducible setup, diagrams, lessons and tagged source.
+7. Cross-stage traceability and acceptance
+Maintain a traceability register with these columns: requirement ID, user journey, owning service, API/event, design diagram, implementation milestone, automated test/evaluation, acceptance target and release tag. Stage-2 findings must reference stage-1 capabilities and stage-3 changes.
+Representative acceptance cases: two buyers compete for the final SKU; duplicate checkout is retried; payment fails after reservation; an event consumer restarts; a projection rebuilds; reports reconcile after late events; an assistant recommends only qualifying products; a malicious review cannot grant tools; a customer cannot access another customer’s order; a price change invalidates stale purchase approval.
+Candidate measures include transaction correctness, projection freshness, report reconciliation, task completion, retrieval relevance, evidence support, tool correctness, approval compliance, p95 latency, recovery time and cost per successful task. Numeric targets are deliberately not invented here: establish baselines in stage 1 and agree agent targets in stage 2.
+8. Infrastructure, delivery and learning progression
+Core profile: storefront, selected commerce services, PostgreSQL and optional Redis. Streaming/search profile: add Kafka, Debezium and OpenSearch. Data profile: enable graph, object storage, Iceberg, Spark, Trino and reporting as required. Agent profile: add runtime, retrieval, model adapter and evaluation tooling. Full integration profile runs on adequately sized infrastructure.
+Use the same application images and contracts across local and cloud profiles, with environment-specific configuration. Do not treat successful local Kubernetes deployment as proof of cloud reliability or scale. Measure both. Cloud deployment should include documented budgets, teardown and recovery procedures.
+Suggested lesson structure: explain the problem, demonstrate a baseline, introduce a failure or limitation, compare approaches, implement the chosen solution, test it, inspect telemetry, and summarize the trade-off. Provide beginner prerequisites and optional advanced exercises so students can follow incrementally.
+No calendar commitments are set yet. Sequence work by dependencies and milestone exit criteria. Stage 1 must be operational before finalizing the Rufus design; stage 2 must identify gaps before stage 3 implements them. Within a stage, independent documentation and tests may progress alongside development.
+9. Decisions to finalize before implementation
+Confirm the sports-equipment domain and product scope; choose the frontend and Java/Python versions; select cloud provider and budget; choose repository hosting and CI provider; confirm identity and workflow engines; define the initial dataset size and local resource envelope; determine which data-platform components belong in the first teaching release; and establish measurable performance targets.
+Immediate next deliverable: S1-M01 requirements and architecture package, followed by the repository and platform bootstrap. This plan captures the agreed three-stage sequence while leaving implementation choices open to measured validation.
