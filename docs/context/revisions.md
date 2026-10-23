@@ -26,3 +26,6 @@ Added independently buildable Catalog and Configuration services, pinned ARM64 D
 The full `devops/scripts/ci` run passed; follow-up review-driven coverage passed with 16 Python unit tests and 12 real-stack integration tests (18 Java tests also passed in each service image build). Recovery, exact-image rollback, scoped reset, Helm/Terraform checks passed. No Kubernetes cluster, cloud provisioning, security scan or SBOM was run.
 Eight code-review lenses returned; reliability and adversarial lenses hit the session usage limit. Recorded findings were fixed and retested. Signed expired/wrong-issuer JWT negative tests remain a follow-up gap; review completion is partial, not represented as a full review receipt.
 Checkpointed locally as `s1-m02-bootstrap` (`cf50e8e`); next milestone is S1-M03 catalog/inventory.
+
+## 2026-10-23 — S1-M03 design reviewed
+Added the Catalog/Pricing/Inventory implementation contract, editable Excalidraw architecture and preview, milestone evidence page, and ADR 0002. Two design-review passes resolved price-completeness concurrency, currency ownership, admin role/revision/audit rules, asset scope and admin interaction-state findings. Cross-model review was skipped under the repository rule against external model CLIs. No S1-M03 implementation or runtime test is claimed yet.
