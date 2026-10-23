@@ -3,7 +3,7 @@ Revision 2 · 2026-10-23 · Status: implemented and locally verified; independen
 
 Design and implementation contract: [bootstrap design](../../../design/S1-M02/bootstrap.md).
 Origin: [accepted requirements](../../../requirements/accepted-requirements.md).
-Baseline checkpoint: s1-m01-design-v1 (7ef04c4).
+Baseline checkpoint: s1-m01-design-v1 (7ef04c4). Implementation checkpoint: s1-m02-bootstrap (cf50e8e).
 
 The milestone delivers independently buildable Catalog/Configuration foundations, private PostgreSQL, local identity, Docker operational scripts, real-stack verification and alternate-deployment scaffolding. Storefront/catalog business features retain their later milestone owners.
 
