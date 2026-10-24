@@ -14,7 +14,8 @@ Repository intake and execution order: [implementation units](implementation-uni
 - Unit 3 cancellation workflow: Orders, Inventory, Fulfillment, customer API/UI, v2 event emission and acceptance guide are now authored. This is unverified development; no tests or build have run for this slice. See [cancellation design](cancellation-design.md), [flow](cancellation-flow.mmd), [review](cancellation-review.md), and [manual checks](cancellation-manual-checks.md).
 - Unit 4 partial returns/refunds: Orders request ledger, deterministic immutable allocation, Payment refund worker, revisioned Configuration policy and customer UI/API are now authored, unverified. See [design](returns-refunds-design.md), [flow](returns-refunds-flow.mmd), [review](returns-refunds-review.md), and [manual checks](returns-refunds-manual-checks.md).
 - Unit 5 return inspection/restock: Orders registration retry, Inventory receipt/inspection audit and stock movement, operator UI, contract, test sources and manual guide are authored. Unverified; see [design](return-inspection-design.md), [flow](return-inspection-flow.mmd), [review](return-inspection-review.md), and [manual checks](return-inspection-manual-checks.md).
-- Units 6–8 remain to be developed in dependency order.
+- Unit 6 verified reviews and Unit 7 owned support: independent service projects/databases, owner verification through Orders, customer/operator APIs and UI, migration/security contracts, tests and manual checklist are authored but unverified. See [review/support design](reviews-support-design.md), [flow](reviews-support-flow.mmd), [review](reviews-support-review.md), and [manual checks](reviews-support-manual-checks.md).
+- Unit 8 integration is in progress. Tracking event mirroring and final event/UI/deployment integration still need development; test/build execution remains deferred.
 
 ## Objective
 

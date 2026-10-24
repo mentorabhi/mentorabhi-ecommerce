@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info: {title: SuperSports Reviews API, version: 1.0.0}
+servers: [{url: /api/v1}]
+paths:
+  /reviews/products/{productId}:
+    get:
+      summary: Published product reviews
+      parameters: [{in: path, name: productId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Published reviews only}}
+  /customer/reviews:
+    get: {security: [{customer: []}], responses: {'200': {description: Reviews owned by the token subject}}}
+    post:
+      security: [{customer: []}]
+      summary: Submit an owned delivered purchase review
+      responses: {'201': {description: Pending moderation}, '404': {description: Purchase is not owned}, '409': {description: Review already exists}}
+  /operator/reviews/pending:
+    get: {security: [{operator: []}], responses: {'200': {description: Pending moderation queue}}}
+  /operator/reviews/{id}/moderation:
+    post: {security: [{operator: []}], responses: {'200': {description: Audited decision}, '409': {description: Conflicting operation or state}}}
+components:
+  securitySchemes:
+    customer: {type: http, scheme: bearer}
+    operator: {type: http, scheme: bearer}

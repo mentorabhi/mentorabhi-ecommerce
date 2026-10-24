@@ -123,7 +123,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
     def test_local_admin_mobile_navigation_and_sign_out(self):
         self.driver.set_window_size(390, 844)
         self.login("admin", "ADMIN_PASSWORD")
-        for section in ("Prices & coupons", "Inventory", "Catalog"):
+        for section in ("Prices & coupons", "Inventory", "Reviews", "Support", "Catalog"):
             self.nav(section)
             self.wait.until(lambda driver: driver.find_element(By.TAG_NAME, "h1").text == f"{section}.")
         self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Sign out"]'))).click()

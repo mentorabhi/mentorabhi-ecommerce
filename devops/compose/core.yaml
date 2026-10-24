@@ -43,6 +43,8 @@ services:
       FULFILLMENT_DB_PASSWORD: "${FULFILLMENT_DB_PASSWORD:?Run configure}"
       CDC_DB_PASSWORD: "${CDC_DB_PASSWORD:?Run configure}"
       ORDER_HISTORY_DB_PASSWORD: "${ORDER_HISTORY_DB_PASSWORD:?Run configure}"
+      REVIEWS_DB_PASSWORD: "${REVIEWS_DB_PASSWORD:?Run configure}"
+      SUPPORT_DB_PASSWORD: "${SUPPORT_DB_PASSWORD:?Run configure}"
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./devops/postgres/init.sh:/docker-entrypoint-initdb.d/10-supersports.sh:ro
@@ -225,6 +227,52 @@ services:
       IDENTITY_TOKEN_URL: http://identity:8080/realms/supersports/protocol/openid-connect/token
     ports: ["127.0.0.1:8086:8080"]
 
+  reviews:
+    <<: *app-runtime
+    image: "${REVIEWS_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args:
+        BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}"
+        JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}"
+        SERVICE_NAME: reviews
+        RELEASE_VERSION: "${RELEASE_VERSION:-s1-m07}"
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/reviews
+      SPRING_DATASOURCE_USERNAME: supersports_reviews
+      SPRING_DATASOURCE_PASSWORD: "${REVIEWS_DB_PASSWORD:?Run configure}"
+      ORDERS_BASE_URL: http://orders:8080
+    depends_on:
+      postgres: {condition: service_healthy}
+      identity: {condition: service_healthy}
+      orders: {condition: service_healthy}
+    ports: ["127.0.0.1:8092:8080"]
+
+  support:
+    <<: *app-runtime
+    image: "${SUPPORT_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args:
+        BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}"
+        JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}"
+        SERVICE_NAME: support
+        RELEASE_VERSION: "${RELEASE_VERSION:-s1-m07}"
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/support
+      SPRING_DATASOURCE_USERNAME: supersports_support
+      SPRING_DATASOURCE_PASSWORD: "${SUPPORT_DB_PASSWORD:?Run configure}"
+      ORDERS_BASE_URL: http://orders:8080
+    depends_on:
+      postgres: {condition: service_healthy}
+      identity: {condition: service_healthy}
+      orders: {condition: service_healthy}
+    ports: ["127.0.0.1:8093:8080"]
+
   payment-simulator:
     <<: *app-runtime
     image: "${PAYMENT_SIMULATOR_IMAGE:?Use devops/scripts/supersports}"
@@ -275,6 +323,8 @@ services:
       inventory: {condition: service_healthy}
       customer: {condition: service_healthy}
       orders: {condition: service_healthy}
+      reviews: {condition: service_healthy}
+      support: {condition: service_healthy}
       identity: {condition: service_healthy}
     ports: ["127.0.0.1:3000:8080"]
 

@@ -30,6 +30,12 @@ class OrdersController {
     }
     @GetMapping("/checkout-requests/{requestId}") Map<String,Object> request(@PathVariable UUID requestId,@AuthenticationPrincipal Jwt jwt){var result=repository.request(requestId,jwt.getSubject());if(result==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND);return result;}
     @GetMapping List<Map<String,Object>> orders(@AuthenticationPrincipal Jwt jwt){return repository.orders(jwt.getSubject());}
+    @GetMapping("/{orderId}/verified-purchase/{skuId}") Map<String,Object> verifiedPurchase(@PathVariable UUID orderId,@PathVariable UUID skuId,@AuthenticationPrincipal Jwt jwt){
+        if(!repository.hasDeliveredSku(orderId,skuId,jwt.getSubject()))throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        try{var shipment=fulfillment.fulfillmentStatus(orderId);if(shipment==null||!"DELIVERED".equals(shipment.get("state")))throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,"Purchase is not delivered");return Map.of("verified",true,"orderId",orderId,"skuId",skuId,"deliveryState","DELIVERED");}
+        catch(RestClientException failure){throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Delivery verification is unavailable");}
+    }
+    @GetMapping("/{orderId}/verified-ownership") Map<String,Object> verifiedOwnership(@PathVariable UUID orderId,@AuthenticationPrincipal Jwt jwt){var order=repository.order(orderId,jwt.getSubject());if(order==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND);return Map.of("verified",true,"orderId",orderId,"orderState",order.get("state"));}
     @GetMapping("/{orderId}/tracking") Map<String,Object> tracking(@PathVariable UUID orderId,@AuthenticationPrincipal Jwt jwt){
         if(!repository.ownsOrder(orderId,jwt.getSubject()))throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         Map<String,Object> shipment;

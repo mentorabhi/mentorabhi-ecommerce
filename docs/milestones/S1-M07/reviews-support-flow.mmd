@@ -1,0 +1,16 @@
+sequenceDiagram
+  actor C as Customer
+  participant R as Reviews
+  participant O as Orders
+  participant S as Support
+  participant OP as Operator
+  C->>R: Submit review with customer token
+  R->>O: Verify owned delivered order line (forward token)
+  O-->>R: Minimal verified purchase fact
+  R->>R: Store PENDING review
+  OP->>R: Publish/reject/hide with reason
+  C->>S: Open ticket / add message
+  S->>O: Verify linked order ownership (forward token)
+  O-->>S: Minimal verified order fact
+  S->>S: Store owner-scoped ticket and audit
+  OP->>S: Reply or transition with audit

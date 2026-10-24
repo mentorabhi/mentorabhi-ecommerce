@@ -24,7 +24,7 @@ SECRET_KEYS = (
     "IDENTITY_DB_PASSWORD", "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD", "CUSTOMER_DB_PASSWORD", "ORDERS_DB_PASSWORD", "PAYMENT_DB_PASSWORD", "FULFILLMENT_DB_PASSWORD",
     "KEYCLOAK_ADMIN_PASSWORD", "CHECKOUT_WORKER_CLIENT_SECRET", "DEMO_CUSTOMER_PASSWORD",
     "DEMO_PLATFORM_ADMIN_PASSWORD", "DEMO_CATALOG_ADMIN_PASSWORD", "DEMO_INVENTORY_OPERATOR_PASSWORD",
-    "CDC_DB_PASSWORD", "ORDER_HISTORY_DB_PASSWORD", "ORDER_HISTORY_OWNER_KEY",
+    "CDC_DB_PASSWORD", "ORDER_HISTORY_DB_PASSWORD", "REVIEWS_DB_PASSWORD", "SUPPORT_DB_PASSWORD", "ORDER_HISTORY_OWNER_KEY",
 )
 M02_SECRET_KEYS = (
     "POSTGRES_PASSWORD", "CATALOG_DB_PASSWORD", "CONFIGURATION_DB_PASSWORD",
@@ -34,11 +34,12 @@ M02_SECRET_KEYS = (
 PRE_M05_SECRET_KEYS = (*M02_SECRET_KEYS, "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD",
                        "DEMO_INVENTORY_OPERATOR_PASSWORD", "CUSTOMER_DB_PASSWORD", "ORDERS_DB_PASSWORD", "CHECKOUT_WORKER_CLIENT_SECRET")
 LEGACY_SECRET_KEYS = (*PRE_M05_SECRET_KEYS, "PAYMENT_DB_PASSWORD", "FULFILLMENT_DB_PASSWORD")
-SERVICES = ("catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator")
+PRE_M07_SECRET_KEYS = (*LEGACY_SECRET_KEYS, "CDC_DB_PASSWORD", "ORDER_HISTORY_DB_PASSWORD", "ORDER_HISTORY_OWNER_KEY")
+SERVICES = ("catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator", "reviews", "support")
 STREAMING_SERVICES = ("order-history",)
 DEPLOYABLES = (*SERVICES, *STREAMING_SERVICES, "storefront")
-SERVICE_PORTS = (8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088)
-DEFAULT_VERSION = "s1-m06"
+SERVICE_PORTS = (8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 8092, 8093)
+DEFAULT_VERSION = "s1-m07"
 TOKEN_URL = "http://127.0.0.1:8180/realms/supersports/protocol/openid-connect/token"
 CUSTOMER_TOKEN_URL = "http://127.0.0.1:8180/realms/supersports-customers/protocol/openid-connect/token"
 
@@ -151,7 +152,7 @@ def configure(root: Path = ROOT) -> Path:
                 if not separator or key not in LEGACY_SECRET_KEYS or key in existing or not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", value):
                     raise
                 existing[key] = value
-            if set(existing) not in (set(M02_SECRET_KEYS), set(PRE_M05_SECRET_KEYS), set(LEGACY_SECRET_KEYS)):
+            if set(existing) not in (set(M02_SECRET_KEYS), set(PRE_M05_SECRET_KEYS), set(LEGACY_SECRET_KEYS), set(PRE_M07_SECRET_KEYS)):
                 raise
             with path.open("a") as handle:
                 for key in sorted(set(SECRET_KEYS) - set(existing)):

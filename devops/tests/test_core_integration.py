@@ -53,7 +53,9 @@ class CoreIntegrationTests(unittest.TestCase):
                     f"{CONFIGURATION}/api/v1/configuration", f"{PRICING}/api/v1/pricing/prices",
                     f"{INVENTORY}/api/v1/inventory/balances", f"{CUSTOMER}/api/v1/customer/profile",
                     f"{ORDERS}/api/v1/orders", "http://127.0.0.1:3000/api/orders",
-                    "http://127.0.0.1:3000/api/configuration"):
+                    "http://127.0.0.1:3000/api/configuration",
+                    "http://127.0.0.1:8092/api/v1/customer/reviews",
+                    "http://127.0.0.1:8093/api/v1/customer/support/tickets"):
             self.assertEqual(manage.request_json(url)[0], 401)
 
     def test_public_customer_browsing_and_snapshots_are_available_without_signin(self):
@@ -78,6 +80,11 @@ class CoreIntegrationTests(unittest.TestCase):
         self.assertEqual(manage.request_json(f"{CUSTOMER}/api/v1/customer/profile", token=self.local_admin)[0], 401)
         self.assertEqual(manage.request_json(f"{CUSTOMER}/api/v1/customer/cart", token=self.admin)[0], 401)
         self.assertEqual(manage.request_json(f"{ORDERS}/api/v1/orders", token=self.admin)[0], 401)
+        self.assertEqual(manage.request_json("http://127.0.0.1:8092/api/v1/operator/reviews/pending",token=self.customer)[0],403)
+        self.assertEqual(manage.request_json("http://127.0.0.1:8093/api/v1/operator/support/tickets",token=self.customer)[0],403)
+        self.assertEqual(manage.request_json("http://127.0.0.1:8092/api/v1/customer/reviews",token=self.local_admin)[0],401)
+        self.assertEqual(manage.request_json("http://127.0.0.1:8093/api/v1/customer/support/tickets",token=self.local_admin)[0],401)
+        self.assertEqual(manage.request_json("http://127.0.0.1:8092/api/v1/reviews/products/00000000-0000-4000-8000-000000000000")[0],200)
 
     def test_checkout_creates_owner_scoped_order_and_is_idempotent(self):
         _, products = manage.request_json(f"{CATALOG}/api/v1/catalog/products?q=football")

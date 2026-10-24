@@ -197,3 +197,7 @@ Designed and authored return requests with owner-scoped idempotency, delivery an
 ## 2026-10-24 — S1-M07 return inspection/restock development checkpoint
 
 Designed and authored the retryable Orders-to-Inventory registration boundary for refunded unit manifests, Inventory receipt persistence and revisioned all-unit inspection. Only sellable units create idempotent positive stock movements; damage/dispute outcomes retain actor and reason without affecting the completed refund. Added operator queue/form, narrowly scoped worker API, contract, persistence migrations, Java unit and real-stack integration assertions, Selenium fixture journey, review artifacts and a separate database/UI manual guide. Development only; no build, test, or runtime command was executed. Further M07 Units 6–8 and M08/M09 development remain before testing resumes.
+
+## 2026-10-24 — S1-M07 verified reviews and owned support development checkpoint
+
+Designed and authored separate Reviews and Support services with distinct PostgreSQL databases/roles, customer/operator realm audience boundaries, owner verification through minimal Orders endpoints, moderation and support audits, bounded customer text, duplicate review prevention, idempotent ticket/message operations, Compose wiring, contracts, storefront customer/operator interfaces, unit/integration/Selenium test source, and a separate manual guide. No build or test was run. M07 tracking-event mirroring and final integration remain, followed by M08/M09 development before verification starts.

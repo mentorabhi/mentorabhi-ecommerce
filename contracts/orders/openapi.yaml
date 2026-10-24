@@ -40,6 +40,14 @@ paths:
       summary: Read owner-verified order and local simulator tracking state
       parameters: [{in: path, name: orderId, required: true, schema: {type: string, format: uuid}}]
       responses: {'200': {description: Owned order state and synthetic shipment details; unavailable simulator is represented explicitly}, '404': {description: Missing or not owned by caller}}
+  /{orderId}/verified-ownership:
+    get:
+      summary: Return minimal ownership proof for a linked support request
+      responses: {'200': {description: Owned order identifier and state}, '404': {description: Missing or not owned by caller}}
+  /{orderId}/verified-purchase/{skuId}:
+    get:
+      summary: Verify an owned delivered purchase for review submission
+      responses: {'200': {description: Owned delivered order and SKU identifiers}, '404': {description: Missing or not owned by caller}, '422': {description: Purchase has not been delivered}}
   /{orderId}/cancellation-eligibility:
     get:
       summary: Check whether an owned, scheduled order can still be cancelled before shipment handoff

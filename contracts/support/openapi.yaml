@@ -1,0 +1,21 @@
+openapi: 3.1.0
+info: {title: SuperSports Support API, version: 1.0.0}
+servers: [{url: /api/v1}]
+paths:
+  /customer/support/tickets:
+    get: {security: [{customer: []}], responses: {'200': {description: Owned tickets}}}
+    post: {security: [{customer: []}], responses: {'200': {description: Created ticket}, '404': {description: Linked order is not owned}, '503': {description: Order owner is unavailable}}}
+  /customer/support/tickets/{id}:
+    get: {security: [{customer: []}], responses: {'200': {description: Owned ticket and messages}, '404': {description: Not found}}}
+  /customer/support/tickets/{id}/messages:
+    post: {security: [{customer: []}], responses: {'200': {description: Idempotent customer message}}}
+  /operator/support/tickets:
+    get: {security: [{operator: []}], responses: {'200': {description: Open operator queue}}}
+  /operator/support/tickets/{id}/messages:
+    post: {security: [{operator: []}], responses: {'200': {description: Audited operator reply}}}
+  /operator/support/tickets/{id}/status:
+    put: {security: [{operator: []}], responses: {'200': {description: Audited status transition}, '409': {description: Invalid transition}}}
+components:
+  securitySchemes:
+    customer: {type: http, scheme: bearer}
+    operator: {type: http, scheme: bearer}

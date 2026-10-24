@@ -41,7 +41,7 @@ const money = (amount: number, currency: Currency) => new Intl.NumberFormat('en-
 function AdminApp() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [screen, setScreen] = useState<'catalog' | 'pricing' | 'inventory' | 'configuration'>('catalog')
+  const [screen, setScreen] = useState<'catalog' | 'pricing' | 'inventory' | 'configuration' | 'reviews' | 'support'>('catalog')
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [prices, setPrices] = useState<Record<string, number>>({})
@@ -59,6 +59,8 @@ function AdminApp() {
     { id: 'pricing' as const, label: 'Prices & coupons', icon: '↗' },
     { id: 'inventory' as const, label: 'Inventory', icon: '▤' },
     { id: 'configuration' as const, label: 'Configuration', icon: '⚙' },
+    { id: 'reviews' as const, label: 'Reviews', icon: '★' },
+    { id: 'support' as const, label: 'Support', icon: '✉' },
   ]
 
   useEffect(() => {
@@ -126,9 +128,18 @@ function AdminApp() {
       {screen==='pricing'&&<Pricing prices={prices} products={products} currency={currency} currencyRevision={currencyRevision} coupons={coupons} token={token} saving={saving} run={run} refresh={refresh} setMessage={setMessage}/>}
       {screen==='inventory'&&<Inventory balances={balances} products={products} token={token} saving={saving} run={run} refresh={refresh} setMessage={setMessage}/>}
       {screen==='configuration'&&configuration&&<Configurations snapshot={configuration} token={token} saving={saving} run={run} refresh={refresh} setMessage={setMessage}/>}
+      {screen==='reviews'&&<ModerationQueue kind="reviews" token={token} run={run} saving={saving} setMessage={setMessage}/>}
+      {screen==='support'&&<ModerationQueue kind="support" token={token} run={run} saving={saving} setMessage={setMessage}/>}
       <footer className="footer"><span>Built for the love of the game.</span><span>SUPERSPORTS <b>·</b> LOCAL FIRST</span></footer>
     </div></main>
   </div>
+}
+
+function ModerationQueue({kind,token,run,saving,setMessage}:{kind:'reviews'|'support';token:string;run:(f:()=>Promise<void>)=>Promise<void>;saving:boolean;setMessage:(s:string)=>void}){
+ const [rows,setRows]=useState<Record<string,any>[]>([])
+ const refresh=async()=>setRows(await api<Record<string,any>[]>(kind==='reviews'?'/api/reviews/operator/reviews/pending':'/api/support/operator/support/tickets',token))
+ useEffect(()=>{void refresh().catch(()=>setRows([]))},[token,kind])
+ return <section className="section-block"><div className="section-heading"><div><span className="eyebrow">CUSTOMER CARE</span><h2>{kind==='reviews'?'Reviews awaiting moderation':'Open support tickets'}</h2></div><button className="button secondary" onClick={()=>void refresh()}>Refresh</button></div>{rows.length===0?<div className="empty-state compact"><h2>Queue is clear</h2><p>New customer submissions will appear here.</p></div>:<div className="configuration-groups">{rows.map((row)=><article className="section-block" key={row.reviewId??row.ticketId}><div className="section-heading"><div><span className="eyebrow">{kind==='reviews'?'REVIEW':'TICKET'} · {String(row.reviewId??row.ticketId).slice(0,8)}</span><h3>{row.title??row.subject}</h3></div><span className="result-count">{row.state??row.status}</span></div><p>{row.body??'Customer support request'}{row.orderId?` · Order ${String(row.orderId).slice(0,8)}`:''}</p><div className="form-actions">{kind==='reviews'?<><button className="button primary" disabled={saving} onClick={()=>void run(async()=>{await api(`/api/reviews/operator/reviews/${row.reviewId}/moderation`,token,{method:'POST',body:JSON.stringify({state:'PUBLISHED',reason:'Meets review guidelines',operationId:crypto.randomUUID()})});setMessage('Review published.');await refresh()})}>Publish</button><button className="button secondary" disabled={saving} onClick={()=>void run(async()=>{await api(`/api/reviews/operator/reviews/${row.reviewId}/moderation`,token,{method:'POST',body:JSON.stringify({state:'REJECTED',reason:'Does not meet review guidelines',operationId:crypto.randomUUID()})});await refresh()})}>Reject</button></>:<form onSubmit={(event)=>{event.preventDefault();const form=new FormData(event.currentTarget);void run(async()=>{await api(`/api/support/operator/support/tickets/${row.ticketId}/messages`,token,{method:'POST',body:JSON.stringify({body:form.get('reply'),operationId:crypto.randomUUID()})});await api(`/api/support/operator/support/tickets/${row.ticketId}/status`,token,{method:'PUT',body:JSON.stringify({status:'IN_PROGRESS',reason:'Operator replied to customer'})}).catch(()=>undefined);setMessage('Support reply recorded.');await refresh()})}}><label>Reply to customer<input name="reply" required maxLength={4000}/></label><button className="button primary" disabled={saving}>Send reply</button></form>}</div></article>)}</div>}</section>
 }
 
 function Configurations({snapshot,token,saving,run,refresh,setMessage}:{snapshot:Configuration;token:string;saving:boolean;run:(f:()=>Promise<void>)=>Promise<void>;refresh:()=>Promise<void>;setMessage:(s:string)=>void}){

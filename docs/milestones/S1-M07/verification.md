@@ -38,3 +38,7 @@ Partial returns and refunds are also authored but unverified. Unit test, real-st
 
 Inventory receipt registration and complete per-unit SELLABLE/DAMAGED/DISPUTED inspection are authored with operation identity, revision fencing, audit actor/reason and sellable-only restock movement. Orders retries registration after refund completion using a persisted lease state. Operator UI, OpenAPI contract, Java unit tests, real-stack integration assertions, Selenium fixture journey and a separate manual guide are present. No build, test, or runtime check has been executed for this checkpoint; all outcomes remain unverified until Stage 1 development is complete.
 
+## Development-first checkpoint — Units 6–7 reviews and support
+
+Added independent Reviews and Support Spring projects, database migrations/credentials, public/customer/operator API routes, minimal owner verification through Orders, pending moderation and audited decisions, owner-scoped tickets and idempotent messages, storefront customer/operator workflows, OpenAPI contracts, unit/integration/Selenium source and manual steps. New services are included in the core Compose profile. No build, test, or runtime check has been executed. Tracking-event mirroring and final Unit 8 integration remain open.
+

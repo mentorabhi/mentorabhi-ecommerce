@@ -1,0 +1,2 @@
+package com.supersports.support;import static org.junit.jupiter.api.Assertions.*;import org.junit.jupiter.api.Test;
+class SupportRulesTest{@Test void validatesTextAndTransitions(){assertEquals("Help needed",SupportRules.text(" Help needed ",160));assertThrows(IllegalArgumentException.class,()->SupportRules.text(" ",4000));assertTrue(SupportRules.transition("OPEN","IN_PROGRESS"));assertFalse(SupportRules.transition("OPEN","WAITING_FOR_CUSTOMER"));assertTrue(SupportRules.transition("RESOLVED","OPEN"));}}
