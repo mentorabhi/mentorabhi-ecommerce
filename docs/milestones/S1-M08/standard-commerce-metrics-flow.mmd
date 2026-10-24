@@ -1,0 +1,8 @@
+flowchart LR
+  K[Kafka order lifecycle] --> S[Spark batch projection]
+  S --> I[Iceberg raw and curated facts]
+  I --> T[Trino allowlisted period queries]
+  T --> A[Analytics reports API]
+  A --> U[Admin Analytics dashboard]
+  U --> C[Currency and period controls]
+  U --> R[Overview, trend, products, refunds]

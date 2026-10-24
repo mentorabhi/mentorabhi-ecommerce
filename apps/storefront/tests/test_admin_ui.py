@@ -133,6 +133,24 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.login-shell')))
         self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, '.app-shell'))
 
+    def test_analytics_period_currency_kpis_and_reports(self):
+        self.login("admin", "ADMIN_PASSWORD")
+        self.nav("Analytics")
+        self.wait.until(lambda driver: driver.find_element(By.TAG_NAME, "h1").text == "Analytics.")
+        if self.driver.find_elements(By.CSS_SELECTOR, ".notice.warning"):
+            self.skipTest("Start and ingest the optional analytics profile before running this dashboard journey.")
+        period = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "select[aria-label='Report period']")))
+        Select(period).select_by_value("90")
+        self.wait.until(EC.visibility_of_element_located((By.XPATH, "//*[contains(., 'LAST 90 DAYS')]")))
+        for label in ("GROSS MERCHANDISE VALUE", "NET MERCHANDISE SALES", "CONFIRMED ORDERS",
+                      "AVERAGE ORDER VALUE", "UNITS SOLD", "ORDER DISCOUNTS", "DISCOUNT RATE",
+                      "COMPLETED REFUNDS", "REFUND AMOUNT RATE", "NET CASH SALES"):
+            self.wait.until(EC.visibility_of_element_located((By.XPATH, f"//*[normalize-space()='{label}']")))
+        self.assertTrue(self.driver.find_elements(By.XPATH, "//*[contains(., 'Top products')]"))
+        self.assertTrue(self.driver.find_elements(By.XPATH, "//*[contains(., 'Completed refund report')]"))
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[normalize-space()='$ USD']"))).click()
+        self.wait.until(EC.visibility_of_element_located((By.XPATH, "//*[contains(., 'USD')]")))
+
     def test_operator_advances_a_prepared_synthetic_shipment(self):
         order_id=os.environ.get("SUPERSPORTS_SCHEDULED_ORDER_ID")
         if not order_id:self.skipTest("Set SUPERSPORTS_SCHEDULED_ORDER_ID to a prepared scheduled shipment.")

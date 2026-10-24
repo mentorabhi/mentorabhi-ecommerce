@@ -139,13 +139,14 @@ function AdminApp() {
   </div>
 }
 
-type AnalyticsSummary = { accepted_orders: number; confirmed_orders: number; gross_sales_minor: number; discounts_minor: number; refunded_minor: number; cancellations: number; return_orders: number }
-type SalesDay = { day: string; orders: number; grossSalesMinor: number; discountsMinor: number }
+type AnalyticsSummary = { confirmed_orders: number; gmv_minor: number; order_value_minor: number; discounts_minor: number; refunded_minor: number; refund_events: number; cancellations: number; return_orders: number; units_sold: number; latest_event_at: string|null }
+type SalesDay = { day: string; orders: number; gmvMinor: number; orderValueMinor: number; discountsMinor: number }
 type ProductSales = { productId: string; productTitle: string; unitsSold: number; salesMinor: number; discountsMinor: number }
 type RefundRow = { day: string; reasonCode: string; events: number; amountMinor: number }
 
 function AnalyticsDashboard({token}:{token:string}) {
   const [currency,setCurrency]=useState<Currency>('INR')
+  const [days,setDays]=useState(30)
   const [summary,setSummary]=useState<AnalyticsSummary|null>(null)
   const [daily,setDaily]=useState<SalesDay[]>([])
   const [products,setProducts]=useState<ProductSales[]>([])
@@ -156,37 +157,43 @@ function AnalyticsDashboard({token}:{token:string}) {
     setLoading(true);setError('')
     try {
       const [s,d,p,r]=await Promise.all([
-        api<AnalyticsSummary>(`/api/reports/summary?currency=${currency}`,token),
-        api<SalesDay[]>(`/api/reports/daily-sales?currency=${currency}&days=30`,token),
-        api<ProductSales[]>(`/api/reports/top-products?currency=${currency}&limit=10`,token),
-        api<RefundRow[]>(`/api/reports/refunds?currency=${currency}`,token),
+        api<AnalyticsSummary>(`/api/reports/summary?currency=${currency}&days=${days}`,token),
+        api<SalesDay[]>(`/api/reports/daily-sales?currency=${currency}&days=${days}`,token),
+        api<ProductSales[]>(`/api/reports/top-products?currency=${currency}&days=${days}&limit=10`,token),
+        api<RefundRow[]>(`/api/reports/refunds?currency=${currency}&days=${days}`,token),
       ])
       setSummary(s);setDaily(d);setProducts(p);setRefunds(r)
     } catch(e) { setError(e instanceof Error?e.message:'Analytics data is unavailable.') }
     finally { setLoading(false) }
   }
-  useEffect(()=>{void refresh()},[token,currency])
+  useEffect(()=>{void refresh()},[token,currency,days])
   const confirmed=summary?.confirmed_orders??0
-  const gross=summary?.gross_sales_minor??0
+  const gmv=summary?.gmv_minor??0
+  const orderValue=summary?.order_value_minor??0
   const refunded=summary?.refunded_minor??0
-  const max=Math.max(1,...daily.map(row=>Number(row.grossSalesMinor)||0))
+  const max=Math.max(1,...daily.map(row=>Number(row.gmvMinor)||0))
   const moneyValue=(minor:number)=>money(Number(minor)||0,currency)
   return <section className="analytics-dashboard">
-    <div className="analytics-toolbar"><div className="currency-switch" aria-label="Report currency"><button className={currency==='INR'?'selected':''} onClick={()=>setCurrency('INR')}>₹ INR</button><button className={currency==='USD'?'selected':''} onClick={()=>setCurrency('USD')}>$ USD</button></div><div className="analytics-actions"><span className="result-count">LIFECYCLE DATA · REFRESHED ON REQUEST</span><button className="button secondary" disabled={loading} onClick={()=>void refresh()}>{loading?'Loading…':'Refresh reports'}</button><a className="button secondary" href="http://localhost:8095" target="_blank" rel="noreferrer">Open dashboard studio ↗</a></div></div>
+    <div className="analytics-toolbar"><div className="currency-switch" aria-label="Report currency"><button className={currency==='INR'?'selected':''} onClick={()=>setCurrency('INR')}>₹ INR</button><button className={currency==='USD'?'selected':''} onClick={()=>setCurrency('USD')}>$ USD</button></div><div className="analytics-actions"><label className="analytics-period">Period<select aria-label="Report period" value={days} onChange={event=>setDays(Number(event.target.value))}><option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option><option value={365}>Last 365 days</option></select></label><span className="result-count">{summary?.latest_event_at?`LATEST EVENT · ${new Date(summary.latest_event_at).toLocaleString('en-IN')}`:'LIFECYCLE DATA · REFRESHED ON REQUEST'}</span><button className="button secondary" disabled={loading} onClick={()=>void refresh()}>{loading?'Loading…':'Refresh reports'}</button><a className="button secondary" href="http://localhost:8095" target="_blank" rel="noreferrer">Open dashboard studio ↗</a></div></div>
     {error&&<div className="notice warning" role="status"><span>i</span><div><strong>Reports are unavailable</strong><p>{error}. Start the local analytics profile and run the batch ingestion job.</p></div></div>}
     {summary&&<>
       <div className="metric-grid">
-        <MetricCard label="CONFIRMED SALES" value={moneyValue(gross)} hint={`${confirmed} confirmed orders`}/>
-        <MetricCard label="AVERAGE ORDER VALUE" value={moneyValue(confirmed?Math.round(gross/confirmed):0)} hint="Confirmed sales ÷ confirmed orders"/>
-        <MetricCard label="PROMO DISCOUNTS" value={moneyValue(summary.discounts_minor)} hint="Snapshot discounts on confirmed orders"/>
-        <MetricCard label="COMPLETED REFUNDS" value={moneyValue(refunded)} hint={`${summary.cancellations} cancelled · ${summary.return_orders} return requests`}/>
-        <MetricCard label="NET SALES" value={moneyValue(gross-refunded)} hint="Confirmed sales less completed refunds"/>
+        <MetricCard label="GROSS MERCHANDISE VALUE" value={moneyValue(gmv)} hint="Confirmed merchandise subtotal before discounts, tax and shipping"/>
+        <MetricCard label="NET MERCHANDISE SALES" value={moneyValue(gmv-summary.discounts_minor)} hint="GMV less confirmed order discounts"/>
+        <MetricCard label="CONFIRMED ORDERS" value={String(confirmed)} hint={`${summary.cancellations} cancellations · ${summary.return_orders} return requests`}/>
+        <MetricCard label="AVERAGE ORDER VALUE" value={moneyValue(confirmed?Math.round(orderValue/confirmed):0)} hint="Confirmed order total, including tax and shipping"/>
+        <MetricCard label="UNITS SOLD" value={String(summary.units_sold)} hint={`${confirmed?(summary.units_sold/confirmed).toFixed(1):'0.0'} items per confirmed order`}/>
+        <MetricCard label="ORDER DISCOUNTS" value={moneyValue(summary.discounts_minor)} hint="Discount snapshots on confirmed orders"/>
+        <MetricCard label="DISCOUNT RATE" value={`${gmv?((summary.discounts_minor/gmv)*100).toFixed(1):'0.0'}%`} hint="Order discounts ÷ gross merchandise value"/>
+        <MetricCard label="COMPLETED REFUNDS" value={moneyValue(refunded)} hint={`${summary.refund_events} refund events in this period`}/>
+        <MetricCard label="REFUND AMOUNT RATE" value={`${orderValue?((refunded/orderValue)*100).toFixed(1):'0.0'}%`} hint="Refund amount ÷ order value in selected period"/>
+        <MetricCard label="NET CASH SALES" value={moneyValue(orderValue-refunded)} hint="Order value accepted less refunds issued in period"/>
       </div>
-      <div className="analytics-grid"><section className="analytics-panel"><div className="section-heading"><div><span className="eyebrow">LAST 30 DAYS</span><h2>Confirmed sales by day</h2></div><span className="result-count">{currency}</span></div>{daily.length===0?<p className="analytics-empty">No confirmed orders in this period.</p>:<div className="sales-bars" role="img" aria-label="Daily confirmed sales chart">{[...daily].reverse().map((row)=><div className="sales-bar-column" key={row.day} title={`${row.day}: ${moneyValue(Number(row.grossSalesMinor))}`}><div className="sales-bar" style={{height:`${Math.max(4,Number(row.grossSalesMinor)/max*100)}%`}}/><small>{row.day.slice(5)}</small></div>)}</div>}</section>
+      <div className="analytics-grid"><section className="analytics-panel"><div className="section-heading"><div><span className="eyebrow">LAST {days} DAYS</span><h2>Merchandise sales by day</h2></div><span className="result-count">{currency}</span></div>{daily.length===0?<p className="analytics-empty">No confirmed orders in this period.</p>:<div className="sales-bars" role="img" aria-label="Daily gross merchandise value chart">{[...daily].reverse().map((row)=><div className="sales-bar-column" key={row.day} title={`${row.day}: ${moneyValue(Number(row.gmvMinor))} · ${row.orders} orders`}><div className="sales-bar" style={{height:`${Math.max(4,Number(row.gmvMinor)/max*100)}%`}}/><small>{row.day.slice(5)}</small></div>)}</div>}</section>
         <section className="analytics-panel"><div className="section-heading"><div><span className="eyebrow">PRODUCT PERFORMANCE</span><h2>Top products</h2></div><span className="result-count">{currency}</span></div>{products.length===0?<p className="analytics-empty">No product sales available yet.</p>:<div className="table-wrap"><table><thead><tr><th>PRODUCT</th><th>UNITS</th><th>SALES</th></tr></thead><tbody>{products.map((row)=><tr key={row.productId}><td><strong>{row.productTitle}</strong><span>{row.productId.slice(0,8)}</span></td><td>{row.unitsSold}</td><td>{moneyValue(row.salesMinor)}</td></tr>)}</tbody></table></div>}</section>
       </div>
       <section className="analytics-panel"><div className="section-heading"><div><span className="eyebrow">RETURNS & REFUNDS</span><h2>Completed refund report</h2></div><span className="result-count">{currency}</span></div>{refunds.length===0?<p className="analytics-empty">No completed refunds in the current event history.</p>:<div className="table-wrap"><table><thead><tr><th>DATE</th><th>REASON</th><th>EVENTS</th><th>AMOUNT</th></tr></thead><tbody>{refunds.map((row,i)=><tr key={`${row.day}-${row.reasonCode}-${i}`}><td>{row.day}</td><td>{row.reasonCode}</td><td>{row.events}</td><td>{moneyValue(row.amountMinor)}</td></tr>)}</tbody></table></div>}</section>
-      <p className="analytics-footnote">Sales include confirmed orders only. Refunds are reported separately and subtracted once for net sales. Figures never combine currencies. Conversion and cart abandonment are excluded until storefront visit and cart events are published.</p>
+      <p className="analytics-footnote">GMV is confirmed merchandise subtotal before discounts, tax and shipping. Refunds use their issue date and may include allocated tax; net cash sales is a period activity measure. Figures never combine currencies. Sessions, conversion, cart abandonment, coupon attribution and inventory health need additional source events or owner APIs and are not estimated here.</p>
     </>}
   </section>
 }
