@@ -42,4 +42,10 @@ class ReplayRulesTest {
         assertTrue(canonical.matches("reformatted-bytes","canonical"));
         assertFalse(canonical.matches("original-bytes","changed-content"));
     }
+
+    @Test void integerEquivalentSequenceFormattingDoesNotChangeReplayIdentity(){
+        var original=event();original.put("eventVersion",999);
+        var corrected=event();corrected.put("aggregateSequence",2.0);
+        assertEquals(2,ReplayRules.correction(EventContent.write(original),EventContent.write(corrected)).sequence());
+    }
 }

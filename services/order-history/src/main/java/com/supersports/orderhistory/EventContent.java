@@ -20,7 +20,9 @@ final class EventContent {
     static String write(Object value) { return JSON.writeValueAsString(value); }
     static String hash(String raw) { return rawHash(write(canonical(read(raw)))); }
     static String rawHash(String value) {
-        try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))); }
+        // Kafka tombstones have no bytes; 0xff cannot occur in a UTF-8 string encoding.
+        byte[] bytes=value==null?new byte[]{(byte)0xff}:value.getBytes(StandardCharsets.UTF_8);
+        try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)); }
         catch (java.security.NoSuchAlgorithmException error) { throw new IllegalStateException(error); }
     }
 

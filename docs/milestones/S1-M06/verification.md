@@ -1,6 +1,14 @@
 # S1-M06 verification record
 
-Revision 4 · 2026-10-24 · Full CI after replay/rebuild passed; explicit remaining acceptance is in [the matrix](acceptance-matrix.md).
+Revision 5 · 2026-10-24 · Full rebuild CI plus focused tombstone/numeric-replay follow-up passed; remaining acceptance is in [the matrix](acceptance-matrix.md).
+
+## Focused follow-up after rebuild checkpoint
+
+After full CI at `3d84ca5`, two narrow edge cases were found and fixed: null Kafka values aborted diagnostic hashing, and replay identity rejected integer-equivalent sequence formatting such as `1.0` versus `1`. Both new regression tests were observed failing first (`NullPointerException` and `REPLAY_IDENTITY_CHANGE` respectively), then passed after the fixes. Existing non-null fingerprints and identity-change guards remain covered.
+
+The rebuilt/deployed Order History image passed all 15 module tests. A live operator probe replayed a retained correction with floating-point integer sequence representation, returned `PUBLISHED`, returned the identical receipt on retry, and left the projection at 190 events/70 orders. Follow-up `stream-reconcile` passed with 11 audits and five resolved poison records; the customer history Selenium journey passed in 4.891 seconds. The tombstone case is a focused index/contract unit test, not an injected live commerce event. Unresolved malformed records remain explicit reconciliation failures.
+
+The full repository CI below predates these two small follow-ups; it was not repeated after them. Verification after the fixes was scoped to the affected Java module, image build/readiness, live operator/reconciliation behavior and customer history UI.
 
 ## Latest full CI and rebuild verification
 

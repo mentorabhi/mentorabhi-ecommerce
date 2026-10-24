@@ -1,6 +1,7 @@
 package com.supersports.orderhistory;
 
 import java.util.List;
+import java.util.Map;
 
 final class ReplayRules {
     private ReplayRules() {}
@@ -16,7 +17,8 @@ final class ReplayRules {
         var before = EventContent.read(original);
         var after = EventContent.read(corrected);
         for (String key : List.of("eventId", "aggregateId", "aggregateSequence", "customerKey")) {
-            if (before.get(key) == null || !before.get(key).toString().equals(String.valueOf(after.get(key))))
+            if (before.get(key) == null || after.get(key) == null ||
+                    !EventContent.hash(EventContent.write(Map.of(key,before.get(key)))).equals(EventContent.hash(EventContent.write(Map.of(key,after.get(key))))))
                 throw new IllegalArgumentException("REPLAY_IDENTITY_CHANGE");
         }
         return HistoryRules.parse(after);

@@ -20,3 +20,9 @@ Code review: skipped (ce-code-review unavailable). The dedicated multi-agent rev
 The targeted streaming run passed three journeys in 256.815 seconds: consumer crash recovery, audited replay recovery/idempotency, and rebuild dry-run → injected candidate mismatch → successful cutover → new checkout delivery. The mismatch left the saved target unchanged and Order History healthy. Rebuild carried forward audit/delivery records and reconciled retained state before activation.
 
 Thirteen Order History Java tests and the Python target/lock/reconciliation/control-path tests pass. Full CI subsequently exited 0, including both rebuild journeys and seven Selenium tests; measured results and sampled memory are recorded in `verification.md`. The complete M06 acceptance matrix remains authoritative for unclosed failure, freshness, load and human-check evidence.
+
+## Tombstone follow-up
+
+A later manual edge-case scan found that diagnostic hashing assumed a non-null Kafka value. A new regression failed with `NullPointerException` before the fix. Tombstones now receive a deterministic fingerprint distinct from every UTF-8 string value and are classified as quarantined records by the index. Existing non-null fingerprints are unchanged. This avoids a generic diagnostic abort; an unresolved tombstone still fails reconciliation explicitly and is not silently accepted or assigned an invented commerce event identity.
+
+The same scan found that textual identity comparison rejected integer-equivalent sequence representations even though the schema and canonical hashing accept them. Identity fields now compare their canonical values; different IDs/owners/sequences still conflict. Its new test failed before the change, then all 15 module tests passed. A live numeric correction/retry and subsequent reconciliation/UI check also passed; the full repository CI was not rerun for these leaf changes.
