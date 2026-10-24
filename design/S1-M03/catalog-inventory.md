@@ -42,6 +42,8 @@ Each service has an independent Maven project, DB/user, migration stream, tests,
 
 ## API outline and authorization
 
+**2026-10-23 user revision:** [ADR 0003](../../docs/decisions/0003-simple-local-authentication.md) supersedes the role matrix and role-aware controls below. All authenticated local accounts may administer all three sections and read Configuration. Keep the original matrix below as the reviewed historical design; implement the new authentication-only policy and [editable flow](local-authentication.mmd). Authentication, actor audit, customer ownership and business validation remain required.
+
 All APIs use the existing realm and API audience. Existing test-only CLI direct-grant client remains for automated synthetic tests/fixture setup; browser login uses Authorization Code + PKCE (`S256`) with the local Keycloak public client and exact local redirect allowlist. Add the `inventory-operator` role and synthetic fixture user. Never add passwords to realm JSON. Services enforce roles and ownership at every request.
 
 - Role matrix: `catalog-admin` and `platform-admin` may maintain taxonomy, products/SKUs, prices and coupon definitions; `inventory-operator` and `platform-admin` may adjust/inspect stock. `customer` may read public-safe active catalog/pricing data but cannot perform admin mutations. Each service enforces these roles at its own endpoints.
@@ -65,7 +67,11 @@ Create the SuperSports logo as an original local SVG and a distinct original SVG
 
 Extend the Docker Compose core with Pricing, Inventory and the admin UI, their DB roles/databases and health/readiness checks. Keep per-service resource limits and JVM heaps; set a dedicated Node build stage and small static runtime. Bind browser/API/identity ports to loopback, keep PostgreSQL private, and preserve a lighter bootstrap profile only if measurements show the added admin and services materially pressure the 16 GB host. No Redis/Kafka in this milestone.
 
-Service implementation follows the S1-M02 Spring Boot 4.1.2 / Java 27 Maven pattern and verified image lock. For the browser, use React 19.3 and Vite 8.1 with Node 24.22.1 LTS as build runtime, exact npm lockfile and pinned ARM64-compatible image digests. React's official versions page lists 19.3 as latest; Vite's official blog lists 8.1; Node's official release page identifies 24.22.1 as latest LTS while 26.12.1 is Current (checked 2026-10-23). Recheck versions, ARM64 manifests and licenses immediately before pinning implementation images/dependencies. Sources: https://react.dev/versions, https://vite.dev/blog, https://nodejs.org/en/blog/release.
+Service implementation follows the S1-M02 Spring Boot 4.1.2 / Java 27 Maven pattern and verified image lock. Browser stack: React 19.3, Vite 8.3.5, and Node 24.22.1 LTS. Pin the npm lockfile and ARM64-compatible images. The versions were checked on 2026-10-23: React's official versions page lists 19.3; Vite's supported releases and npm registry identify 8.3.5 as latest stable; Node's official release page identifies 24.22.1 as latest LTS while 26.12.1 is Current. Docker's official Node image manifest includes linux/arm64/v8. Sources: https://react.dev/versions, https://vite.dev/releases, https://vite.dev/guide/, https://nodejs.org/en/blog/release/v24.22.1, https://hub.docker.com/_/node.
+
+### Design revision 2 — implementation-time version check (2026-10-23)
+
+The implementation check found Vite 8.3.5 is the current supported stable line; the earlier Vite 8.1 proposal is superseded. React 19.3 and Node 24.22.1 remain suitable, and Vite's official guide requires Node 20.19+ or 22.12+, satisfied by the selected LTS. ARM64 support was checked against the official Node image manifest. The architecture and feature boundaries are unchanged. This revision was reviewed against the design's compatibility, resource and reproducibility requirements before frontend work.
 
 ## Implementation units and verification
 

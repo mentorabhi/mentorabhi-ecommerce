@@ -1,0 +1,9 @@
+flowchart LR
+    User[Trusted local user] --> Login[Username/password sign-in]
+    Login --> Identity[Host-accessible local Keycloak]
+    Identity -->|PKCE session| UI[All admin sections]
+    UI -->|Bearer token through Nginx| APIs[Catalog / Pricing / Inventory / Configuration]
+    APIs --> Auth[Verify signature, issuer, audience and expiry]
+    Auth --> Business[Validate request and deterministic business rules]
+    Business --> DB[Owning service database with actor audit]
+    Anonymous[No valid session] --> Reject[401 response]

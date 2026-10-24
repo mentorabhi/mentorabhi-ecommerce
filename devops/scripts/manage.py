@@ -19,11 +19,18 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[2]
 SECRET_KEYS = (
     "POSTGRES_PASSWORD", "CATALOG_DB_PASSWORD", "CONFIGURATION_DB_PASSWORD",
+    "IDENTITY_DB_PASSWORD", "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD",
+    "KEYCLOAK_ADMIN_PASSWORD", "DEMO_CUSTOMER_PASSWORD",
+    "DEMO_PLATFORM_ADMIN_PASSWORD", "DEMO_CATALOG_ADMIN_PASSWORD", "DEMO_INVENTORY_OPERATOR_PASSWORD",
+)
+LEGACY_SECRET_KEYS = (
+    "POSTGRES_PASSWORD", "CATALOG_DB_PASSWORD", "CONFIGURATION_DB_PASSWORD",
     "IDENTITY_DB_PASSWORD", "KEYCLOAK_ADMIN_PASSWORD", "DEMO_CUSTOMER_PASSWORD",
     "DEMO_PLATFORM_ADMIN_PASSWORD", "DEMO_CATALOG_ADMIN_PASSWORD",
 )
-SERVICES = ("catalog", "configuration")
-DEFAULT_VERSION = "s1-m02"
+SERVICES = ("catalog", "configuration", "pricing", "inventory")
+DEPLOYABLES = (*SERVICES, "storefront")
+DEFAULT_VERSION = "s1-m03"
 TOKEN_URL = "http://127.0.0.1:8180/realms/supersports/protocol/openid-connect/token"
 
 
@@ -72,6 +79,27 @@ def load_credentials(path: Path) -> dict[str, str]:
     return values
 
 
+def configure_admin_login(root: Path = ROOT) -> str:
+    """Keep the editable local application password separate from infrastructure secrets."""
+    directory = root / "devops/.local"
+    if directory.is_symlink():
+        raise ValueError("Refusing a symlinked local state directory.")
+    directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    directory.chmod(0o700)
+    path = directory / "admin-login.env"
+    if path.is_symlink():
+        raise ValueError("Refusing a symlinked admin login file.")
+    if not path.exists():
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "w") as handle:
+            handle.write(f"ADMIN_PASSWORD={secrets.token_hex(24)}\n")
+    value = path.read_text().strip()
+    if not re.fullmatch(r"ADMIN_PASSWORD=[A-Za-z0-9_-]{1,128}", value):
+        raise ValueError("Invalid local admin login file; existing value was preserved.")
+    path.chmod(0o600)
+    return value.partition("=")[2]
+
+
 def configure(root: Path = ROOT) -> Path:
     local = root / "devops/.local"
     if local.is_symlink():
@@ -82,14 +110,34 @@ def configure(root: Path = ROOT) -> Path:
     if path.is_symlink():
         raise ValueError("Refusing a symlinked credentials file.")
     if path.exists():
-        load_credentials(path)
+        try:
+            load_credentials(path)
+        except ValueError:
+            if not path.is_file():
+                raise
+            existing = {}
+            for line in path.read_text().splitlines():
+                if not line or line.startswith("#"):
+                    continue
+                key, separator, value = line.partition("=")
+                if not separator or key not in LEGACY_SECRET_KEYS or key in existing or not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", value):
+                    raise
+                existing[key] = value
+            if set(existing) != set(LEGACY_SECRET_KEYS):
+                raise
+            with path.open("a") as handle:
+                for key in sorted(set(SECRET_KEYS) - set(existing)):
+                    handle.write(f"{key}={secrets.token_hex(24)}\n")
+            load_credentials(path)
         path.chmod(0o600)
+        configure_admin_login(root)
         return path
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(descriptor, "w") as handle:
         handle.write("# Generated locally. Do not commit, print or rotate independently of database state.\n")
         for key in SECRET_KEYS:
             handle.write(f"{key}={secrets.token_hex(24)}\n")
+    configure_admin_login(root)
     return path
 
 
@@ -108,8 +156,10 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
     lock = json.loads((root / "devops/images.lock.json").read_text())
     for key in ("BUILD_IMAGE", "JAVA_IMAGE", "POSTGRES_IMAGE", "KEYCLOAK_IMAGE"):
         environment[key] = lock[key]
+    for key in ("STOREFRONT_NODE_IMAGE", "STOREFRONT_NGINX_IMAGE"):
+        environment[key] = lock[key]
     environment["RELEASE_VERSION"] = validated_version(version)
-    for service in SERVICES:
+    for service in DEPLOYABLES:
         environment[f"{service.upper()}_IMAGE"] = (
             images[service] if images else f"supersports/{service}:{version}"
         )
@@ -135,10 +185,110 @@ def compose(arguments: list[str], *, root=ROOT, project="supersports",
                capture=capture, check=check, cwd=root)
 
 
+def provision_databases(root=ROOT, project="supersports", version=DEFAULT_VERSION):
+    compose(["up", "-d", "postgres", "--wait", "--wait-timeout", "120"],
+            root=root, project=project, version=version)
+    command = compose_command(root, project, ["exec", "-T", "postgres", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"])
+    command.extend(["-f", "/opt/supersports/provision.sql"])
+    run(command, cwd=root)
+
+
+def provision_local_identity(root=ROOT):
+    credentials = load_credentials(root / "devops/.local/bootstrap.env")
+    token_body = urlencode({
+        "grant_type": "password", "client_id": "admin-cli",
+        "username": "bootstrap-admin", "password": credentials["KEYCLOAK_ADMIN_PASSWORD"],
+    }).encode()
+    with urlopen(Request("http://127.0.0.1:8180/realms/master/protocol/openid-connect/token",
+                        data=token_body, headers={"Content-Type": "application/x-www-form-urlencoded"}), timeout=15) as response:
+        token = json.loads(response.read())["access_token"]
+    base = "http://127.0.0.1:8180/admin/realms/supersports"
+
+    def admin(method, path, body=None):
+        data = None if body is None else json.dumps(body).encode()
+        headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+        if data is not None:
+            headers["Content-Type"] = "application/json"
+        try:
+            with urlopen(Request(base + path, data=data, headers=headers, method=method), timeout=15) as response:
+                raw = response.read()
+                return response.status, json.loads(raw) if raw else None
+        except HTTPError as error:
+            with error:
+                raw = error.read()
+                return error.code, json.loads(raw) if raw else None
+
+    status, role = admin("GET", "/roles/inventory-operator")
+    if status == 404:
+        status, _ = admin("POST", "/roles", {"name": "inventory-operator", "description": "May inspect and adjust local warehouse stock"})
+        if status not in (201, 204):
+            raise RuntimeError("Could not provision the inventory operator role in local Keycloak.")
+        status, role = admin("GET", "/roles/inventory-operator")
+    if status != 200:
+        raise RuntimeError("Could not read the inventory operator role from local Keycloak.")
+    status, users = admin("GET", "/users?username=inventory-operator&exact=true")
+    if status != 200:
+        raise RuntimeError("Could not inspect the inventory operator in local Keycloak.")
+    if not users:
+        status, _ = admin("POST", "/users", {
+            "username": "inventory-operator", "enabled": True, "emailVerified": True,
+            "firstName": "Synthetic", "lastName": "Inventory",
+            "email": "inventory-operator@supersports.local",
+            "credentials": [{"type": "password", "value": credentials["DEMO_INVENTORY_OPERATOR_PASSWORD"], "temporary": False}],
+        })
+        if status not in (201, 204):
+            raise RuntimeError("Could not create the synthetic inventory operator in local Keycloak.")
+        status, users = admin("GET", "/users?username=inventory-operator&exact=true")
+    if status != 200 or not users:
+        raise RuntimeError("Could not read the synthetic inventory operator in local Keycloak.")
+    user_id = users[0]["id"]
+    status, mappings = admin("GET", f"/users/{user_id}/role-mappings/realm")
+    if status != 200:
+        raise RuntimeError("Could not inspect inventory operator role mappings in local Keycloak.")
+    if not any(item.get("name") == "inventory-operator" for item in mappings):
+        status, _ = admin("POST", f"/users/{user_id}/role-mappings/realm", [role])
+        if status not in (201, 204):
+            raise RuntimeError("Could not assign the inventory operator role in local Keycloak.")
+    status, scopes = admin("GET", "/client-scopes")
+    basic = next((scope for scope in scopes or [] if scope.get("name") == "basic"), None)
+    if status != 200 or basic is None:
+        raise RuntimeError("Local Keycloak is missing its standard basic client scope.")
+    for client_id in ("supersports-cli", "supersports-other-cli", "supersports-web"):
+        status, clients = admin("GET", f"/clients?clientId={client_id}")
+        if status != 200 or not clients:
+            raise RuntimeError(f"Could not inspect local Keycloak client {client_id}.")
+        client = clients[0]
+        if "basic" not in client.get("defaultClientScopes", []):
+            status, _ = admin("PUT", f"/clients/{client['id']}/default-client-scopes/{basic['id']}")
+            if status not in (201, 204):
+                raise RuntimeError(f"Could not attach the standard subject scope to {client_id}.")
+
+    status, users = admin("GET", "/users?username=admin&exact=true")
+    if status != 200:
+        raise RuntimeError("Could not inspect the local admin account.")
+    if not users:
+        status, _ = admin("POST", "/users", {
+            "username": "admin", "enabled": True, "emailVerified": True,
+            "firstName": "Local", "lastName": "Admin", "email": "admin@supersports.local",
+        })
+        if status != 201:
+            raise RuntimeError("Could not create the local admin account.")
+        status, users = admin("GET", "/users?username=admin&exact=true")
+    if status != 200 or len(users) != 1:
+        raise RuntimeError("Could not resolve the local admin account.")
+    status, _ = admin("PUT", f"/users/{users[0]['id']}/reset-password", {
+        "type": "password", "value": configure_admin_login(root), "temporary": False,
+    })
+    if status != 204:
+        raise RuntimeError("Could not synchronize the local admin password.")
+
+
 def request_json(url: str, *, token: str | None = None, method: str = "GET", data=None):
     headers = {"Accept": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
+    if data is not None:
+        headers["Content-Type"] = "application/json"
     try:
         with urlopen(Request(url, data=data, headers=headers, method=method), timeout=5) as response:
             return response.status, json.loads(response.read())
@@ -174,12 +324,24 @@ def unit(root=ROOT, project="supersports"):
 
 
 def integration(root=ROOT, project="supersports"):
+    run([str(root / ".venv/bin/python"), str(root / "data/pipelines/catalog-fixtures/import.py")], cwd=root)
     environment = os.environ.copy()
     environment["SUPERSPORTS_PROJECT"] = validated_project_name(project)
     environment["SUPERSPORTS_INTEGRATION"] = "1"
     run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
          "-s", "devops/tests", "-p", "test_core_integration.py", "-v"],
         environment=environment, cwd=root)
+
+
+def ui_test(root=ROOT):
+    try:
+        with urlopen("http://127.0.0.1:3000/healthz", timeout=5) as response:
+            if response.status != 200 or response.read().decode().strip() != "ok":
+                raise RuntimeError("Storefront health check returned an unexpected response.")
+    except (URLError, TimeoutError) as error:
+        raise RuntimeError("Storefront is not running; start it with devops/scripts/supersports up.") from error
+    run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
+         "-s", "apps/storefront/tests", "-p", "test_*.py", "-v"], cwd=root)
 
 
 def recovery(root=ROOT, project="supersports"):
@@ -190,20 +352,20 @@ def recovery(root=ROOT, project="supersports"):
     if before[0] != 200:
         raise RuntimeError("Configuration snapshot is unavailable before recovery test.")
     compose(["restart", *SERVICES], root=root, project=project)
-    for port in (8081, 8082):
+    for port in (8081, 8082, 8083, 8084):
         wait_status(f"http://127.0.0.1:{port}/actuator/health/readiness")
     if request_json(url, token=token) != before:
         raise RuntimeError("Configuration changed unexpectedly across application restart.")
     print("PASS: configuration and migration state survive application restart")
     try:
         compose(["stop", "postgres"], root=root, project=project)
-        for port in (8081, 8082):
+        for port in (8081, 8082, 8083, 8084):
             wait_status(f"http://127.0.0.1:{port}/actuator/health/readiness", 503, timeout=45)
             wait_status(f"http://127.0.0.1:{port}/actuator/health/liveness", 200, timeout=15)
         print("PASS: database outage removes readiness without killing liveness")
     finally:
         compose(["start", "postgres"], root=root, project=project)
-        for port in (8081, 8082):
+        for port in (8081, 8082, 8083, 8084):
             wait_status(f"http://127.0.0.1:{port}/actuator/health/readiness", timeout=120)
     print("PASS: database reconnection restores readiness")
     deadline = time.monotonic() + 120
@@ -235,10 +397,10 @@ def read_releases(root: Path, project: str) -> dict:
 
 def record_release(root: Path, project: str, version: str, images: dict) -> None:
     validated_version(version)
-    if set(images) != set(SERVICES) or not all(
+    if set(images) != set(DEPLOYABLES) or not all(
         re.fullmatch(r"sha256:[0-9a-f]{64}", value) for value in images.values()
     ):
-        raise ValueError("A release records exact image IDs for both services.")
+        raise ValueError("A release records exact image IDs for every application image.")
     releases = read_releases(root, project)
     if version in releases:
         raise ValueError("Release version is already recorded; choose a new version.")
@@ -258,7 +420,7 @@ def release(root=ROOT, project="supersports", version=None):
             root=root, project=project, version=version)
     integration(root, project)
     images = {}
-    for service in SERVICES:
+    for service in DEPLOYABLES:
         result = run(["docker", "image", "inspect", "--format", "{{.Id}}",
                       f"supersports/{service}:{version}"], capture=True)
         images[service] = result.stdout.strip()
@@ -299,6 +461,7 @@ def main(argv=None):
     parser.add_argument("action", choices=[
         "doctor", "configure", "validate", "build", "up", "down", "status",
         "unit", "test", "reset", "release", "rollback",
+        "ui-test",
     ])
     parser.add_argument("release_version", nargs="?")
     parser.add_argument("--project", default="supersports")
@@ -324,8 +487,10 @@ def main(argv=None):
         elif action == "build":
             compose(["build"], project=project, version=version)
         elif action == "up":
-            compose(["up", "-d", "--build", "--wait", "--wait-timeout", "180"],
+            provision_databases(project=project, version=version)
+            compose(["up", "-d", "--build", "--force-recreate", "--wait", "--wait-timeout", "180"],
                     project=project, version=version)
+            provision_local_identity()
         elif action == "down":
             compose(["down"], project=project, version=version)
         elif action == "status":
@@ -336,6 +501,8 @@ def main(argv=None):
             integration(project=project)
             if arguments.recovery:
                 recovery(project=project)
+        elif action == "ui-test":
+            ui_test()
         elif action == "reset":
             compose(["down", "--volumes", "--remove-orphans"], project=project, version=version)
             print(f"Removed {project} runtime volumes; local credentials and build cache preserved.")

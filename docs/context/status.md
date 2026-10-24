@@ -1,10 +1,10 @@
 # Project status
-Updated: 2026-10-23.
+Updated: 2026-10-24.
 
 S1-M01: reviewed and checkpointed as s1-m01-design-v1 (7ef04c4).
 S1-M02: runnable Docker bootstrap implemented and locally verified; checkpointed as `s1-m02-bootstrap` at `cf50e8e`. 16 Python unit tests, 18 Java unit tests and 12 real-stack integration tests pass; Helm/Terraform validators and recovery/release/rollback exercises pass. Code review returned eight lenses; two stopped at the session usage limit, so the review set is partial and the residual auth-token negative cases are documented.
-S1-M03: catalog/pricing/inventory/fixture design and editable diagram reviewed; findings resolved. Implementation has not started. No S1-M03 runtime or test result is claimed.
+S1-M03: implementation verification passed; milestone commit pending. ADR 0003 implements the user’s `admin`/`admin` local login and removes admin role enforcement; authenticated local accounts can use all admin APIs. Final `devops/scripts/ci` passed 20 Python and 29 Java tests, 15 live integration tests, recovery, validators and four Selenium journeys. Playwright login and a visual check of the complete banner also passed. `supersports up` force-recreates containers so rebuilt same-tag images are used. Code review is explicitly skipped because the local review agent hit its usage limit; owner manual checks and peak/load memory measurement remain pending.
 Current branch: feat/s1-m03-catalog-inventory. No remote or external publication.
-Runtime: private PostgreSQL, Keycloak, Catalog and Configuration. No storefront or Nova runtime yet.
+Runtime: S1-M03 profile is running. Admin UI: http://localhost:3000. Seven-container RSS snapshot: 1,816.4 MiB; Docker allocation 7.75 GiB. Snapshot is not a peak measurement.
 Ollama: existing host installation only; setup is a Nova prerequisite in docs/setup/prerequisites.md.
-Next: implement S1-M03 from the reviewed design.
+Next: S1-M04 customer storefront and browsing. UI remains available for visual/manual review during continued implementation.

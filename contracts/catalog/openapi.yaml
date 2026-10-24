@@ -1,0 +1,27 @@
+openapi: 3.1.0
+info:
+  title: SuperSports Catalog API
+  version: 1.0.0
+servers: [{url: /api/v1/catalog}]
+security: [{bearerAuth: []}]
+paths:
+  /sports:
+    get: {summary: List active sports, responses: {'200': {description: Sports}}}
+    post: {summary: Create or reconcile a sport by slug, responses: {'200': {description: Sport identifier}}}
+  /categories:
+    get: {summary: List active categories and attribute schemas, responses: {'200': {description: Categories}}}
+    post: {summary: Create or reconcile a category, responses: {'200': {description: Category identifier}}}
+  /products:
+    get: {summary: List active products and SKUs, responses: {'200': {description: Active catalog}}}
+    post: {summary: Create or reconcile a draft product, responses: {'200': {description: Product identifier}}}
+  /admin/products:
+    get: {summary: List draft and active products for catalog operators, responses: {'200': {description: Products including revisions}}}
+  /products/{productId}/skus:
+    post: {summary: Add a SKU to a draft product, responses: {'200': {description: SKU identifier}}}
+  /products/{productId}/activate:
+    post: {summary: Activate after Pricing confirms INR and USD prices, responses: {'200': {description: Active product}, '409': {description: Stale revision or incomplete books}}}
+  /skus/{skuId}/status:
+    get: {summary: Scoped SKU status for Inventory validation, responses: {'200': {description: SKU ID and active status}}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}

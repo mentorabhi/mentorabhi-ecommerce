@@ -1,6 +1,8 @@
 # S1-M02 — Local platform bootstrap
 Revision 2 · 2026-10-23 · Status: implemented and locally verified; independent review partially unavailable.
 
+Manual end-user checks: [S1-M02 manual acceptance](manual-acceptance.md).
+
 Design and implementation contract: [bootstrap design](../../../design/S1-M02/bootstrap.md).
 Origin: [accepted requirements](../../../requirements/accepted-requirements.md).
 Baseline checkpoint: s1-m01-design-v1 (7ef04c4). Implementation checkpoint: s1-m02-bootstrap (cf50e8e).

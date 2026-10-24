@@ -10,18 +10,18 @@ import static org.mockito.Mockito.*;
 class CatalogControllerTest {
     @Test void reportsMigratedSchemaAndExactPublicShape() throws Exception {
         var jdbc = mock(JdbcTemplate.class);
-        when(jdbc.queryForObject("SELECT schema_version FROM bootstrap_metadata WHERE service = 'catalog'", Integer.class))
-                .thenReturn(1);
-        var response = new CatalogController(new CatalogRepository(jdbc)).status();
+        when(jdbc.queryForObject("SELECT max(version::integer) FROM flyway_schema_history WHERE success", Integer.class))
+                .thenReturn(2);
+        var response = new CatalogController(new CatalogRepository(jdbc), "http://localhost").status();
         assertThat(new JsonMapper().writeValueAsString(response))
-                .isEqualTo("{\"service\":\"catalog\",\"status\":\"ready\",\"schemaVersion\":1}");
+                .isEqualTo("{\"service\":\"catalog\",\"status\":\"ready\",\"schemaVersion\":2}");
     }
 
     @Test void unavailableDatabaseDoesNotProduceAReadyResponse() {
         var jdbc = mock(JdbcTemplate.class);
         when(jdbc.queryForObject(anyString(), eq(Integer.class)))
                 .thenThrow(new DataAccessResourceFailureException("unavailable"));
-        assertThatThrownBy(() -> new CatalogController(new CatalogRepository(jdbc)).status())
+        assertThatThrownBy(() -> new CatalogController(new CatalogRepository(jdbc), "http://localhost").status())
                 .isInstanceOf(DataAccessResourceFailureException.class);
     }
 }

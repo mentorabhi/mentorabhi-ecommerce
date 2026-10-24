@@ -24,6 +24,7 @@ Existing architecture/ diagrams are proposals from that baseline, not implemente
 - Unit tests for every feature; documented and executed integration, regression and relevant end-to-end tests after major features/milestones.
 - Maintain .gitignore. Modern responsive storefront, logo, original product imagery, useful descriptions and plausible synthetic prices.
 - Work autonomously on this repository, Git and service lifecycles. Ask about material ambiguity; respect environment-enforced approvals.
+- Commit each completed milestone on the active branch with a relevant message. Create a new branch after each completed stage. Continue subsequent milestones without routine approval.
 
 ## Python execution
 Use the repository-local .venv for all Python execution and package management: .venv/bin/python and .venv/bin/python -m pip. Never install project dependencies globally. Bootstrap the environment with python3 -m venv .venv. Current verified local interpreter is Python 3.14.7, recorded in verification evidence; dependency/version selection remains S1-M02 work.
@@ -38,10 +39,13 @@ Application code must follow the corresponding reviewed design. Do not interpret
 2. S2: Nova requirements/design/evaluations grounded in working S1 APIs; identify gaps.
 3. S3: implement gaps, grounded read-only Nova, then approval-bound actions, memory, caching and enterprise roles.
 
+## Milestone manual acceptance
+Every milestone has a separate `docs/milestones/<milestone>/manual-acceptance.md` for end-user checks outside automation. Cover local service health, UI journeys and feature actions, relevant database state, and a manual result record. See [milestone evidence convention](../milestones/README.md).
+
 ## Provisional defaults (change through a recorded decision)
 Single retailer, one store, one initial warehouse; no marketplace or cross-border tax compliance.
 Store-wide currency selection at first, not per-customer currency switching. Explicit currency-specific price books; no implicit live exchange-rate service. Currency changes affect new quotes, not historical orders.
-No public exposure by default. Local identity and role boundaries still required.
+No public exposure by default. Simple local sign-in is required; administrative role distinctions are removed by the user's revision in ADR 0003. Customer ownership and Nova approval rules remain required.
 All numeric capacity targets remain proposed until measured. No cloud or hosted model fallback.
 
 ## Setup prerequisite

@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info: {title: SuperSports Pricing API, version: 1.0.0}
+servers: [{url: /api/v1/pricing}]
+security: [{bearerAuth: []}]
+paths:
+  /currency:
+    get: {summary: Read active store currency, responses: {'200': {description: Currency code and revision}}}
+    put: {summary: Switch only between complete INR and USD price books, responses: {'200': {description: Active currency}, '409': {description: Unsupported or incomplete book}}}
+  /prices:
+    get: {summary: List current SKU prices for catalog operators, responses: {'200': {description: Prices in integer minor units}}}
+  /prices/{skuId}/{currency}:
+    put: {summary: Set or revise a positive SKU price, responses: {'200': {description: Stored price}, '422': {description: Invalid amount or currency}}}
+  /completeness:
+    post: {summary: Check every supplied SKU has positive INR and USD prices, responses: {'200': {description: Completeness result}}}
+  /coupons:
+    get: {summary: List coupon definitions, responses: {'200': {description: Coupon definitions}}}
+    post: {summary: Create a coupon definition without consuming its limits, responses: {'200': {description: Coupon identifier}}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}

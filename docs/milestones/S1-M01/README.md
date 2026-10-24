@@ -1,6 +1,8 @@
 # S1-M01 — Scope, domain and architecture
 Revision 2 · 2026-10-23 · Status: complete — reviewed design checkpoint s1-m01-design-v1.
 
+Manual end-user review: [S1-M01 manual acceptance](manual-acceptance.md).
+
 ## Objective
 Translate the original three-stage plan and subsequent user decisions into a consistent, implementable SuperSports baseline. Establish ownership and acceptance examples before deploying services.
 

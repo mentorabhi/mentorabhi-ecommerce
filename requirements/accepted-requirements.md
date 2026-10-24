@@ -1,5 +1,5 @@
 # Accepted requirements
-Revision 1 · 2026-10-23. User decisions override the original planning baseline. IDs are stable; append or supersede rather than silently renumber.
+Revision 2 · 2026-10-23. User decisions override the original planning baseline. IDs are stable; append or supersede rather than silently renumber.
 
 | ID | Requirement | Delivery / acceptance |
 |---|---|---|
@@ -11,7 +11,7 @@ Revision 1 · 2026-10-23. User decisions override the original planning baseline
 | R06 | Idempotent checkout; stock reservation; simulated authorization, capture, fulfillment, tax and shipping. | S1-M05; AE05–AE08 |
 | R07 | Coupons with product/category eligibility, dates, minimum spend, currency rules, usage limits and deterministic rounding. | S1-M03/M05; AE09 |
 | R08 | Tracking, cancellation, return/refund simulations, verified-purchase reviews, moderation and support. | S1-M07; AE10 |
-| R09 | Catalog, pricing and inventory administration with role enforcement. | S1-M03; AE11 |
+| R09 | Catalog, pricing and inventory administration with simple local sign-in; all authenticated local accounts can administer. Role enforcement superseded by ADR 0003 at the user's request. | S1-M03; AE11 |
 | R10 | Categorized configuration administration: commerce/localization, simulations, storage, search/cache, messaging/workflows, identity, observability, Nova. | S1-M02 foundation; S1-M04 UI; AE12 |
 | R11 | Monorepo with independent microservice projects and devops as the sole infrastructure project. | S1-M02; AE13 |
 | R12 | Dockerized application/dependencies except existing host Ollama, ARM64-compatible local profiles on a 16 GB Mac and larger-machine deployment path; Kubernetes, Helm, Terraform and repeatable scripts. | S1-M02/M09; AE13 |
@@ -43,7 +43,7 @@ Nova: delegated caller scoped to a signed-in actor, never a privileged bypass.
 - AE08: Worker restart resumes persisted Saga; retries do not duplicate capture/shipments. Failed compensation becomes visible manual resolution.
 - AE09: An expired, ineligible, wrong-currency or exhausted coupon fails; competing requests for the last redemption cannot both consume it.
 - AE10: Owned delivered line supports a partial return; refund never exceeds captured amount less previous refunds; inspection governs restock independently.
-- AE11: Unprivileged users cannot update catalog, prices or stock. Stock changes retain actor/reason.
+- AE11: Anonymous callers cannot update catalog, prices or stock. Every authenticated local account can administer without role assignments. Stock changes retain actor/reason. Customer ownership and Nova approval rules remain required (ADR 0003).
 - AE12: Platform admin changes tax simulation rate; new quotes use the activated revision and old orders retain their snapshot. Invalid adapter settings cannot activate; passwords are never returned to the browser.
 - AE13: Clean checkout starts a documented core Docker profile without cloud credentials; local Kubernetes is a separate deployment exercise, not simultaneous duplicate infrastructure.
 - AE14: Duplicate/late events and a restarted consumer do not inflate sales; search/order projections rebuild and reconcile.

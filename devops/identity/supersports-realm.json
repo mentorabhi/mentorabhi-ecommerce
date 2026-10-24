@@ -15,6 +15,9 @@
         "name": "catalog-admin"
       },
       {
+        "name": "inventory-operator"
+      },
+      {
         "name": "platform-admin"
       }
     ]
@@ -30,6 +33,7 @@
       "directAccessGrantsEnabled": true,
       "fullScopeAllowed": true,
       "defaultClientScopes": [
+        "basic",
         "profile",
         "email",
         "roles"
@@ -57,6 +61,7 @@
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": true,
       "defaultClientScopes": [
+        "basic",
         "profile",
         "email",
         "roles"
@@ -147,6 +152,16 @@
           "temporary": false
         }
       ]
+    },
+    {
+      "username": "inventory-operator",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Inventory",
+      "email": "inventory-operator@supersports.local",
+      "realmRoles": ["inventory-operator"],
+      "credentials": [{"type": "password", "value": "${DEMO_INVENTORY_OPERATOR_PASSWORD}", "temporary": false}]
     }
   ]
 }

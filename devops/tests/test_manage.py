@@ -14,6 +14,28 @@ spec.loader.exec_module(manage)
 
 
 class ConfigureTests(unittest.TestCase):
+    def test_local_admin_login_is_separate_private_and_persistent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "devops/.local/admin-login.env"
+            self.assertEqual(manage.configure_admin_login(root), path.read_text().strip().partition("=")[2])
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            path.write_text("ADMIN_PASSWORD=admin\n")
+            self.assertEqual(manage.configure_admin_login(root), "admin")
+            self.assertEqual(path.read_text(), "ADMIN_PASSWORD=admin\n")
+
+    def test_local_admin_login_refuses_symlinked_password_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            local = root / "devops/.local"
+            local.mkdir(parents=True)
+            external = root / "external"
+            external.write_text("ADMIN_PASSWORD=admin\n")
+            (local / "admin-login.env").symlink_to(external)
+            with self.assertRaises(ValueError):
+                manage.configure_admin_login(root)
+            self.assertEqual(external.read_text(), "ADMIN_PASSWORD=admin\n")
+
     def test_configure_generates_private_credentials_without_printing_them(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -35,6 +57,18 @@ class ConfigureTests(unittest.TestCase):
             before = path.read_bytes()
             manage.configure(root)
             self.assertEqual(before, path.read_bytes())
+
+    def test_configure_extends_known_m02_credentials_without_rotating_them(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = manage.configure(root)
+            values = manage.load_credentials(path)
+            old = {key: values[key] for key in manage.LEGACY_SECRET_KEYS}
+            path.write_text("\n".join(f"{key}={value}" for key, value in old.items()) + "\n")
+            manage.configure(root)
+            extended = manage.load_credentials(path)
+            self.assertEqual({key: extended[key] for key in old}, old)
+            self.assertEqual(set(extended), set(manage.SECRET_KEYS))
 
     def test_incomplete_existing_credentials_are_rejected_not_rotated(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -59,6 +93,16 @@ class ConfigureTests(unittest.TestCase):
 
 
 class CommandTests(unittest.TestCase):
+    def test_up_recreates_services_from_the_latest_built_images(self):
+        from unittest.mock import patch
+        with patch.object(manage, "provision_databases"), \
+             patch.object(manage, "provision_local_identity"), \
+             patch.object(manage, "compose") as compose:
+            self.assertEqual(manage.main(["up"]), 0)
+        arguments = next(call.args[0] for call in compose.call_args_list
+                         if call.args[0][0] == "up" and "--build" in call.args[0])
+        self.assertIn("--force-recreate", arguments)
+
     def test_project_names_stay_in_supersports_namespace(self):
         self.assertEqual(manage.validated_project_name("supersports"), "supersports")
         self.assertEqual(manage.validated_project_name("supersports-regression"), "supersports-regression")
@@ -109,7 +153,7 @@ class HttpProbeTests(unittest.TestCase):
 
 class ReleaseRegistryTests(unittest.TestCase):
     def test_records_exact_image_ids_and_does_not_overwrite_a_release(self):
-        images = {"catalog": "sha256:" + "a" * 64, "configuration": "sha256:" + "b" * 64}
+        images = {service: "sha256:" + str(i) * 64 for i, service in enumerate(manage.DEPLOYABLES, 1)}
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             manage.record_release(root, "supersports", "v1", images)
@@ -122,13 +166,15 @@ class ReleaseRegistryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(ValueError):
                 manage.record_release(Path(directory), "supersports", "v1",
-                                      {"catalog": "latest", "configuration": "latest"})
+                                      {service: "latest" for service in manage.DEPLOYABLES})
 
     def test_release_failure_does_not_record_a_release(self):
         from unittest.mock import patch
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             with patch.object(manage, "compose") as compose, \
+                 patch.object(manage, "provision_databases"), \
+                 patch.object(manage, "provision_local_identity"), \
                  patch.object(manage, "integration", side_effect=RuntimeError("failed")):
                 with self.assertRaises(RuntimeError):
                     manage.release(root=root, project="supersports", version="v2")
@@ -147,16 +193,14 @@ class ReleaseRegistryTests(unittest.TestCase):
         from unittest.mock import patch, call
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            images = {"catalog": "sha256:" + "a" * 64,
-                      "configuration": "sha256:" + "b" * 64}
+            images = {service: "sha256:" + str(i) * 64 for i, service in enumerate(manage.DEPLOYABLES, 1)}
             manage.record_release(root, "supersports", "v1", images)
             with patch.object(manage, "run") as run, \
                  patch.object(manage, "compose") as compose, \
                  patch.object(manage, "integration") as integration:
                 manage.rollback(root=root, project="supersports", version="v1")
             self.assertEqual(run.call_args_list, [
-                call(["docker", "image", "inspect", images["catalog"]], capture=True),
-                call(["docker", "image", "inspect", images["configuration"]], capture=True),
+                *[call(["docker", "image", "inspect", images[service]], capture=True) for service in manage.DEPLOYABLES],
             ])
             compose.assert_called_once_with(
                 ["up", "-d", "--no-build", "--wait", "--wait-timeout", "180"],

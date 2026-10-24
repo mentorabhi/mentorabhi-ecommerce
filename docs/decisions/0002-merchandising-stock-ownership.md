@@ -24,4 +24,6 @@ The admin UI shows revision conflicts rather than overwriting another administra
 
 ## Supersession
 
+2026-10-23: [ADR 0003](0003-simple-local-authentication.md) supersedes the application role requirements in decisions 5–6. Authenticated local accounts can administer without role assignments. Database roles, stock invariants and actor audit are unchanged.
+
 Any later change to runtime currency ownership, service data ownership, stock ledger semantics, or cross-currency completeness must supersede this ADR and update accepted requirements/design/traceability before implementation.

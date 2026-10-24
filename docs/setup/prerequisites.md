@@ -6,6 +6,7 @@ Revision 1 · 2026-10-23.
 - Docker Desktop/Engine running, with Compose and at least 4 GiB allocated for this bootstrap; this Mac has about 7.75 GiB allocated. Full future commerce/data/model workloads require separate measurements.
 - A compatible Python interpreter and repository-local .venv for operational scripts. This checkout uses Python 3.14.7. Do not install project packages globally.
 - Git and initial internet access for pinned image/dependency downloads. Runtime uses local services and does not require cloud accounts.
+- Google Chrome installed on the host for the Selenium UI suite. Selenium Manager downloads the matching ChromeDriver on first test run; runtime services do not need Chrome.
 Java/Maven and all app/dependency workloads for this milestone run in Docker. Host Java, Maven, PostgreSQL, Keycloak, Redis or Kafka installations are unnecessary.
 
 From the repository root:
@@ -17,6 +18,23 @@ devops/scripts/supersports configure
 devops/scripts/supersports validate
 ```
 Choose a supported installed interpreter explicitly if system python3 is old; for example python3.14 -m venv .venv. Do not recreate an existing working environment just to run these commands.
+
+Set the local application account to the requested demo login before first startup:
+
+```sh
+printf 'ADMIN_PASSWORD=admin\n' > devops/.local/admin-login.env
+chmod 600 devops/.local/admin-login.env
+```
+
+Sign in at `http://localhost:3000` with username `admin` and password `admin`. The ignored file is local-only; the identity provisioning step synchronizes it on each `supersports up`. Infrastructure/database credentials stay in the separate generated bootstrap file.
+
+Install the pinned UI test dependency in the repository environment:
+
+```sh
+.venv/bin/python -m pip install -r apps/storefront/tests/requirements.txt
+```
+
+After starting the full S1-M03 profile, run the authenticated browser suite with `devops/scripts/supersports ui-test`. It uses the ignored local demo credentials, creates one stable Selenium product and coupon on first run, and appends an inventory adjustment/reversal pair on each run. Retain these records in the local development database so UI-to-database results remain inspectable. Browser driver acquisition is managed by Selenium Manager.
 
 ## Nova prerequisite: native host Ollama
 Use the Ollama installation already present on the host. Do not install, create or start an Ollama Docker container. This is the explicit exception to the Dockerized application/dependency stack. Stage 1 commerce must work while Ollama is stopped.

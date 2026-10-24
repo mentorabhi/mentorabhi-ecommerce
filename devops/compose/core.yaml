@@ -1,7 +1,7 @@
 name: supersports
 x-app-environment: &app-environment
   JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m -XX:MaxMetaspaceSize=160m"
-  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "4"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
   SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
   SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "3000"
   SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://localhost:8180/realms/supersports"
@@ -35,9 +35,12 @@ services:
       CATALOG_DB_PASSWORD: "${CATALOG_DB_PASSWORD:?Run configure}"
       CONFIGURATION_DB_PASSWORD: "${CONFIGURATION_DB_PASSWORD:?Run configure}"
       IDENTITY_DB_PASSWORD: "${IDENTITY_DB_PASSWORD:?Run configure}"
+      PRICING_DB_PASSWORD: "${PRICING_DB_PASSWORD:?Run configure}"
+      INVENTORY_DB_PASSWORD: "${INVENTORY_DB_PASSWORD:?Run configure}"
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./devops/postgres/init.sh:/docker-entrypoint-initdb.d/10-supersports.sh:ro
+      - ./devops/postgres/provision.sql:/opt/supersports/provision.sql:ro
     healthcheck:
       test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "postgres"]
       interval: 5s
@@ -68,6 +71,7 @@ services:
       DEMO_CUSTOMER_PASSWORD: "${DEMO_CUSTOMER_PASSWORD:?Run configure}"
       DEMO_PLATFORM_ADMIN_PASSWORD: "${DEMO_PLATFORM_ADMIN_PASSWORD:?Run configure}"
       DEMO_CATALOG_ADMIN_PASSWORD: "${DEMO_CATALOG_ADMIN_PASSWORD:?Run configure}"
+      DEMO_INVENTORY_OPERATOR_PASSWORD: "${DEMO_INVENTORY_OPERATOR_PASSWORD:?Run configure}"
     ports: ["127.0.0.1:8180:8080"]
     volumes:
       - ./devops/identity/supersports-realm.json:/opt/keycloak/data/import/supersports-realm.json:ro
@@ -122,6 +126,66 @@ services:
       SPRING_DATASOURCE_USERNAME: supersports_configuration
       SPRING_DATASOURCE_PASSWORD: "${CONFIGURATION_DB_PASSWORD:?Run configure}"
     ports: ["127.0.0.1:8082:8080"]
+
+  pricing:
+    <<: *app-runtime
+    image: "${PRICING_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args:
+        BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}"
+        JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}"
+        SERVICE_NAME: pricing
+        RELEASE_VERSION: "${RELEASE_VERSION:-s1-m03}"
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pricing
+      SPRING_DATASOURCE_USERNAME: supersports_pricing
+      SPRING_DATASOURCE_PASSWORD: "${PRICING_DB_PASSWORD:?Run configure}"
+    ports: ["127.0.0.1:8083:8080"]
+
+  inventory:
+    <<: *app-runtime
+    image: "${INVENTORY_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args:
+        BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}"
+        JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}"
+        SERVICE_NAME: inventory
+        RELEASE_VERSION: "${RELEASE_VERSION:-s1-m03}"
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/inventory
+      SPRING_DATASOURCE_USERNAME: supersports_inventory
+      SPRING_DATASOURCE_PASSWORD: "${INVENTORY_DB_PASSWORD:?Run configure}"
+      CATALOG_BASE_URL: http://catalog:8080
+    ports: ["127.0.0.1:8084:8080"]
+
+  storefront:
+    restart: unless-stopped
+    image: "${STOREFRONT_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/storefront.Dockerfile
+      args:
+        NODE_IMAGE: "${STOREFRONT_NODE_IMAGE:?Use devops/scripts/supersports}"
+        NGINX_IMAGE: "${STOREFRONT_NGINX_IMAGE:?Use devops/scripts/supersports}"
+    mem_limit: 128m
+    cpus: 0.5
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16777216
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      catalog: {condition: service_healthy}
+      pricing: {condition: service_healthy}
+      inventory: {condition: service_healthy}
+      identity: {condition: service_healthy}
+    ports: ["127.0.0.1:3000:8080"]
 
 volumes:
   postgres-data:

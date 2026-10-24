@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sports": [
+    {"slug":"cricket","name":"Cricket","category":{"slug":"cricket-equipment","name":"Cricket Equipment","attributes":[]}},
+    {"slug":"football","name":"Football","category":{"slug":"football-equipment","name":"Football Equipment","attributes":[]}}
+  ],
+  "products": [
+    {"sport":"cricket","slug":"ss-pro-cricket-bat","brand":"SuperSports","title":"Pro Willow Cricket Bat","description":"Balanced English willow profile for confident front-foot drives and controlled pickup.","code":"SS-CR-BAT-001","asset":"products/cricket-bat.svg","alt":"Illustrated English willow cricket bat","inr":1249900,"usd":14999,"stock":16},
+    {"sport":"cricket","slug":"ss-match-cricket-ball","brand":"SuperSports","title":"Match Leather Cricket Ball","description":"Four-piece red leather match ball with a pronounced seam and durable core.","code":"SS-CR-BALL-001","asset":"products/cricket-ball.svg","alt":"Illustrated red leather cricket ball","inr":89900,"usd":1099,"stock":32},
+    {"sport":"cricket","slug":"ss-pro-batting-gloves","brand":"SuperSports","title":"Pro Batting Gloves","description":"Lightweight protection with ventilated palms and flexible finger rolls.","code":"SS-CR-GLOVE-001","asset":"products/cricket-gloves.svg","alt":"Illustrated pair of cricket batting gloves","inr":249900,"usd":2999,"stock":20},
+    {"sport":"football","slug":"ss-control-football","brand":"SuperSports","title":"Control Match Football","description":"Thermally bonded match ball with a stable flight and textured touch panels.","code":"SS-FB-BALL-001","asset":"products/football.svg","alt":"Illustrated white and blue football","inr":329900,"usd":3999,"stock":24},
+    {"sport":"football","slug":"ss-pitch-training-cones","brand":"SuperSports","title":"Pitch Training Cones Set","description":"Ten high-visibility flexible cones for agility drills and small-sided training.","code":"SS-FB-CONE-001","asset":"products/football-cones.svg","alt":"Illustrated set of orange training cones","inr":79900,"usd":999,"stock":40},
+    {"sport":"football","slug":"ss-keeper-gloves","brand":"SuperSports","title":"Grip Goalkeeper Gloves","description":"Latex palm grip, reinforced wrist support and a comfortable breathable backhand.","code":"SS-FB-GLOVE-001","asset":"products/goalkeeper-gloves.svg","alt":"Illustrated pair of goalkeeper gloves","inr":219900,"usd":2699,"stock":18}
+  ],
+  "coupons": [
+    {"code":"WELCOME10","active":true,"startsAt":"2026-01-01T00:00:00Z","endsAt":"2027-01-01T00:00:00Z","currency":"INR","kind":"PERCENT","value":1000,"minimumSubtotalMinor":100000,"maximumDiscountMinor":50000,"globalLimit":500,"perCustomerLimit":1,"rules":{"categorySlugs":["cricket-equipment","football-equipment"]}},
+    {"code":"CRICKET250","active":true,"startsAt":"2026-01-01T00:00:00Z","endsAt":"2027-01-01T00:00:00Z","currency":"INR","kind":"FIXED","value":25000,"minimumSubtotalMinor":100000,"maximumDiscountMinor":25000,"globalLimit":100,"perCustomerLimit":1,"rules":{"categorySlugs":["cricket-equipment"]}}
+  ]
+}

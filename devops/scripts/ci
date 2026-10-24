@@ -7,3 +7,5 @@ repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 "$repo_root/.venv/bin/python" "$repo_root/devops/scripts/check_deployment.py"
 "$repo_root/devops/scripts/supersports" up
 "$repo_root/devops/scripts/supersports" test --recovery
+"$repo_root/.venv/bin/python" -m pip install -r "$repo_root/apps/storefront/tests/requirements.txt"
+"$repo_root/devops/scripts/supersports" ui-test
