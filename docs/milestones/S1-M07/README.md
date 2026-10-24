@@ -4,6 +4,8 @@ Revision 1 · 2026-10-24 · Design and review complete; implementation not start
 
 Design: [post-purchase design](design.md). Review: [design review](design-review.md). Editable flow: [post-purchase-flow.mmd](post-purchase-flow.mmd). Manual checks: [manual acceptance](manual-acceptance.md). Requirements: R08 and AE10 in [accepted requirements](../../../requirements/accepted-requirements.md).
 
+Repository intake and execution order: [implementation units](implementation-units.md). The first implementation unit closes existing Payment ledger caps and operation ownership before customer post-purchase actions are exposed.
+
 ## Objective
 
 Complete the customer order lifecycle after checkout: fulfillment tracking, eligible cancellation, line-level returns, simulated refunds, verified-purchase reviews with moderation, and owned support requests. Preserve service ownership and money invariants from M05/M06.
