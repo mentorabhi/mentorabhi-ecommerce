@@ -12,6 +12,15 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class ConfigurationRepositoryTest {
+    @Test void exposesVersionedCheckoutSimulationSettings() throws Exception {
+        var jdbc=mock(JdbcTemplate.class);
+        when(jdbc.queryForObject("SELECT revision FROM bootstrap_metadata WHERE service='configuration'",Long.class)).thenReturn(2L);
+        when(jdbc.query(eq("SELECT key,value FROM configuration_setting WHERE key LIKE 'checkout.%' ORDER BY key"),any(RowMapper.class)))
+                .thenAnswer(invocation->{RowMapper<?> mapper=invocation.getArgument(1);String[][] values={{"checkout.tax.rate-bps","1800"},{"checkout.shipping.INR","9900"},{"checkout.shipping.USD","199"},{"checkout.inventory.reservation-seconds","600"},{"checkout.payment.authorization-mode","APPROVE"}};var result=new java.util.ArrayList<>();for(int i=0;i<values.length;i++){var row=mock(ResultSet.class);when(row.getString("key")).thenReturn(values[i][0]);when(row.getString("value")).thenReturn(values[i][1]);result.add(mapper.mapRow(row,i));}return result;});
+        var settings=new ConfigurationRepository(jdbc).checkoutSettings();
+        assertThat(settings).isEqualTo(new ConfigurationRepository.CheckoutSettings(2,1800,9900,199,600,"APPROVE"));
+    }
+
     @Test void readsRevisionAndOrderedTypedRecordsThroughController() throws Exception {
         var jdbc = mock(JdbcTemplate.class);
         when(jdbc.queryForObject("SELECT revision FROM bootstrap_metadata WHERE service = 'configuration'", Long.class))

@@ -1,0 +1,13 @@
+openapi: 3.1.0
+info: {title: SuperSports Catalog Checkout Internal API, version: 1.0.0}
+servers: [{url: /api/v1/internal/checkout/catalog}]
+security: [{checkoutWorker: []}]
+paths:
+  /skus/{skuId}:
+    get:
+      summary: Read active SKU and Catalog-owned product/category facts for checkout
+      parameters: [{in: path, name: skuId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Catalog facts and component revisions}, '404': {description: SKU not found}}
+components:
+  securitySchemes:
+    checkoutWorker: {type: http, scheme: bearer, bearerFormat: JWT, description: Exact checkout worker client, internal audience and checkout:catalog.read scope}

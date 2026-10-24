@@ -38,6 +38,50 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "supersports-customer-test",
+      "name": "Local integration tests only",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "defaultClientScopes": ["basic", "profile", "email"],
+      "protocolMappers": [
+        {
+          "name": "supersports-customer-test-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "supersports-customer-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "checkout-test-customer",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "checkout-test-customer@supersports.local",
+      "firstName": "Checkout",
+      "lastName": "Test",
+      "credentials": [{"type": "password", "value": "${DEMO_CUSTOMER_PASSWORD}", "temporary": false}]
+    },
+    {
+      "username": "checkout-test-customer-b",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "checkout-test-customer-b@supersports.local",
+      "firstName": "Checkout",
+      "lastName": "Test B",
+      "credentials": [{"type": "password", "value": "${DEMO_CUSTOMER_PASSWORD}", "temporary": false}]
     }
   ]
 }

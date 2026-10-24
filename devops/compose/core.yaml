@@ -6,7 +6,6 @@ x-app-environment: &app-environment
   SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "3000"
   SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://localhost:8180/realms/supersports"
   SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "http://identity:8080/realms/supersports/protocol/openid-connect/certs"
-  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUDIENCES: "supersports-api"
 
 x-app-runtime: &app-runtime
   restart: unless-stopped
@@ -38,6 +37,9 @@ services:
       PRICING_DB_PASSWORD: "${PRICING_DB_PASSWORD:?Run configure}"
       INVENTORY_DB_PASSWORD: "${INVENTORY_DB_PASSWORD:?Run configure}"
       CUSTOMER_DB_PASSWORD: "${CUSTOMER_DB_PASSWORD:?Run configure}"
+      ORDERS_DB_PASSWORD: "${ORDERS_DB_PASSWORD:?Run configure}"
+      PAYMENT_DB_PASSWORD: "${PAYMENT_DB_PASSWORD:?Run configure}"
+      FULFILLMENT_DB_PASSWORD: "${FULFILLMENT_DB_PASSWORD:?Run configure}"
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./devops/postgres/init.sh:/docker-entrypoint-initdb.d/10-supersports.sh:ro
@@ -188,6 +190,65 @@ services:
       CATALOG_BASE_URL: http://catalog:8080
     ports: ["127.0.0.1:8085:8080"]
 
+  orders:
+    <<: *app-runtime
+    image: "${ORDERS_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args:
+        BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}"
+        JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}"
+        SERVICE_NAME: orders
+        RELEASE_VERSION: "${RELEASE_VERSION:-s1-m05}"
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orders
+      SPRING_DATASOURCE_USERNAME: supersports_orders
+      SPRING_DATASOURCE_PASSWORD: "${ORDERS_DB_PASSWORD:?Run configure}"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://localhost:8180/realms/supersports-customers"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "http://identity:8080/realms/supersports-customers/protocol/openid-connect/certs"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUDIENCES: "supersports-customer-api"
+      CHECKOUT_WORKER_CLIENT_ID: supersports-checkout-worker
+      CHECKOUT_WORKER_CLIENT_SECRET: "${CHECKOUT_WORKER_CLIENT_SECRET:?Run configure}"
+      CUSTOMER_BASE_URL: http://customer:8080
+      CATALOG_BASE_URL: http://catalog:8080
+      PRICING_BASE_URL: http://pricing:8080
+      CONFIGURATION_BASE_URL: http://configuration:8080
+      INVENTORY_BASE_URL: http://inventory:8080
+      PAYMENT_BASE_URL: http://payment-simulator:8080
+      FULFILLMENT_BASE_URL: http://fulfillment-simulator:8080
+      IDENTITY_TOKEN_URL: http://identity:8080/realms/supersports/protocol/openid-connect/token
+    ports: ["127.0.0.1:8086:8080"]
+
+  payment-simulator:
+    <<: *app-runtime
+    image: "${PAYMENT_SIMULATOR_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args: {BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}", JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}", SERVICE_NAME: payment-simulator, RELEASE_VERSION: "${RELEASE_VERSION:-s1-m05}"}
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment
+      SPRING_DATASOURCE_USERNAME: supersports_payment
+      SPRING_DATASOURCE_PASSWORD: "${PAYMENT_DB_PASSWORD:?Run configure}"
+    ports: ["127.0.0.1:8087:8080"]
+
+  fulfillment-simulator:
+    <<: *app-runtime
+    image: "${FULFILLMENT_SIMULATOR_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args: {BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}", JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}", SERVICE_NAME: fulfillment-simulator, RELEASE_VERSION: "${RELEASE_VERSION:-s1-m05}"}
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fulfillment
+      SPRING_DATASOURCE_USERNAME: supersports_fulfillment
+      SPRING_DATASOURCE_PASSWORD: "${FULFILLMENT_DB_PASSWORD:?Run configure}"
+    ports: ["127.0.0.1:8088:8080"]
+
   storefront:
     restart: unless-stopped
     image: "${STOREFRONT_IMAGE:?Use devops/scripts/supersports}"
@@ -209,6 +270,7 @@ services:
       pricing: {condition: service_healthy}
       inventory: {condition: service_healthy}
       customer: {condition: service_healthy}
+      orders: {condition: service_healthy}
       identity: {condition: service_healthy}
     ports: ["127.0.0.1:3000:8080"]
 

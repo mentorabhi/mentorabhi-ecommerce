@@ -133,6 +133,25 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.login-shell')))
         self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, '.app-shell'))
 
+    def test_checkout_configuration_categories_update_and_audit_feedback(self):
+        self.login("admin", "ADMIN_PASSWORD")
+        self.nav("Configuration")
+        self.wait.until(lambda driver: driver.find_element(By.TAG_NAME, "h1").text == "Configuration.")
+        row_selector = "//article[contains(@class,'configuration-row')][.//code[normalize-space()='checkout.tax.rate-bps']]"
+        row = self.wait.until(EC.visibility_of_element_located((By.XPATH, row_selector)))
+        original = row.find_element(By.NAME, "value").get_attribute("value")
+        changed = "1900" if original != "1900" else "1800"
+        field = row.find_element(By.NAME, "value"); field.clear(); field.send_keys(changed)
+        row.find_element(By.XPATH, ".//button[normalize-space()='Save']").click()
+        self.wait.until(lambda driver: changed in driver.find_element(By.XPATH, row_selector).find_element(By.NAME, "value").get_attribute("value"))
+        row = self.driver.find_element(By.XPATH, row_selector)
+        field = row.find_element(By.NAME, "value"); field.clear(); field.send_keys(original)
+        row.find_element(By.XPATH, ".//button[normalize-space()='Save']").click()
+        self.wait.until(lambda driver: original in driver.find_element(By.XPATH, row_selector).find_element(By.NAME, "value").get_attribute("value"))
+        self.assertIn("Commerce simulations", self.driver.find_element(By.CSS_SELECTOR, ".configuration-groups").text)
+        self.assertIn("recorded in the audit log", self.driver.find_element(By.CSS_SELECTOR, ".content").text)
+        self.assert_no_react_hook_order_error()
+
     def test_catalog_login_products_art_and_product_creation(self):
         self.login("admin", "ADMIN_PASSWORD")
         self.assertEqual(self.driver.find_element(By.TAG_NAME, "h1").text, "Catalog.")
@@ -369,7 +388,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.wait.until(lambda driver: "Added to your cart." in driver.find_element(By.CSS_SELECTOR, ".shop-shell").text)
         self.driver.find_element(By.CSS_SELECTOR, ".shop-actions a[href='/cart']").click()
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".saved-row")))
-        self.assertIn("Cart", self.driver.find_element(By.CSS_SELECTOR, ".customer-page").text)
+        self.assertIn("Your cart", self.driver.find_element(By.CSS_SELECTOR, ".customer-page").text)
         self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, ".saved-row input[type='number']").get_attribute("value"), "2")
 
         self.driver.get(BASE_URL + "/account")
@@ -385,6 +404,19 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         search.send_keys(Keys.ENTER)
         self.wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, ".collection-heading h1").text == 'Results for “football”')
         self.wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, ".store-card")) == 3)
+
+        self.driver.get(BASE_URL + "/cart")
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Place simulated order')]"))).click()
+        self.wait.until(lambda driver: driver.find_elements(By.CSS_SELECTOR, ".order-row") or driver.find_elements(By.CSS_SELECTOR, ".store-alert.error"))
+        if not self.driver.find_elements(By.CSS_SELECTOR, ".order-row"):
+            self.fail("Checkout UI returned an error: " + self.driver.find_element(By.CSS_SELECTOR, ".store-alert.error").text)
+        self.assertIn("Order accepted for processing", self.driver.find_element(By.CSS_SELECTOR, ".shop-shell").text)
+        self.assertTrue(self.driver.find_element(By.CSS_SELECTOR, ".order-row").find_element(By.TAG_NAME, "strong").text.startswith("Order "))
+        self.driver.find_element(By.CSS_SELECTOR, ".order-row").click()
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".order-detail")))
+        self.wait.until(lambda driver: "FULFILLMENT SCHEDULED" in driver.find_element(By.CSS_SELECTOR, ".order-detail").text.upper())
+        self.assertIn("India", self.driver.find_element(By.CSS_SELECTOR, ".order-detail").text)
+        self.assertIn("Simulated tax", self.driver.find_element(By.CSS_SELECTOR, ".order-detail").text)
 
         self.driver.get(BASE_URL + "/account")
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".address-form")))

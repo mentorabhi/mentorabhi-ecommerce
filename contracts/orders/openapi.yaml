@@ -1,0 +1,40 @@
+openapi: 3.1.0
+info: {title: SuperSports Orders API, version: 1.0.0}
+servers: [{url: /api/v1/orders}]
+security: [{customerBearer: []}]
+paths:
+  /checkout:
+    post:
+      summary: Validate current customer address, catalog facts, quote and checkout settings; create an owner-scoped immutable order snapshot idempotently
+      parameters:
+        - {in: header, name: Idempotency-Key, required: true, schema: {type: string, minLength: 8, maxLength: 120}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lines]
+              properties:
+                lines: {type: array, minItems: 1, maxItems: 50, items: {type: object, required: [skuId, quantity], properties: {skuId: {type: string, format: uuid}, quantity: {type: integer, minimum: 1, maximum: 100}}}}
+                couponCode: {type: [string, 'null']}
+      responses:
+        '202': {description: Order snapshot created in PENDING_PAYMENT or same owner/key replayed}
+        '409': {description: Idempotency key reused with changed payload}
+        '422': {description: Invalid cart, incomplete Indian address, inactive SKU, or deterministic price/coupon rejection}
+        '503': {description: Validation dependency unavailable; request claim can resume after its lease expires}
+  /checkout-requests/{requestId}:
+    get:
+      summary: Read a checkout request owned by the authenticated customer
+      parameters: [{in: path, name: requestId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Request state}, '404': {description: Missing or not owned by caller}}
+  /:
+    get: {summary: List the authenticated customer's orders, responses: {'200': {description: Owner-scoped orders}}}
+  /{orderId}:
+    get:
+      summary: Read an order owned by the authenticated customer
+      parameters: [{in: path, name: orderId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Immutable order snapshot}, '404': {description: Missing or not owned by caller}}
+components:
+  securitySchemes:
+    customerBearer: {type: http, scheme: bearer, bearerFormat: JWT, description: Customer realm token with supersports-customer-api audience}

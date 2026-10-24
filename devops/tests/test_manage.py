@@ -87,12 +87,15 @@ class ConfigureTests(unittest.TestCase):
         realm = json.loads((ROOT / "devops/identity/supersports-customers-realm.json").read_text())
         self.assertEqual(realm["realm"], "supersports-customers")
         self.assertTrue(realm["registrationAllowed"])
-        client, = realm["clients"]
+        client = next(client for client in realm["clients"] if client["clientId"] == "supersports-customer-web")
         self.assertEqual(client["clientId"], "supersports-customer-web")
         self.assertFalse(client["directAccessGrantsEnabled"])
         audiences = [mapper["config"]["included.custom.audience"] for mapper in client["protocolMappers"]]
         self.assertEqual(audiences, ["supersports-customer-api"])
         self.assertNotIn("supersports-api", audiences)
+        test_client = next(client for client in realm["clients"] if client["clientId"] == "supersports-customer-test")
+        self.assertTrue(test_client["directAccessGrantsEnabled"])
+        self.assertEqual(test_client["name"], "Local integration tests only")
 
     def test_incomplete_existing_credentials_are_rejected_not_rotated(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -158,6 +161,18 @@ class CommandTests(unittest.TestCase):
 
 
 class HttpProbeTests(unittest.TestCase):
+    def test_request_json_preserves_custom_idempotency_header(self):
+        from io import BytesIO
+        from unittest.mock import patch
+        class Response(BytesIO):
+            status = 202
+        response = Response(b'{"status":"VALIDATING"}')
+        with patch.object(manage, "urlopen", return_value=response) as opened:
+            self.assertEqual(manage.request_json("http://localhost", method="POST", data=b"{}",
+                                                 headers={"Idempotency-Key":"integration-1"}),
+                             (202, {"status":"VALIDATING"}))
+        self.assertEqual(opened.call_args.args[0].get_header("Idempotency-key"), "integration-1")
+
     def test_restart_connection_drop_is_a_retryable_probe_result(self):
         from http.client import RemoteDisconnected
         from unittest.mock import patch

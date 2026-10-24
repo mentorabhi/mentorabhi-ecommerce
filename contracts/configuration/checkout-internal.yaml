@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info:
+  title: SuperSports Checkout Configuration API
+  version: 1.0.0
+servers:
+  - url: http://configuration:8080/api/v1/internal/checkout/configuration
+security:
+  - checkoutWorker: [checkout:configuration.read]
+paths:
+  /:
+    get:
+      summary: Read the active checkout simulation settings and revision
+      responses:
+        '200':
+          description: Versioned tax, per-currency shipping, reservation timeout and payment simulation mode
+        '401': {description: Missing or invalid token}
+        '403': {description: Wrong client, audience or operation scope}
+components:
+  securitySchemes:
+    checkoutWorker:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

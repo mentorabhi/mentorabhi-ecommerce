@@ -1,0 +1,6 @@
+package com.supersports.fulfillment;
+import static org.junit.jupiter.api.Assertions.*;import static org.mockito.ArgumentMatchers.*;import static org.mockito.Mockito.*;import java.util.List;import java.util.UUID;import org.junit.jupiter.api.Test;import org.springframework.jdbc.core.JdbcTemplate;
+class FulfillmentRepositoryTest{
+ @Test void schedulesStableTrackingReference(){JdbcTemplate jdbc=mock(JdbcTemplate.class);UUID order=UUID.randomUUID();when(jdbc.queryForObject(anyString(),eq(Long.class),eq(order))).thenReturn(2L);when(jdbc.queryForList(anyString(),any(Object[].class))).thenReturn(List.of());var result=new FulfillmentRepository(jdbc).schedule(order,2,"order:schedule");assertEquals("SCHEDULED",result.get("state"));assertEquals("SS-"+order.toString().substring(0,8).toUpperCase(),result.get("trackingId"));verify(jdbc).update(contains("INSERT INTO shipment"),eq(order),eq("order:schedule"),anyString(),eq(2L));}
+ @Test void rejectsStaleFence(){JdbcTemplate jdbc=mock(JdbcTemplate.class);UUID order=UUID.randomUUID();when(jdbc.queryForObject(anyString(),eq(Long.class),eq(order))).thenReturn(3L);assertThrows(FulfillmentRepository.StaleFenceException.class,()->new FulfillmentRepository(jdbc).schedule(order,2,"order:schedule"));}
+}

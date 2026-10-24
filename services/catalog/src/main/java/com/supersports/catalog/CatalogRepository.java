@@ -48,6 +48,10 @@ class CatalogRepository {
         return jdbc.queryForMap("SELECT s.id, (s.active AND p.status='active') AS active FROM skus s JOIN products p ON p.id=s.product_id WHERE s.id=?", id);
     }
 
+    Map<String,Object> checkoutSku(UUID id) {
+        return jdbc.queryForMap("SELECT s.id AS \"skuId\",s.active AND p.status='active' AND c.active AS active,p.id AS \"productId\",p.title,c.id AS \"categoryId\",c.slug AS \"categorySlug\",s.revision AS \"skuRevision\",p.revision AS \"productRevision\",c.revision AS \"categoryRevision\" FROM skus s JOIN products p ON p.id=s.product_id JOIN categories c ON c.id=p.category_id WHERE s.id=?",id);
+    }
+
     UUID createSport(String slug, String name, String actor) {
         UUID id=jdbc.queryForObject("INSERT INTO sports(id,slug,name) VALUES (?,?,?) ON CONFLICT(slug) DO UPDATE SET name=excluded.name,revision=sports.revision+CASE WHEN sports.name IS DISTINCT FROM excluded.name THEN 1 ELSE 0 END RETURNING id",UUID.class,UUID.randomUUID(),slug,name);
         return id;

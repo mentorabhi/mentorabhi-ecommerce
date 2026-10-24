@@ -55,6 +55,17 @@ class SecurityPolicyTest {
     @Test void healthRemainsPublic() throws Exception {
         mvc.perform(get("/actuator/health/readiness")).andExpect(status().isOk());
     }
+    @Test void checkoutReservationRequiresDedicatedAudienceClientAndScope() throws Exception {
+        mvc.perform(post("/api/v1/internal/checkout/inventory/reservations").header("Authorization", "Bearer valid"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/internal/checkout/inventory/reservations").header("Authorization", "Bearer operator-scope"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/internal/checkout/inventory/reservations").header("Authorization", "Bearer worker"))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/v1/inventory/balances").header("Authorization","Bearer worker")).andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/internal/checkout/inventory/reservations/{id}/commit", "00000000-0000-4000-8000-000000000001").header("Authorization", "Bearer worker"))
+                .andExpect(status().isForbidden());
+    }
 
     @Configuration(proxyBeanMethods = false)
     @EnableWebSecurity
@@ -64,9 +75,11 @@ class SecurityPolicyTest {
         @Bean JwtDecoder jwtDecoder() {
             // Isolate route policy from cryptography; live tests cover signed and tampered tokens.
             return token -> {
-                if (!"valid".equals(token)) throw new BadJwtException("Invalid test token");
-                return Jwt.withTokenValue(token).header("alg", "RS256")
-                        .subject("ordinary-local-user").claim("aud", java.util.List.of("supersports-api")).build();
+                if (!java.util.Set.of("valid", "worker", "operator-scope").contains(token)) throw new BadJwtException("Invalid test token");
+                var builder=Jwt.withTokenValue(token).header("alg", "RS256").subject("ordinary-local-user");
+                if(token.equals("worker"))return builder.claim("aud",java.util.List.of("supersports-checkout-internal-api")).claim("azp","supersports-checkout-worker").claim("scope","checkout:inventory.reserve").build();
+                if(token.equals("operator-scope"))return builder.claim("aud",java.util.List.of("supersports-api")).claim("scope","checkout:inventory.reserve").build();
+                return builder.claim("aud", java.util.List.of("supersports-api")).build();
             };
         }
         @Bean EchoController echoController() { return new EchoController(); }

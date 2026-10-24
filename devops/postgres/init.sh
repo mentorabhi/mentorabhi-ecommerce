@@ -6,25 +6,29 @@ psql --username "$POSTGRES_USER" --dbname postgres --set ON_ERROR_STOP=1 \
   --set identity_password="$IDENTITY_DB_PASSWORD" \
   --set pricing_password="$PRICING_DB_PASSWORD" \
   --set inventory_password="$INVENTORY_DB_PASSWORD" \
-  --set customer_password="$CUSTOMER_DB_PASSWORD" <<'SQL'
+  --set customer_password="$CUSTOMER_DB_PASSWORD" \
+  --set orders_password="$ORDERS_DB_PASSWORD" <<'SQL'
 CREATE ROLE supersports_catalog LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD :'catalog_password';
 CREATE ROLE supersports_configuration LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD :'configuration_password';
 CREATE ROLE supersports_identity LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD :'identity_password';
 CREATE ROLE supersports_pricing LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD :'pricing_password';
 CREATE ROLE supersports_inventory LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD :'inventory_password';
 CREATE ROLE supersports_customer LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD :'customer_password';
+CREATE ROLE supersports_orders LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD :'orders_password';
 CREATE DATABASE catalog OWNER supersports_catalog;
 CREATE DATABASE configuration OWNER supersports_configuration;
 CREATE DATABASE identity OWNER supersports_identity;
 CREATE DATABASE pricing OWNER supersports_pricing;
 CREATE DATABASE inventory OWNER supersports_inventory;
 CREATE DATABASE customer OWNER supersports_customer;
+CREATE DATABASE orders OWNER supersports_orders;
 REVOKE ALL ON DATABASE catalog FROM PUBLIC;
 REVOKE ALL ON DATABASE configuration FROM PUBLIC;
 REVOKE ALL ON DATABASE identity FROM PUBLIC;
 REVOKE ALL ON DATABASE pricing FROM PUBLIC;
 REVOKE ALL ON DATABASE inventory FROM PUBLIC;
 REVOKE ALL ON DATABASE customer FROM PUBLIC;
+REVOKE ALL ON DATABASE orders FROM PUBLIC;
 REVOKE CONNECT ON DATABASE postgres FROM PUBLIC;
 REVOKE CONNECT ON DATABASE template1 FROM PUBLIC;
 GRANT CONNECT ON DATABASE catalog TO supersports_catalog;
@@ -33,4 +37,5 @@ GRANT CONNECT ON DATABASE identity TO supersports_identity;
 GRANT CONNECT ON DATABASE pricing TO supersports_pricing;
 GRANT CONNECT ON DATABASE inventory TO supersports_inventory;
 GRANT CONNECT ON DATABASE customer TO supersports_customer;
+GRANT CONNECT ON DATABASE orders TO supersports_orders;
 SQL

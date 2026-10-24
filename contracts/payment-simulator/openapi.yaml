@@ -1,0 +1,32 @@
+openapi: 3.1.0
+info: {title: SuperSports local Payment Simulator API, version: 1.0.0}
+servers: [{url: /api/v1/internal/checkout/payments}]
+security: [{checkoutWorker: []}]
+paths:
+  /authorize:
+    post:
+      summary: Create an idempotent local authorization; mode DECLINE is deterministic
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/Operation'}}}}
+      responses: {'200': {description: AUTHORIZED, DECLINED or replayed operation}, '409': {description: Stale fence, invalid lifecycle transition or changed payload}}
+  /capture:
+    post: {summary: Capture a prior authorization idempotently, responses: {'200': {description: CAPTURED}, '409': {description: Stale fence or no authorization}}}
+  /void:
+    post: {summary: Void an authorization idempotently, responses: {'200': {description: VOIDED}}}
+  /refund:
+    post: {summary: Refund a captured simulated payment idempotently, responses: {'200': {description: REFUNDED}}}
+  /{orderId}/status:
+    get: {summary: Reconcile local operations for one order, responses: {'200': {description: Operation ledger}}}
+components:
+  schemas:
+    Operation:
+      type: object
+      required: [orderId, operationKey, fence, amountMinor, currency]
+      properties:
+        orderId: {type: string, format: uuid}
+        operationKey: {type: string, maxLength: 200}
+        fence: {type: integer, minimum: 1}
+        amountMinor: {type: integer, minimum: 0}
+        currency: {type: string, pattern: '^[A-Z]{3}$'}
+        authorizationMode: {type: string, enum: [APPROVE, DECLINE]}
+  securitySchemes:
+    checkoutWorker: {type: http, scheme: bearer, bearerFormat: JWT, description: Exact checkout client, internal audience and per-operation payment scope}

@@ -1,6 +1,6 @@
 # S1-M05 manual end-user acceptance
 
-Revision 1 · 2026-10-24 · Drafted with design; run only after M05 implementation is verified.
+Revision 2 · 2026-10-24 · Updated for the local simulator projects; manual execution remains outstanding.
 
 This checklist is separate from automated test evidence. Leave boxes unchecked until a person completes the action in the local UI or database. Do not use real payment, card, bank or carrier details.
 
@@ -9,7 +9,7 @@ This checklist is separate from automated test evidence. Leave boxes unchecked u
 - [ ] From repository root, start the documented full local profile: `./devops/scripts/supersports up`.
 - [ ] Run `./devops/scripts/supersports status`; confirm healthy PostgreSQL, Keycloak, Catalog, Configuration, Pricing, Inventory, Customer, Orders, Payment Simulator, Fulfillment Simulator and Storefront containers; record image tags.
 - [ ] Confirm the Storefront is available at http://localhost:3000 and `/healthz` reports `ok`.
-- [ ] Confirm readiness for Catalog (`8081`), Configuration (`8082`), Pricing (`8083`), Inventory (`8084`), Customer (`8085`), Orders (`8086`), Payment Simulator (`8087`) and Fulfillment Simulator (`8088`). These are the planned local port assignments; update this checklist if the reviewed implementation changes them.
+- [ ] Confirm readiness for Catalog (`8081`), Configuration (`8082`), Pricing (`8083`), Inventory (`8084`), Customer (`8085`), Orders (`8086`), Payment Simulator (`8087`) and Fulfillment Simulator (`8088`).
 - [ ] Confirm Keycloak readiness at http://localhost:8180/health/ready and both customer/operator issuer documents.
 - [ ] Confirm no cloud account, real payment provider or carrier is configured. Ollama is host-installed and not required for checkout.
 
@@ -47,11 +47,11 @@ This checklist is separate from automated test evidence. Leave boxes unchecked u
 Use the PostgreSQL owner account only for these read-only checks. Compare aggregate counts before and after each journey; do not paste personal addresses, email, customer subject identifiers, payment tokens or secrets into this document. Update table and database names if the reviewed migration contract changes.
 
 ```sh
-docker compose --project-directory . --project-name supersports --env-file devops/.local/bootstrap.env -f devops/compose/core.yaml exec -T postgres sh -ec 'for database in orders pricing inventory payments fulfillment; do echo "--- $database ---"; PGPASSWORD="$POSTGRES_PASSWORD" psql -X -v ON_ERROR_STOP=1 -U postgres -d "$database" -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"; done'
+docker compose --project-directory . --project-name supersports --env-file devops/.local/bootstrap.env -f devops/compose/core.yaml exec -T postgres sh -ec 'for database in orders pricing inventory payment fulfillment; do echo "--- $database ---"; PGPASSWORD="$POSTGRES_PASSWORD" psql -X -v ON_ERROR_STOP=1 -U postgres -d "$database" -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"; done'
 ```
 
 - [ ] Confirm migrations for Orders, Pricing, Inventory, Payment Simulator and Fulfillment Simulator succeeded.
-- [ ] Confirm the successful order has one idempotency record, expected line count and a terminal `CONFIRMED` state with matching order-owned Saga steps and outbox record.
+- [ ] Confirm the successful order has one idempotency record, expected line count and `FULFILLMENT_SCHEDULED` state with matching order-owned Saga steps and outbox records.
 - [ ] Confirm inventory has a single active/consumed reservation for the order and the stock movement ledger reconciles with on-hand stock.
 - [ ] Confirm coupon usage has one committed redemption for the order; failed/declined orders leave no active hold.
 - [ ] Confirm Payment Simulator has one authorization and one capture for the successful order; the decline case has no capture; a failed checkout's void/refund is represented once.

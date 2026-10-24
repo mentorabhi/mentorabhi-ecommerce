@@ -13,6 +13,18 @@ paths:
     get: {summary: Read recent stock movements, responses: {'200': {description: Append-only ledger entries}}}
   /adjustments:
     post: {summary: Append an idempotent signed stock adjustment after Catalog validation, responses: {'200': {description: Movement and balance}, '409': {description: Idempotency conflict}, '422': {description: Inactive SKU or negative stock}}}
+  /api/v1/internal/checkout/inventory/reservations:
+    servers: [{url: /}]
+    post: {summary: Atomically reserve all order SKU quantities; checkout worker scope and positive fencing token required, responses: {'200': {description: Reservation result}, '409': {description: Insufficient stock, stale fence or payload conflict}, '422': {description: Invalid expiry or quantity}}}
+  /api/v1/internal/checkout/inventory/reservations/{orderId}/protect:
+    servers: [{url: /}]
+    post: {summary: Protect a live hold against expiry while payment is reconciled; requires X-Checkout-Fence, responses: {'200': {description: Protected reservation}, '404': {description: Reservation not found}, '409': {description: Invalid transition or stale fence}}}
+  /api/v1/internal/checkout/inventory/reservations/{orderId}/commit:
+    servers: [{url: /}]
+    post: {summary: Consume a protected hold and decrement on-hand once; requires X-Checkout-Fence, responses: {'200': {description: Committed allocation}, '404': {description: Reservation not found}, '409': {description: Invalid transition or stale fence}}}
+  /api/v1/internal/checkout/inventory/reservations/{orderId}/release:
+    servers: [{url: /}]
+    post: {summary: Release an uncommitted hold idempotently; requires X-Checkout-Fence, responses: {'200': {description: Released reservation}, '404': {description: Reservation not found}, '409': {description: Stale fence}}}
 components:
   securitySchemes:
     bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}

@@ -58,6 +58,12 @@ class SecurityPolicyTest {
     @Test void healthRemainsPublic() throws Exception {
         mvc.perform(get("/actuator/health/readiness")).andExpect(status().isOk());
     }
+    @Test void checkoutWorkerHasOnlyItsInternalPricingRoutes() throws Exception {
+        mvc.perform(post("/api/v1/internal/checkout/pricing/quotes").header("Authorization","Bearer valid")).andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/internal/checkout/pricing/quotes").header("Authorization","Bearer worker")).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/pricing/prices").header("Authorization","Bearer worker")).andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/internal/checkout/pricing/coupon-holds").header("Authorization","Bearer worker")).andExpect(status().isForbidden());
+    }
 
     @Configuration(proxyBeanMethods = false)
     @EnableWebSecurity
@@ -67,9 +73,9 @@ class SecurityPolicyTest {
         @Bean JwtDecoder jwtDecoder() {
             // Isolate route policy from cryptography; live tests cover signed and tampered tokens.
             return token -> {
-                if (!"valid".equals(token)) throw new BadJwtException("Invalid test token");
-                return Jwt.withTokenValue(token).header("alg", "RS256")
-                        .subject("ordinary-local-user").claim("aud", java.util.List.of("supersports-api")).build();
+                if (!java.util.Set.of("valid","worker").contains(token)) throw new BadJwtException("Invalid test token");
+                if(token.equals("worker"))return Jwt.withTokenValue(token).header("alg","RS256").subject("checkout").claim("aud",java.util.List.of("supersports-checkout-internal-api")).claim("azp","supersports-checkout-worker").claim("scope","checkout:pricing.quote").build();
+                return Jwt.withTokenValue(token).header("alg", "RS256").subject("ordinary-local-user").claim("aud", java.util.List.of("supersports-api")).build();
             };
         }
         @Bean EchoController echoController() { return new EchoController(); }

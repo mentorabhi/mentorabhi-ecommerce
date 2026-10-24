@@ -1,3 +1,3 @@
 package com.supersports.pricing;
 import tools.jackson.databind.json.JsonMapper;
-final class Json {private static final JsonMapper M=new JsonMapper();private Json(){}static String write(Object o){try{return M.writeValueAsString(o);}catch(tools.jackson.core.JacksonException e){throw new IllegalArgumentException("Invalid JSON value",e);}}}
+final class Json {private static final JsonMapper M=new JsonMapper();private Json(){}static String write(Object o){try{return M.writeValueAsString(o);}catch(tools.jackson.core.JacksonException e){throw new IllegalArgumentException("Invalid JSON value",e);}}@SuppressWarnings("unchecked")static java.util.Map<String,Object> readMap(String json){try{return (java.util.Map<String,Object>)M.readValue(json,Object.class);}catch(tools.jackson.core.JacksonException e){throw new IllegalArgumentException("Invalid JSON value",e);}}}

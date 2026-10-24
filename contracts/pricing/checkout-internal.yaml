@@ -1,0 +1,25 @@
+openapi: 3.1.0
+info: {title: SuperSports Pricing Checkout Internal API, version: 1.0.0}
+servers: [{url: /api/v1/internal/checkout/pricing}]
+security: [{checkoutWorker: []}]
+paths:
+  /quotes:
+    post:
+      summary: Create or replay an owner-bound minor-unit quote using Catalog-proven facts and one active currency snapshot
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [requestId, customerSubject, lines], properties: {requestId: {type: string, format: uuid}, customerSubject: {type: string}, couponCode: {type: [string, 'null']}, lines: {type: array, minItems: 1, maxItems: 50, items: {type: object}}}}}}}
+      responses: {'200': {description: Quote snapshot}, '409': {description: Request ID payload conflict}, '422': {description: Invalid product price, coupon or terms}}
+  /coupon-holds:
+    post:
+      summary: Validate the quote revisions and atomically reserve coupon capacity when the quote uses a coupon
+      parameters: [{in: header, name: X-Checkout-Fence, required: false, schema: {type: integer, minimum: 1}}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [orderId, quoteId, customerSubject, expiresAt, fence], properties: {orderId: {type: string, format: uuid}, quoteId: {type: string, format: uuid}, customerSubject: {type: string}, expiresAt: {type: string, format: date-time}, fence: {type: integer, minimum: 1}}}}}}
+      responses: {'200': {description: Hold state or revision-validated no-coupon result}, '409': {description: Coupon capacity, expiry, stale fence or revision conflict}, '422': {description: Invalid hold request}}
+  /coupon-holds/{orderId}/protect:
+    post: {summary: Protect a live coupon hold while payment outcome is reconciled; requires X-Checkout-Fence, responses: {'200': {description: Protected hold}, '409': {description: Invalid transition or stale fence}}}
+  /coupon-holds/{orderId}/commit:
+    post: {summary: Commit the coupon redemption once; requires X-Checkout-Fence, responses: {'200': {description: Committed redemption}, '409': {description: Invalid transition or stale fence}}}
+  /coupon-holds/{orderId}/release:
+    post: {summary: Release an uncommitted coupon hold; requires X-Checkout-Fence, responses: {'200': {description: Released hold}, '409': {description: Invalid transition or stale fence}}}
+components:
+  securitySchemes:
+    checkoutWorker: {type: http, scheme: bearer, bearerFormat: JWT, description: Exact checkout worker client, internal audience and operation-specific checkout:pricing.* scope}

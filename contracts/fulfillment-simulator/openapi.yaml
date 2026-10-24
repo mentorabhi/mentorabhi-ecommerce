@@ -1,0 +1,15 @@
+openapi: 3.1.0
+info: {title: SuperSports local Fulfillment Simulator API, version: 1.0.0}
+servers: [{url: /api/v1/internal/checkout/fulfillment}]
+security: [{checkoutWorker: []}]
+paths:
+  /:
+    post:
+      summary: Idempotently schedule one local shipment after order confirmation
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [orderId, fence, operationKey], properties: {orderId: {type: string, format: uuid}, fence: {type: integer, minimum: 1}, operationKey: {type: string, maxLength: 200}}}}}}
+      responses: {'200': {description: Scheduled shipment and synthetic tracking ID}, '409': {description: Stale fence or operation conflict}}
+  /{orderId}:
+    get: {summary: Read shipment scheduling state, responses: {'200': {description: Local shipment state}}}
+components:
+  securitySchemes:
+    checkoutWorker: {type: http, scheme: bearer, bearerFormat: JWT, description: Exact checkout client, internal audience and fulfillment scope}

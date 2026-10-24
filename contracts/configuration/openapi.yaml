@@ -1,0 +1,39 @@
+openapi: 3.1.0
+info:
+  title: SuperSports Configuration API
+  version: 1.0.0
+servers:
+  - url: /api/v1/configuration
+security:
+  - operatorBearer: []
+paths:
+  /:
+    get:
+      summary: Read settings grouped by category, including activation mode and revisions
+      responses:
+        '200': {description: Configuration snapshot; secret values are omitted}
+  /checkout/{key}:
+    put:
+      summary: Update an allow-listed checkout simulation setting with optimistic revision and actor audit
+      parameters:
+        - {in: path, name: key, required: true, schema: {type: string, enum: [tax.rate-bps, shipping.INR, shipping.USD, inventory.reservation-seconds, payment.authorization-mode]}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value, expectedRevision]
+              properties:
+                value: {type: string}
+                expectedRevision: {type: integer, minimum: 1}
+      responses:
+        '200': {description: Updated value and global/setting revisions}
+        '409': {description: Stale setting revision}
+        '422': {description: Unsupported key or invalid setting value}
+components:
+  securitySchemes:
+    operatorBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

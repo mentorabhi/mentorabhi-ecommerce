@@ -1,6 +1,6 @@
 # S1-M05 design — Checkout Saga and compensation
 
-Revision 1 · 2026-10-24 · Proposed, pending review before implementation.
+Revision 2 · 2026-10-24 · Reviewed; implementation in progress.
 
 ## Goal and boundary
 

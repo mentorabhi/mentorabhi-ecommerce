@@ -19,8 +19,8 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[2]
 SECRET_KEYS = (
     "POSTGRES_PASSWORD", "CATALOG_DB_PASSWORD", "CONFIGURATION_DB_PASSWORD",
-    "IDENTITY_DB_PASSWORD", "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD", "CUSTOMER_DB_PASSWORD",
-    "KEYCLOAK_ADMIN_PASSWORD", "DEMO_CUSTOMER_PASSWORD",
+    "IDENTITY_DB_PASSWORD", "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD", "CUSTOMER_DB_PASSWORD", "ORDERS_DB_PASSWORD", "PAYMENT_DB_PASSWORD", "FULFILLMENT_DB_PASSWORD",
+    "KEYCLOAK_ADMIN_PASSWORD", "CHECKOUT_WORKER_CLIENT_SECRET", "DEMO_CUSTOMER_PASSWORD",
     "DEMO_PLATFORM_ADMIN_PASSWORD", "DEMO_CATALOG_ADMIN_PASSWORD", "DEMO_INVENTORY_OPERATOR_PASSWORD",
 )
 M02_SECRET_KEYS = (
@@ -29,17 +29,37 @@ M02_SECRET_KEYS = (
     "DEMO_PLATFORM_ADMIN_PASSWORD", "DEMO_CATALOG_ADMIN_PASSWORD",
 )
 LEGACY_SECRET_KEYS = (*M02_SECRET_KEYS, "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD",
-                      "DEMO_INVENTORY_OPERATOR_PASSWORD")
-SERVICES = ("catalog", "configuration", "pricing", "inventory", "customer")
+                      "DEMO_INVENTORY_OPERATOR_PASSWORD", "CUSTOMER_DB_PASSWORD", "ORDERS_DB_PASSWORD", "CHECKOUT_WORKER_CLIENT_SECRET")
+SERVICES = ("catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator")
 DEPLOYABLES = (*SERVICES, "storefront")
-SERVICE_PORTS = (8081, 8082, 8083, 8084, 8085)
-DEFAULT_VERSION = "s1-m04"
+SERVICE_PORTS = (8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088)
+DEFAULT_VERSION = "s1-m05"
 TOKEN_URL = "http://127.0.0.1:8180/realms/supersports/protocol/openid-connect/token"
+CUSTOMER_TOKEN_URL = "http://127.0.0.1:8180/realms/supersports-customers/protocol/openid-connect/token"
 
 
 def token_for(username: str, password: str, client: str = "supersports-cli") -> str:
     body = urlencode({"grant_type": "password", "client_id": client,
                       "username": username, "password": password}).encode()
+    with urlopen(Request(TOKEN_URL, data=body, headers={
+        "Content-Type": "application/x-www-form-urlencoded"
+    }), timeout=10) as response:
+        return json.loads(response.read())["access_token"]
+
+
+def customer_token_for(username: str, password: str) -> str:
+    body = urlencode({"grant_type": "password", "client_id": "supersports-customer-test",
+                      "username": username, "password": password}).encode()
+    with urlopen(Request(CUSTOMER_TOKEN_URL, data=body, headers={
+        "Content-Type": "application/x-www-form-urlencoded"
+    }), timeout=10) as response:
+        return json.loads(response.read())["access_token"]
+
+
+def checkout_worker_token(root: Path = ROOT) -> str:
+    credentials = load_credentials(root / "devops/.local/bootstrap.env")
+    body = urlencode({"grant_type": "client_credentials", "client_id": "supersports-checkout-worker",
+                      "client_secret": credentials["CHECKOUT_WORKER_CLIENT_SECRET"]}).encode()
     with urlopen(Request(TOKEN_URL, data=body, headers={
         "Content-Type": "application/x-www-form-urlencoded"
     }), timeout=10) as response:
@@ -163,7 +183,7 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
         environment[key] = lock[key]
     environment["RELEASE_VERSION"] = validated_version(version)
     for service in DEPLOYABLES:
-        environment[f"{service.upper()}_IMAGE"] = (
+        environment[f"{service.upper().replace('-', '_')}_IMAGE"] = (
             images[service] if images else f"supersports/{service}:{version}"
         )
     return environment
@@ -266,6 +286,60 @@ def provision_local_identity(root=ROOT):
             if status not in (201, 204):
                 raise RuntimeError(f"Could not attach the standard subject scope to {client_id}.")
 
+    checkout_scopes = (
+        "checkout:catalog.read", "checkout:configuration.read", "checkout:inventory.reserve",
+        "checkout:inventory.protect", "checkout:inventory.commit", "checkout:inventory.release",
+        "checkout:pricing.quote", "checkout:pricing.coupon.hold", "checkout:pricing.coupon.protect",
+        "checkout:pricing.coupon.commit", "checkout:pricing.coupon.release",
+        "checkout:payment.authorize", "checkout:payment.capture", "checkout:payment.status",
+        "checkout:payment.void", "checkout:payment.refund", "checkout:fulfillment.schedule",
+        "checkout:fulfillment.status",
+    )
+    status, existing_scopes = admin("GET", "/client-scopes")
+    if status != 200:
+        raise RuntimeError("Could not inspect local checkout scopes.")
+    scopes_by_name = {scope.get("name"): scope for scope in existing_scopes or []}
+    for scope_name in checkout_scopes:
+        if scope_name not in scopes_by_name:
+            status, _ = admin("POST", "/client-scopes", {"name": scope_name, "protocol": "openid-connect"})
+            if status != 201:
+                raise RuntimeError("Could not create a local checkout operation scope.")
+            status, existing_scopes = admin("GET", "/client-scopes")
+            if status != 200:
+                raise RuntimeError("Could not read local checkout operation scopes.")
+            scopes_by_name = {scope.get("name"): scope for scope in existing_scopes or []}
+    status, checkout_clients = admin("GET", "/clients?clientId=supersports-checkout-worker")
+    checkout_client = {"clientId": "supersports-checkout-worker", "name": "SuperSports local checkout worker",
+        "enabled": True, "protocol": "openid-connect", "publicClient": False,
+        "standardFlowEnabled": False, "directAccessGrantsEnabled": False,
+        "serviceAccountsEnabled": True, "clientAuthenticatorType": "client-secret",
+        "secret": credentials["CHECKOUT_WORKER_CLIENT_SECRET"],
+        "defaultClientScopes": [], "protocolMappers": [{"name": "supersports-checkout-internal-api-audience",
+            "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper",
+            "config": {"included.custom.audience": "supersports-checkout-internal-api",
+                "id.token.claim": "false", "access.token.claim": "true",
+                "introspection.token.claim": "true"}}]}
+    if status != 200:
+        raise RuntimeError("Could not inspect the local checkout worker client.")
+    if not checkout_clients:
+        status, _ = admin("POST", "/clients", checkout_client)
+        if status != 201:
+            raise RuntimeError("Could not create the local checkout worker client.")
+        status, checkout_clients = admin("GET", "/clients?clientId=supersports-checkout-worker")
+    if status != 200 or len(checkout_clients) != 1:
+        raise RuntimeError("Could not resolve the local checkout worker client.")
+    checkout_client_id = checkout_clients[0]["id"]
+    status, attached_scopes = admin("GET", f"/clients/{checkout_client_id}/default-client-scopes")
+    if status != 200:
+        raise RuntimeError("Could not inspect checkout worker scopes.")
+    attached_names = {scope.get("name") for scope in attached_scopes or []}
+    for scope_name in checkout_scopes:
+        scope = scopes_by_name[scope_name]
+        if scope_name not in attached_names:
+            status, _ = admin("PUT", f"/clients/{checkout_client_id}/default-client-scopes/{scope['id']}")
+            if status not in (201, 204):
+                raise RuntimeError("Could not grant a checkout worker operation scope.")
+
     status, users = admin("GET", "/users?username=admin&exact=true")
     if status != 200:
         raise RuntimeError("Could not inspect the local admin account.")
@@ -285,15 +359,69 @@ def provision_local_identity(root=ROOT):
     if status != 204:
         raise RuntimeError("Could not synchronize the local admin password.")
 
+    customer_base = "http://127.0.0.1:8180/admin/realms/supersports-customers"
+    def customer_admin(method, path, body=None):
+        data = None if body is None else json.dumps(body).encode()
+        headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+        if data is not None:
+            headers["Content-Type"] = "application/json"
+        try:
+            with urlopen(Request(customer_base + path, data=data, headers=headers, method=method), timeout=15) as response:
+                raw = response.read()
+                return response.status, json.loads(raw) if raw else None
+        except HTTPError as error:
+            with error:
+                raw = error.read()
+                return error.code, json.loads(raw) if raw else None
 
-def request_json(url: str, *, token: str | None = None, method: str = "GET", data=None):
-    headers = {"Accept": "application/json"}
+    status, test_clients = customer_admin("GET", "/clients?clientId=supersports-customer-test")
+    if status != 200:
+        raise RuntimeError("Could not inspect the local customer integration client.")
+    if not test_clients:
+        status, _ = customer_admin("POST", "/clients", {
+            "clientId": "supersports-customer-test", "name": "Local integration tests only",
+            "enabled": True, "protocol": "openid-connect", "publicClient": True,
+            "standardFlowEnabled": False, "directAccessGrantsEnabled": True,
+            "implicitFlowEnabled": False,
+            "protocolMappers": [{"name": "supersports-customer-test-api-audience",
+                "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper",
+                "config": {"included.custom.audience": "supersports-customer-api",
+                    "id.token.claim": "false", "access.token.claim": "true",
+                    "introspection.token.claim": "true"}}],
+        })
+        if status != 201:
+            raise RuntimeError("Could not create the local customer integration client.")
+    for username in ("checkout-test-customer", "checkout-test-customer-b"):
+        status, users = customer_admin("GET", f"/users?username={username}&exact=true")
+        if status != 200:
+            raise RuntimeError("Could not inspect a local checkout test customer.")
+        if not users:
+            status, _ = customer_admin("POST", "/users", {
+                "username": username, "enabled": True, "emailVerified": True,
+                "firstName": "Checkout", "lastName": "Test",
+                "email": username + "@supersports.local",
+            })
+            if status != 201:
+                raise RuntimeError("Could not create a local checkout test customer.")
+            status, users = customer_admin("GET", f"/users?username={username}&exact=true")
+        if status != 200 or len(users) != 1:
+            raise RuntimeError("Could not resolve a local checkout test customer.")
+        status, _ = customer_admin("PUT", f"/users/{users[0]['id']}/reset-password", {
+            "type": "password", "value": credentials["DEMO_CUSTOMER_PASSWORD"], "temporary": False,
+        })
+        if status != 204:
+            raise RuntimeError("Could not synchronize a local checkout test customer password.")
+
+
+def request_json(url: str, *, token: str | None = None, method: str = "GET", data=None, headers=None):
+    request_headers = {"Accept": "application/json"}
+    request_headers.update(headers or {})
     if token:
-        headers["Authorization"] = f"Bearer {token}"
+        request_headers["Authorization"] = f"Bearer {token}"
     if data is not None:
-        headers["Content-Type"] = "application/json"
+        request_headers["Content-Type"] = "application/json"
     try:
-        with urlopen(Request(url, data=data, headers=headers, method=method), timeout=5) as response:
+        with urlopen(Request(url, data=data, headers=request_headers, method=method), timeout=5) as response:
             return response.status, json.loads(response.read())
     except HTTPError as error:
         with error:

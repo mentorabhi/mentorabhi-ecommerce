@@ -12,5 +12,7 @@ class RequiredAudienceTest {
         assertThat(validator.validate(token.build()).hasErrors()).isTrue();
         assertThat(validator.validate(token.audience(List.of("account")).build()).hasErrors()).isTrue();
         assertThat(validator.validate(token.audience(List.of("account", "supersports-api")).build()).hasErrors()).isFalse();
+        assertThat(validator.validate(token.audience(List.of("supersports-checkout-internal-api")).claim("azp","supersports-cli").build()).hasErrors()).isTrue();
+        assertThat(validator.validate(token.audience(List.of("supersports-checkout-internal-api")).claim("azp","supersports-checkout-worker").build()).hasErrors()).isFalse();
     }
 }

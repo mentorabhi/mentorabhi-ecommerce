@@ -13,14 +13,18 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtClaimValidator;
+import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration(proxyBeanMethods = false)
 class SecurityConfiguration {
+    private static AuthorizationManager<RequestAuthorizationContext> operatorAudience(){return (authentication,context)->{var auth=authentication.get();boolean allowed=auth instanceof JwtAuthenticationToken token&&token.getToken().getAudience().contains("supersports-api");return new org.springframework.security.authorization.AuthorizationDecision(allowed);};}
+    private static AuthorizationManager<RequestAuthorizationContext> checkoutConfigurationRead(){return (authentication,context)->{var auth=authentication.get();boolean allowed=auth instanceof JwtAuthenticationToken token&&token.getToken().getAudience().contains("supersports-checkout-internal-api")&&"supersports-checkout-worker".equals(token.getToken().getClaimAsString("azp"))&&token.getAuthorities().stream().anyMatch(a->a.getAuthority().equals("SCOPE_checkout:configuration.read"));return new org.springframework.security.authorization.AuthorizationDecision(allowed);};}
     @Bean
     OAuth2TokenValidator<Jwt> requiredApiAudience() {
-        return new JwtClaimValidator<List<String>>(JwtClaimNames.AUD,
-                audiences -> audiences != null && audiences.contains("supersports-api"));
+        return jwt->{List<String> audiences=jwt.getAudience();boolean operator=audiences!=null&&audiences.contains("supersports-api");boolean checkout=audiences!=null&&audiences.contains("supersports-checkout-internal-api")&&"supersports-checkout-worker".equals(jwt.getClaimAsString("azp"));return operator||checkout?org.springframework.security.oauth2.core.OAuth2TokenValidatorResult.success():org.springframework.security.oauth2.core.OAuth2TokenValidatorResult.failure(new org.springframework.security.oauth2.core.OAuth2Error("invalid_token","Required API audience or checkout client is missing",null));};
     }
 
     @Bean
@@ -31,7 +35,10 @@ class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/configuration").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/internal/checkout/configuration").access(checkoutConfigurationRead())
+                        .requestMatchers("/api/v1/internal/checkout/**").denyAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/configuration").access(operatorAudience())
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/configuration/checkout/**").access(operatorAudience())
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))
                 .build();

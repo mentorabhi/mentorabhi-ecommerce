@@ -1,10 +1,10 @@
 # S1-M05 — Checkout, orders and simulated payment
 
-Revision 2 · 2026-10-24 · Design reviewed; implementation may begin.
+Revision 6 · 2026-10-24 · Checkout Saga and simulator implementation verified; owner manual acceptance and fault-injection edge coverage remain open.
 
 Design: [checkout and recovery contract](design.md). Editable diagram: [checkout-saga.mmd](checkout-saga.mmd). Review: [design review](design-review.md). Decision: [ADR 0005](../../decisions/0005-persisted-checkout-saga.md). Original proposal: [S1-M05 Excalidraw](../../../architecture/stage-1/S1-M05.excalidraw).
 
-Manual end-user checks: [manual acceptance](manual-acceptance.md). Verification evidence will be added after implementation.
+Manual end-user checks: [manual acceptance](manual-acceptance.md). Automated evidence: [verification](verification.md).
 
 ## Scope
 
@@ -20,4 +20,4 @@ Convert the customer's saved cart into a reproducible quote and order using curr
 - Kafka and event consumers remain S1-M06. M05 writes transactional outbox records but does not claim Kafka delivery.
 - No real payment provider, tax authority, carrier, cloud service or hosted model is used.
 
-Review confirmed the requirements, service-owned state, money/quote snapshots, final-unit and coupon concurrency, idempotency, payment reconciliation, compensation, narrow service identity, restart fencing, and local resource measurement gates. Findings and changes are in the review record. No blocking design issue remains; implementation has not started.
+Review confirmed the requirements, service-owned state, money/quote snapshots, final-unit and coupon concurrency, idempotency, payment reconciliation, compensation, narrow service identity, restart fencing, and local resource measurement gates. Findings and changes are in the review record. Implementation now includes revision-checked quote/coupon holds, fenced inventory and coupon transitions, a persisted Orders worker, local payment/fulfillment simulators, customer order status refresh and successful/declined checkout lifecycle. Automated happy-path, decline-compensation, worker-restart and 22-case integration journeys pass; all six Selenium journeys pass. A recovery guard fails expired legacy quotes before inventory reservation and records the failure in the Saga and outbox. Manual acceptance, full failure-boundary injection and audited operator resolution of manual-review cases remain open.

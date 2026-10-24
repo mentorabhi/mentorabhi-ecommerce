@@ -19,6 +19,7 @@ type Sku = { id: string; code: string; assetKey: string; altText: string; attrib
 type Category = { id: string; slug: string; name: string; sportId: string }
 type Balance = { skuId: string; warehouseName: string; onHand: number; revision: number }
 type Currency = 'INR' | 'USD'
+type Configuration = { revision: number; categories: { id: string; label: string }[]; settings: { key: string; category: string; value: string; valueType: string; activationMode: string; revision: number }[] }
 
 async function api<T>(path: string, token: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
@@ -40,7 +41,7 @@ const money = (amount: number, currency: Currency) => new Intl.NumberFormat('en-
 function AdminApp() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [screen, setScreen] = useState<'catalog' | 'pricing' | 'inventory'>('catalog')
+  const [screen, setScreen] = useState<'catalog' | 'pricing' | 'inventory' | 'configuration'>('catalog')
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [prices, setPrices] = useState<Record<string, number>>({})
@@ -48,6 +49,7 @@ function AdminApp() {
   const [currencyRevision, setCurrencyRevision] = useState(1)
   const [coupons, setCoupons] = useState<Record<string, unknown>[]>([])
   const [balances, setBalances] = useState<Balance[]>([])
+  const [configuration, setConfiguration] = useState<Configuration | null>(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState<ApiError | Error | null>(null)
   const [saving, setSaving] = useState(false)
@@ -56,6 +58,7 @@ function AdminApp() {
     { id: 'catalog' as const, label: 'Catalog', icon: '◈' },
     { id: 'pricing' as const, label: 'Prices & coupons', icon: '↗' },
     { id: 'inventory' as const, label: 'Inventory', icon: '▤' },
+    { id: 'configuration' as const, label: 'Configuration', icon: '⚙' },
   ]
 
   useEffect(() => {
@@ -104,6 +107,7 @@ function AdminApp() {
       setCoupons(couponRows)
     }
     setBalances(await api<Balance[]>('/api/inventory/balances', token))
+    setConfiguration(await api<Configuration>('/api/configuration', token))
   }
 
   useEffect(() => { void refresh().catch((caught) => setError(caught)) }, [token])
@@ -115,15 +119,21 @@ function AdminApp() {
 
   return <div className="app-shell">
     <aside className="sidebar"><a className="brand-link brand-lockup" href="#home"><img src="/brand/supersports-icon.jpg" alt=""/><strong>Super<span>Sports</span></strong></a><div className="workspace-label">LOCAL COMMERCE <span>DEV</span></div><nav aria-label="Workspace sections">{accessibleScreens.map((item) => <button key={item.id} className={`nav-item ${screen===item.id?'selected':''}`} onClick={() => { setScreen(item.id); setError(null); setMessage('') }}><span className="nav-icon" aria-hidden="true">{item.icon}</span>{item.label}{screen===item.id && <span className="nav-active"/>}</button>)}</nav><div className="sidebar-bottom"><div className="health-dot"><i/>All services connected</div><div className="profile"><div className="avatar">{user.profile.preferred_username?.toString().slice(0,1).toUpperCase() ?? 'S'}</div><div><strong>{user.profile.preferred_username?.toString() ?? 'Local user'}</strong><span>Local account</span></div></div></div></aside>
-    <main id="home" className="main-area"><header className="topbar"><div className="breadcrumb"><span>Workspace</span><b>/</b><strong>{title}</strong></div><div className="top-actions"><span className="live-badge"><i/>LOCAL ENVIRONMENT</span><button className="icon-button refresh-button" aria-label="Refresh data" onClick={() => void run(async()=>{await refresh();setMessage('Workspace data refreshed.')})}>⟳</button><button className="icon-button" aria-label="Sign out" onClick={() => void operatorManager.signoutRedirect()}>↪</button></div></header><div className="content"><div className="page-heading"><div><p className="eyebrow">SUPERSPORTS STUDIO <span className="heading-dot">●</span> {screen==='catalog'?'MERCHANDISING':screen==='pricing'?'REVENUE TOOLS':'FULFILMENT'}</p><h1>{title}<span className="heading-period">.</span></h1><p className="subtitle">{screen==='catalog'?'Build a catalog players can trust.':screen==='pricing'?'Keep every price and offer in play.':'Know what is ready for the next order.'}</p></div>{screen==='catalog'&&<div className="summary-chip"><span className="summary-number">{products.length.toString().padStart(2,'0')}</span><span>ACTIVE<br/>PRODUCTS</span></div>}</div>
+    <main id="home" className="main-area"><header className="topbar"><div className="breadcrumb"><span>Workspace</span><b>/</b><strong>{title}</strong></div><div className="top-actions"><span className="live-badge"><i/>LOCAL ENVIRONMENT</span><button className="icon-button refresh-button" aria-label="Refresh data" onClick={() => void run(async()=>{await refresh();setMessage('Workspace data refreshed.')})}>⟳</button><button className="icon-button" aria-label="Sign out" onClick={() => void operatorManager.signoutRedirect()}>↪</button></div></header><div className="content"><div className="page-heading"><div><p className="eyebrow">SUPERSPORTS STUDIO <span className="heading-dot">●</span> {screen==='catalog'?'MERCHANDISING':screen==='pricing'?'REVENUE TOOLS':screen==='inventory'?'FULFILMENT':'PLATFORM SETTINGS'}</p><h1>{title}<span className="heading-period">.</span></h1><p className="subtitle">{screen==='catalog'?'Build a catalog players can trust.':screen==='pricing'?'Keep every price and offer in play.':screen==='inventory'?'Know what is ready for the next order.':'Manage local integrations and commerce simulations.'}</p></div>{screen==='catalog'&&<div className="summary-chip"><span className="summary-number">{products.length.toString().padStart(2,'0')}</span><span>ACTIVE<br/>PRODUCTS</span></div>}</div>
       {error && <div className={`notice ${error instanceof ApiError&&error.status===403?'warning':'error'}`} role="alert"><span aria-hidden="true">{error instanceof ApiError&&error.status===403?'◉':'!'}</span><div><strong>{error instanceof ApiError&&error.status===403?'Access limited':'We couldn’t load that'}</strong><p>{error.message}</p>{error instanceof ApiError&&error.status===401&&<button className="text-button" onClick={() => void operatorManager.signinRedirect()}>Sign in again</button>}</div><button className="notice-close" aria-label="Dismiss message" onClick={()=>setError(null)}>×</button></div>}
       {message&&<div className="notice success" role="status"><span aria-hidden="true">✓</span><div><strong>Done</strong><p>{message}</p></div><button className="notice-close" aria-label="Dismiss message" onClick={()=>setMessage('')}>×</button></div>}
       {screen==='catalog'&&<Catalog products={products} categories={categories} token={token} saving={saving} run={run} refresh={refresh} setMessage={setMessage}/>}
       {screen==='pricing'&&<Pricing prices={prices} products={products} currency={currency} currencyRevision={currencyRevision} coupons={coupons} token={token} saving={saving} run={run} refresh={refresh} setMessage={setMessage}/>}
       {screen==='inventory'&&<Inventory balances={balances} products={products} token={token} saving={saving} run={run} refresh={refresh} setMessage={setMessage}/>}
+      {screen==='configuration'&&configuration&&<Configurations snapshot={configuration} token={token} saving={saving} run={run} refresh={refresh} setMessage={setMessage}/>}
       <footer className="footer"><span>Built for the love of the game.</span><span>SUPERSPORTS <b>·</b> LOCAL FIRST</span></footer>
     </div></main>
   </div>
+}
+
+function Configurations({snapshot,token,saving,run,refresh,setMessage}:{snapshot:Configuration;token:string;saving:boolean;run:(f:()=>Promise<void>)=>Promise<void>;refresh:()=>Promise<void>;setMessage:(s:string)=>void}){
+ const labels:Record<string,string>={'checkout.tax.rate-bps':'Simulated tax rate (basis points)','checkout.shipping.INR':'Simulated shipping (INR paise)','checkout.shipping.USD':'Simulated shipping (USD cents)','checkout.inventory.reservation-seconds':'Inventory reservation duration (seconds)','checkout.payment.authorization-mode':'Payment authorization simulation'}
+ return <div className="configuration-groups">{snapshot.categories.map((category)=><section className="section-block" key={category.id}><div className="section-heading"><div><span className="eyebrow">CONFIGURATION CATEGORY</span><h2>{category.label}</h2></div><span className="result-count">REVISION {snapshot.revision}</span></div><div className="configuration-list">{snapshot.settings.filter((item)=>item.category===category.id).map((setting)=><article className="configuration-row" key={setting.key}><div><strong>{labels[setting.key]??setting.key}</strong><code>{setting.key}</code><small>{setting.activationMode==='OPERATOR_EDITABLE'?'Changes apply to new checkouts. Existing orders retain their snapshot.':'Read only · configured through a reviewed migration.'} · setting revision {setting.revision}</small></div>{setting.activationMode==='OPERATOR_EDITABLE'?<form onSubmit={(event)=>{event.preventDefault();const form=new FormData(event.currentTarget);void run(async()=>{await api(`/api/configuration/checkout/${setting.key.slice('checkout.'.length)}`,token,{method:'PUT',body:JSON.stringify({value:form.get('value'),expectedRevision:setting.revision})});setMessage(`${labels[setting.key]} updated and recorded in the audit log.`);await refresh()})}}>{setting.key==='checkout.payment.authorization-mode'?<select name="value" defaultValue={setting.value}><option value="APPROVE">Approve simulated payments</option><option value="DECLINE">Decline simulated payments</option></select>:<input name="value" type="number" min={setting.key==='checkout.inventory.reservation-seconds'?60:0} max={setting.key==='checkout.inventory.reservation-seconds'?1800:setting.key==='checkout.tax.rate-bps'?10000:100000000} defaultValue={setting.value} required/>}<button className="button primary" disabled={saving}>Save</button></form>:<span className="configuration-value">{setting.value}</span>}</article>)}</div></section>)}</div>
 }
 
 function Catalog({products,categories,token,saving,run,refresh,setMessage}:{products:Product[];categories:Category[];token:string;saving:boolean;run:(f:()=>Promise<void>)=>Promise<void>;refresh:()=>Promise<void>;setMessage:(s:string)=>void}){
