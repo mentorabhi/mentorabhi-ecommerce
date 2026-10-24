@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: SuperSports Order History API
-  version: 1.0.0
+  version: 1.1.0
   description: Customer-owned CQRS view of Orders lifecycle events.
 servers:
   - url: http://localhost:8089
@@ -31,8 +31,9 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [orders]
+                required: [orders, freshness]
                 properties:
+                  freshness: {$ref: '#/components/schemas/Freshness'}
                   orders:
                     type: array
                     items: {$ref: '#/components/schemas/OrderSummary'}
@@ -63,6 +64,15 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    Freshness:
+      type: object
+      description: Consumer status at the latest bounded broker observation, not a guarantee of zero source CDC delay. Pending gap facts belong only to the verified customer.
+      required: [state, checkedAt, pendingOwnEvents, gapSince]
+      properties:
+        state: {type: string, enum: [CURRENT, DELAYED, BLOCKED, UNAVAILABLE]}
+        checkedAt: {type: [string, 'null'], format: date-time}
+        pendingOwnEvents: {type: integer, minimum: 0}
+        gapSince: {type: [string, 'null'], format: date-time}
     OrderSummary:
       type: object
       required: [id, state, currency, totalMinor, lines, createdAt, lastSequence]

@@ -1,0 +1,13 @@
+flowchart LR
+  K[Kafka high-water marks] --> P[Bounded scheduled probe]
+  O[Committed consumer offsets] --> P
+  C[Consumer poll progress] --> S[Freshness rules]
+  P --> S
+  T[Verified customer token] --> G[Owned pending gap query]
+  G --> S
+  S --> A[History list and freshness]
+  A --> UI[Order status notice]
+  A -->|current| H[History records]
+  A -->|delayed / blocked / unavailable| R[Customer-owned Orders API]
+  H --> UI
+  R --> UI

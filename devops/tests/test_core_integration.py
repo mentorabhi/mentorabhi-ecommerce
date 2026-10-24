@@ -417,7 +417,19 @@ class CoreIntegrationTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("permission denied", result.stderr.lower())
 
-    def test_postgres_has_no_host_port_and_apps_bind_only_to_loopback(self):
+    def test_host_postgres_authentication_when_explicitly_enabled(self):
+        import database_access
+        if not database_access.configuration(ROOT,self.project)["enabled"]:
+            self.skipTest("Default profile keeps PostgreSQL private; enable explicit local host inspection to verify TCP.")
+        result=database_access.verify(manage,project=self.project)
+        self.assertEqual(result["host"],"127.0.0.1")
+        self.assertEqual(result["username"],"postgres")
+        self.assertEqual(result["database"],"postgres")
+        self.assertEqual(result["serverPort"],5432)
+
+    def test_database_host_access_is_opt_in_and_all_host_bindings_are_loopback(self):
+        import database_access
+        host_access=database_access.configuration(ROOT,self.project)
         result = manage.compose(["ps", "--format", "json"], project=self.project, capture=True)
         # Compose emits one JSON object per line for multiple services.
         rows = [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
@@ -429,7 +441,12 @@ class CoreIntegrationTests(unittest.TestCase):
         for row in rows:
             publishers = row.get("Publishers") or []
             if row["Service"] == "postgres":
-                self.assertFalse(any(port.get("PublishedPort", 0) for port in publishers))
+                published=[port for port in publishers if port.get("PublishedPort",0)]
+                if host_access["enabled"]:
+                    self.assertEqual(len(published),1)
+                    self.assertEqual(published[0]["URL"],"127.0.0.1")
+                    self.assertEqual(published[0]["PublishedPort"],host_access["port"])
+                else:self.assertFalse(published)
             else:
                 self.assertTrue(publishers)
                 for port in publishers:

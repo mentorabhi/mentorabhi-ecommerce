@@ -51,4 +51,7 @@ No public exposure by default. Simple local sign-in is required; administrative 
 All numeric capacity targets remain proposed until measured. No cloud or hosted model fallback.
 
 ## Setup prerequisite
+
+Host database inspection is now explicitly authorized (R22/ADR 0007). The optional Compose override binds PostgreSQL only to `127.0.0.1:15432`, persists the choice in ignored local state, and uses existing generated credentials. See `docs/setup/database-access.md`; never copy credentials into tracked documentation. M06 now exposes observed freshness and falls back to owned Orders records when streaming is delayed/unavailable; its planned isolated runtime gap/outage acceptance remains open.
+
 Native host Ollama setup/server/model/connectivity is a Nova prerequisite, documented in docs/setup/prerequisites.md. Commerce bootstrap must not require Ollama to be running.

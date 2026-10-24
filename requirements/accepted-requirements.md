@@ -1,5 +1,5 @@
 # Accepted requirements
-Revision 2 · 2026-10-23. User decisions override the original planning baseline. IDs are stable; append or supersede rather than silently renumber.
+Revision 3 · 2026-10-24. User decisions override the original planning baseline. IDs are stable; append or supersede rather than silently renumber.
 
 | ID | Requirement | Delivery / acceptance |
 |---|---|---|
@@ -24,6 +24,7 @@ Revision 2 · 2026-10-23. User decisions override the original planning baseline
 | R19 | Latest stable compatible technology versions verified when implemented; exact pins and license/ARM64/resource checks recorded. | S1-M02 and each dependency addition |
 | R20 | Progress through commerce, Nova design, and gap-led integration in that order. | Stage gates |
 | R21 | Customer self-registration uses a local customer identity realm/API audience isolated from unrestricted merchandising administration. | S1-M04; AE21 |
+| R22 | User-requested DBeaver inspection from the host uses explicit localhost-only PostgreSQL access; private default and service database ownership remain. Existing local admin credentials may be shared directly with the user, never committed. | 2026-10-24 revision; ADR 0007; AE22 |
 
 ## Actors and initial journeys
 Customer: browse → compare → cart → quote → approve purchase → track → review/return.
@@ -56,5 +57,8 @@ Nova: delegated caller scoped to a signed-in actor, never a privileged bypass.
 - AE20: Keyboard and mobile navigation work across home, category/search, product, cart, checkout, account/order and admin screens. Assets have alt text and provenance.
 - AE21: A self-registered customer can sign in and access only their profile/cart/wishlist; their token cannot read or mutate Catalog, Pricing, Inventory or Configuration. The operator token cannot read customer-owned data. Both isolation directions hold after restart and direct API calls; the owner is always taken from the verified token subject.
 
+- AE22: Explicit enablement binds only `127.0.0.1:15432` to PostgreSQL, survives ordinary profile restarts, authenticates from the native host, and can be disabled back to the private default. Credentials stay in ignored local state and the user's client/conversation.
+
 ## Non-goals and deferred choices
+
 No real money, carrier integration, live exchange-rate feeds, marketplace sellers or cloud deployment. Multi-tenancy and multi-agent delegation are later design topics, not baseline runtime requirements. Nova's detailed autonomy, memory retention, models and numeric quality gates belong to S2.

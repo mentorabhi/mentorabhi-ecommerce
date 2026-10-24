@@ -5,10 +5,12 @@ from pathlib import Path
 import importlib.util
 import json
 import os
+import sys
 import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(ROOT / "devops/scripts"))
 spec = importlib.util.spec_from_file_location("supersports_manage", ROOT / "devops/scripts/manage.py")
 manage = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(manage)

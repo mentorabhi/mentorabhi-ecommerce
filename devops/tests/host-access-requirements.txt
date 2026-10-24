@@ -1,0 +1,2 @@
+# Optional native host verification client; application services keep JDBC.
+psycopg[binary]==3.3.6

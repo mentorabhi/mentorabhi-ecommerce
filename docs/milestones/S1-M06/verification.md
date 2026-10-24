@@ -1,5 +1,19 @@
 # S1-M06 verification record
 
+## Latest freshness and host-access checkpoint — 2026-10-24
+
+Implemented observed freshness (`CURRENT`, `DELAYED`, `BLOCKED`, `UNAVAILABLE`), owner-scoped pending gaps and storefront fallback to owned Orders records. The [design/review](freshness-and-ordering.md) precedes implementation; its isolated runtime probe remains planned.
+
+- Pinned Maven image, `mvn -B -ntp test` in Order History: 19 tests passed.
+- Pinned Node image, `node --experimental-strip-types --test tests/order-freshness.test.ts`: two tests passed.
+- `.venv/bin/python -m unittest discover -s devops/tests -p test_database_access.py -v`: four passed.
+- Same discovery command for `test_manage.py`: 26 passed.
+- `SUPERSPORTS_INTEGRATION=1 SUPERSPORTS_PROJECT=supersports .venv/bin/python -m unittest discover -s devops/tests -p test_core_integration.py -v`: 23 passed in 39.083 seconds, including native host PostgreSQL authentication and loopback bindings.
+- `SE_OFFLINE=true .venv/bin/python -m unittest discover -s apps/storefront/tests -p test_customer_history_ui.py -v`: one journey passed in 4.044 seconds, including connected banner and layout within the measured narrow viewport. Chrome's minimum window width means this is not proof of a 390-pixel viewport.
+- Rebuilt/deployed History and Storefront; all 14 containers healthy after integration/restart checks.
+
+No full CI rerun, isolated gap/outage evidence, DBeaver GUI setup or human manual acceptance is claimed. See [host setup and human checks](../../setup/database-access.md). Remaining milestone gates in the matrix stay open.
+
 Revision 5 · 2026-10-24 · Full rebuild CI plus focused tombstone/numeric-replay follow-up passed; remaining acceptance is in [the matrix](acceptance-matrix.md).
 
 ## Focused follow-up after rebuild checkpoint

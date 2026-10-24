@@ -6,6 +6,9 @@ Use synthetic accounts and orders only. Do not paste personal data, bearer token
 
 ## 1. Services and storefront
 
+- [ ] Follow [DBeaver host inspection checks](../../setup/database-access.md) to verify service health, host database login, UI continuity and read-only database queries.
+- [ ] On Orders, confirm the connected-status notice and checked time appear when streaming is caught up. Stop streaming and confirm an unavailable notice while owned Orders records still load; restore streaming afterwards. Gap/delay demonstrations require the isolated probe, which remains planned.
+
 - [ ] From the repository root run `./devops/scripts/supersports streaming-up`, then `./devops/scripts/supersports stream-status`.
 - [ ] Confirm healthy PostgreSQL, Keycloak, Catalog, Configuration, Pricing, Inventory, Customer, Orders, Payment Simulator, Fulfillment Simulator, Storefront, Kafka, Kafka Connect and Order History using `./devops/scripts/supersports status`.
 - [ ] Open [SuperSports storefront](http://localhost:3000), sign in or self-register, and open Orders. Confirm the order list loads and shows the asynchronous status notice.

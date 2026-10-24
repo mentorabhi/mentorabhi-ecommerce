@@ -1,6 +1,12 @@
 # Revision history
 Append dated entries with reason, changed artifacts, evidence and remaining work.
 
+## 2026-10-24 — Host inspection and M06 freshness checkpoint
+
+Accepted R22/ADR 0007 at the user's request: add opt-in loopback PostgreSQL access for DBeaver, preserve the existing volume/password and private defaults, persist only non-secret configuration, and document native verification/manual client setup. Psycopg/binary 3.3.6 is pinned as an optional development dependency; Python 3.14/macOS ARM64 wheel authentication against PostgreSQL 18.6 passed. Four access and 26 management unit tests plus all 23 core integration tests passed, including native host authentication and binding isolation. DBeaver GUI setup is not claimed. All 14 containers were healthy afterwards.
+
+Implemented the reviewed M06 freshness rules/API and customer Orders fallback. Nineteen History Java tests, two frontend unit tests and customer History Selenium passed (4.044 seconds), including connected status and layout within the actual narrow browser viewport. The initial narrow-layout assertion assumed Chrome accepted a requested 390-pixel window; corrected the test to compare against measured `window.innerWidth`. Both images were rebuilt/deployed before the browser check. The isolated ordering/gap/outage probe described in the design is still planned, not implemented. Full CI was not rerun for this checkpoint; remaining M06 gates are unchanged.
+
 ## 2026-10-24 — Stage branch and milestone push policy
 
 The user specified that every milestone checkpoint must be committed and pushed, and that every stage starts on a branch named for the stage. Recorded this in AGENTS.md and project context. Added `origin` for `https://github.com/mentorabhi/mentorabhi-ecommerce.git`; pushed `feat/s1-m05-checkout-orders` at `21dac40`, then created and pushed `stage1` at the same commit. Future milestone commits must push the active stage branch; do not force-push or overwrite remote history.

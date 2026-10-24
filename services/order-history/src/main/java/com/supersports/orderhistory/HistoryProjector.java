@@ -80,6 +80,8 @@ class HistoryProjector {
     }
 
     java.util.List<Map<String,Object>> list(String customerKey){return jdbc.queryForList("SELECT order_id AS id,state,currency,total_minor AS \"totalMinor\",lines::text AS lines,occurred_at AS \"createdAt\",last_sequence AS \"lastSequence\" FROM order_history_projection WHERE customer_key=? ORDER BY occurred_at DESC LIMIT 100",customerKey).stream().map(this::decodeLines).toList();}
+    OwnedGap ownedGap(String customerKey){return jdbc.queryForObject("SELECT count(*) AS count,min(received_at) AS oldest FROM pending_order_event WHERE payload->>'customerKey'=?",(rs,n)->{var oldest=rs.getTimestamp("oldest");return new OwnedGap(rs.getLong("count"),oldest==null?null:oldest.toInstant());},customerKey);}
+    record OwnedGap(long count,Instant oldest) {}
     Map<String,Object> get(UUID orderId,String customerKey){var rows=jdbc.queryForList("SELECT order_id AS \"orderId\",state,currency,total_minor AS \"totalMinor\",lines::text AS lines,occurred_at AS \"updatedAt\",last_sequence AS \"lastSequence\" FROM order_history_projection WHERE order_id=? AND customer_key=?",orderId,customerKey);return rows.isEmpty()?null:decodeLines(rows.getFirst());}
     private Map<String,Object> decodeLines(Map<String,Object> row){row.put("lines",readLines((String)row.get("lines")));return row;}
     private java.util.List<?> readLines(String raw){try{return json.readValue(raw,java.util.List.class);}catch(Exception e){throw new IllegalStateException("Stored order history lines are invalid",e);}}

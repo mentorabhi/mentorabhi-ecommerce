@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { User, UserManager, WebStorageStateStore } from 'oidc-client-ts'
+import { historyPresentation } from './orderFreshness'
+import type { OrderFreshness } from './orderFreshness'
 import './customer.css'
 
 const customerIdentity = new UserManager({
@@ -46,6 +48,7 @@ export default function CustomerStore() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [couponCode, setCouponCode] = useState('')
   const [orders, setOrders] = useState<Order[]>([])
+  const [orderFreshness, setOrderFreshness] = useState<OrderFreshness>()
   const [selectedOrder, setSelectedOrder] = useState<OrderDetail | null>(null)
   const [page, setPage] = useState(pageFromPath)
   const [message, setMessage] = useState('')
@@ -137,7 +140,16 @@ export default function CustomerStore() {
   })
   const unavailableCartItems = cart.filter((item) => !allSkus.some(({ sku }) => sku.id === item.skuId))
 
-  const refreshOrders = async () => { if (!token) { setOrders([]); return } try { const result = await request<{ orders: Order[] }>('/api/order-history', token); if (result.orders.length) { setOrders(result.orders); return } } catch { /* Streaming profile may be stopped while the core store stays available. */ } setOrders(await request<Order[]>('/api/orders', token)) }
+  const refreshOrders = async () => {
+    if (!token) { setOrders([]); setOrderFreshness(undefined); return }
+    try {
+      const result = await request<{ orders: Order[]; freshness: OrderFreshness }>('/api/order-history', token)
+      setOrderFreshness(result.freshness)
+      if (historyPresentation(result.freshness, result.orders.length).preferProjection) { setOrders(result.orders); return }
+    } catch { setOrderFreshness(undefined) }
+    setOrders(await request<Order[]>('/api/orders', token))
+  }
+  const historyView = historyPresentation(orderFreshness, orders.length)
   const openOrder = async (orderId: string) => { if (!token) return; setSelectedOrder(await request<OrderDetail>(`/api/orders/${orderId}`, token)) }
   const checkout = async () => {
     if (!token) { await customerIdentity.signinRedirect(); return }
@@ -151,7 +163,7 @@ export default function CustomerStore() {
     await refreshOrders(); navigate('orders', '/orders'); setMessage(`Order accepted for processing · ${result.state} · ${formattedMoney(result.totalMinor, currency)}`)
   }
   useEffect(() => { if (page === 'orders' && token) void refreshOrders().catch((e: Error) => setError(e.message)) }, [page, token])
-  useEffect(() => { if (page !== 'orders' || !token || selectedOrder) return; const timer = window.setInterval(() => void refreshOrders().catch((e: Error) => setError(e.message)), 1500); return () => window.clearInterval(timer) }, [page, token, selectedOrder?.id])
+  useEffect(() => { if (page !== 'orders' || !token) return; const timer = window.setInterval(() => void refreshOrders().catch((e: Error) => setError(e.message)), 1500); return () => window.clearInterval(timer) }, [page, token])
   useEffect(() => {
     if (!selectedOrder || !token || ['FULFILLMENT_SCHEDULED', 'FAILED', 'MANUAL_REVIEW'].includes(selectedOrder.state)) return
     const orderId = selectedOrder.id
@@ -177,6 +189,7 @@ export default function CustomerStore() {
     <main className="shop-content">
       {error && <div className="store-alert error" role="alert">{error}<button onClick={() => setError('')} aria-label="Dismiss error">×</button></div>}
       {message && <div className="store-alert success" role="status">{message}<button onClick={() => setMessage('')} aria-label="Dismiss message">×</button></div>}
+      {page === 'orders' && token && <div className={`order-update-status status-${historyView.state.toLowerCase()}`} role="status" aria-live="polite" data-freshness-state={historyView.state}><strong>{historyView.message}</strong>{orderFreshness?.checkedAt && <small>Checked {new Date(orderFreshness.checkedAt).toLocaleTimeString('en-IN')}</small>}</div>}
       {detailSlug ? detail ? <ProductDetail product={detail} currency={currency} prices={prices} availability={availability} wishlist={wishlist} busy={busy} addCart={(skuId) => act(async () => { if (!user) { await customerIdentity.signinRedirect(); return } const currentQuantity = cart.find((item) => item.skuId === skuId)?.quantity ?? 0; if (currentQuantity >= 99) throw new Error('A maximum of 99 units can be added per item.'); await request(`/api/customer/cart/items/${skuId}`, token, { method: 'PUT', body: JSON.stringify({ quantity: currentQuantity + 1 }) }) }, 'Added to your cart.')} toggleWishlist={(skuId) => act(async () => { if (!user) { await customerIdentity.signinRedirect(); return } await request(`/api/customer/wishlist/items/${skuId}`, token, { method: wishlist.includes(skuId) ? 'DELETE' : 'POST' }) }, wishlist.includes(skuId) ? 'Removed from wishlist.' : 'Saved to your wishlist.')} /> : <p className="store-empty">That product is not available.</p>
       : page === 'shop' ? <>
         <section className="store-hero"><img src="/brand/supersports-banner.jpg" alt="SuperSports sports and fitness — play, train, live better"/></section>

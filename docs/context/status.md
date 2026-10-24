@@ -1,6 +1,8 @@
 # Project status
 Updated: 2026-10-24.
 
+Latest checkpoint: host PostgreSQL inspection is enabled at `127.0.0.1:15432` on the existing volume. Native password authentication, loopback binding and all 23 core integration cases passed; four host-access and 26 management unit cases passed. DBeaver GUI connection setup is still a human check in `docs/setup/database-access.md`; no credentials are tracked. M06 freshness status and customer Orders fallback are implemented/deployed: 19 History Java tests and two frontend rule tests passed. Isolated live ordering/gap/outage probes and the remaining completion-matrix gates are still pending. All 14 Compose containers were healthy after the database change and integration restart exercise. This is a checkpoint, not M06 completion.
+
 Active branch: `stage1`, tracking `origin/stage1`. Historical checkpoint snapshots below retain the branch and runtime facts recorded at that time; current implementation work is M06.
 
 S1-M01: reviewed and checkpointed as s1-m01-design-v1 (7ef04c4).

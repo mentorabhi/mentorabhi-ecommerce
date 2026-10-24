@@ -170,12 +170,16 @@ def configure(root: Path = ROOT) -> Path:
 
 
 def compose_command(root: Path, project: str, arguments: list[str]) -> list[str]:
-    return [
+    from database_access import configuration
+    command = [
         "docker", "compose", "--project-directory", str(root),
         "--project-name", validated_project_name(project),
         "--env-file", str(root / "devops/.local/bootstrap.env"),
-        "-f", str(root / "devops/compose/core.yaml"), *arguments,
+        "-f", str(root / "devops/compose/core.yaml"),
     ]
+    if configuration(root,project)["enabled"]:
+        command += ["-f",str(root / "devops/compose/host-access.yaml")]
+    return [*command,*arguments]
 
 
 def history_target_path(root: Path = ROOT, project="supersports") -> Path:
@@ -219,6 +223,7 @@ def set_history_target(value, *, root: Path = ROOT, project="supersports"):
 
 
 def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | None = None, project="supersports") -> dict:
+    from database_access import configuration
     environment = os.environ.copy()
     environment.update(load_credentials(root / "devops/.local/bootstrap.env"))
     lock = json.loads((root / "devops/images.lock.json").read_text())
@@ -230,6 +235,7 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
     target = history_target(root, project)
     environment["ORDER_HISTORY_DATABASE_NAME"] = target["database"]
     environment["ORDER_HISTORY_CONSUMER_GROUP"] = target["group"]
+    environment["POSTGRES_HOST_PORT"] = str(configuration(root,project)["port"])
     for service in DEPLOYABLES:
         environment[f"{service.upper().replace('-', '_')}_IMAGE"] = (
             images[service] if images else f"supersports/{service}:{version}"
@@ -609,6 +615,9 @@ def wait_status(url: str, expected: int = 200, timeout: int = 120):
 def unit(root=ROOT, project="supersports"):
     run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
          "-s", "devops/tests", "-p", "test_*.py", "-v"], cwd=root)
+    node_image=json.loads((root / "devops/images.lock.json").read_text())["STOREFRONT_NODE_IMAGE"]
+    run(["docker","run","--rm","--mount",f"type=bind,source={root / 'apps/storefront'},target=/workspace,readonly",
+         "--workdir","/workspace",node_image,"node","--experimental-strip-types","--test","tests/order-freshness.test.ts"],cwd=root)
     image = json.loads((root / "devops/images.lock.json").read_text())["BUILD_IMAGE"]
     for service in (*SERVICES, *STREAMING_SERVICES):
         run([
