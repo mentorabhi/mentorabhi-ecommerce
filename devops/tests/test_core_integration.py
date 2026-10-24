@@ -196,11 +196,40 @@ class CoreIntegrationTests(unittest.TestCase):
             time.sleep(.5)
         self.assertEqual(second_operation["status"],"COMPLETED",second_operation)
         order_check=self.psql("orders","orders","SELECT concat(o.state,':',count(*)) FROM customer_order o JOIN return_request r ON r.order_id=o.id WHERE o.id=$$"+order_id+"$$ GROUP BY o.state")
-        self.assertEqual(order_check.returncode,0,order_check.stderr);self.assertEqual(order_check.stdout.strip(),"DELIVERED:1")
+        self.assertEqual(order_check.returncode,0,order_check.stderr);self.assertEqual(order_check.stdout.strip(),"DELIVERED:2")
         allocation_check=self.psql("orders","orders","SELECT sum(merchandise_refund_minor+tax_refund_minor) FROM return_unit_allocation WHERE order_id=$$"+order_id+"$$")
         self.assertEqual(allocation_check.returncode,0,allocation_check.stderr);self.assertEqual(allocation_check.stdout.strip(),str(int(operation["amountMinor"])+int(second_operation["amountMinor"])))
         payment_check=self.psql("payment","payment","SELECT concat(sum(amount_minor),':',count(*)) FROM payment_operation WHERE order_id=$$"+order_id+"$$ AND operation=$$REFUND$$")
         self.assertEqual(payment_check.returncode,0,payment_check.stderr);self.assertEqual(payment_check.stdout.strip(),str(int(operation["amountMinor"])+int(second_operation["amountMinor"]))+":2")
+        pending_url=f"{INVENTORY}/api/v1/inventory/returns/pending";deadline=time.monotonic()+30
+        while time.monotonic()<deadline:
+            _,pending=manage.request_json(pending_url,token=self.inventory_operator)
+            pending_by_id={item["returnId"]:item for item in pending}
+            if created["returnId"] in pending_by_id and second["returnId"] in pending_by_id:break
+            time.sleep(.5)
+        self.assertIn(created["returnId"],pending_by_id);self.assertIn(second["returnId"],pending_by_id)
+        before_balances=manage.request_json(f"{INVENTORY}/api/v1/inventory/balances",token=self.inventory_operator)[1]
+        before=next((int(row["onHand"]) for row in before_balances if row["skuId"]==sku_id),0)
+        receipts=[pending_by_id[created["returnId"]],pending_by_id[second["returnId"]]]
+        inspection_results=[]
+        for receipt,condition,reason in ((receipts[0],"SELLABLE","No visible wear"),(receipts[1],"DAMAGED","Seam is split")):
+            units=receipt["units"]
+            decisions=[{"skuId":unit["skuId"],"ordinal":unit["ordinal"],"condition":condition,"reason":reason} for unit in units]
+            inspection={"expectedRevision":receipt["revision"],"operationId":str(uuid.uuid4()),"decisions":decisions}
+            inspection_url=f"{INVENTORY}/api/v1/inventory/returns/{receipt['returnId']}/inspection"
+            result_status,result=manage.request_json(inspection_url,token=self.inventory_operator,method="POST",data=json.dumps(inspection).encode())
+            self.assertEqual(result_status,200,result);self.assertEqual(result["state"],"INSPECTED");inspection_results.append((inspection_url,inspection,result,units,condition))
+        replay_status,replay=manage.request_json(inspection_results[0][0],token=self.inventory_operator,method="POST",data=json.dumps(inspection_results[0][1]).encode())
+        self.assertEqual(replay_status,200);self.assertTrue(replay["replayed"])
+        changed_inspection=json.loads(json.dumps(inspection_results[0][1]));changed_inspection["decisions"][0]["reason"]="Changed after inspection"
+        self.assertEqual(manage.request_json(inspection_results[0][0],token=self.inventory_operator,method="POST",data=json.dumps(changed_inspection).encode())[0],409)
+        after_balances=manage.request_json(f"{INVENTORY}/api/v1/inventory/balances",token=self.inventory_operator)[1]
+        after=next((int(row["onHand"]) for row in after_balances if row["skuId"]==sku_id),0);self.assertEqual(after,before+1)
+        for _,_,_,units,condition in inspection_results:
+            for unit in units:
+                key=f"return:{created['returnId'] if condition=='SELLABLE' else second['returnId']}:{unit['skuId']}:{unit['ordinal']}"
+                movement=self.psql("inventory","inventory","SELECT concat(count(*),':',COALESCE(sum(delta),0)) FROM stock_movement WHERE idempotency_key=$$"+key+"$$")
+                self.assertEqual(movement.returncode,0,movement.stderr);self.assertEqual(movement.stdout.strip(),"1:1" if condition=="SELLABLE" else "0:0")
 
     def test_declined_payment_releases_stock_without_capture(self):
         settings_url=f"{CONFIGURATION}/api/v1/configuration"

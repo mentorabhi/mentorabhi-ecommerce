@@ -70,6 +70,39 @@ import java.util.*;import java.sql.Timestamp;import java.time.Instant;import org
   jdbc.update("UPDATE inventory_reservation SET state='CANCELLED',cancellation_operation_id=?,updated_at=now() WHERE id=?",operationId,reservationId);
   return Map.of("orderId",orderId,"state","CANCELLED","replayed",false);
  }
+ @Transactional Map<String,Object> registerReturn(UUID returnId,UUID orderId,List<ReturnInspectionRules.UnitKey> units){
+  if(returnId==null||orderId==null||units==null||units.isEmpty()||units.size()>5000||units.stream().anyMatch(unit->unit==null||unit.skuId()==null||unit.ordinal()<0))throw new IllegalArgumentException("Invalid return manifest");
+  var ordered=units.stream().sorted(Comparator.comparing((ReturnInspectionRules.UnitKey unit)->unit.skuId().toString()).thenComparingInt(ReturnInspectionRules.UnitKey::ordinal)).toList();
+  if(ordered.stream().map(unit->unit.skuId()+":"+unit.ordinal()).distinct().count()!=ordered.size())throw new IllegalArgumentException("Duplicate return manifest unit");
+  String hash=ReturnInspectionRules.hashUnits(ordered);
+  var prior=jdbc.queryForList("SELECT order_id,manifest_hash,state,revision FROM inventory_return WHERE return_id=? FOR UPDATE",returnId);
+  if(!prior.isEmpty()){var row=prior.getFirst();if(!orderId.equals(row.get("order_id"))||!hash.equals(row.get("manifest_hash").toString().trim()))throw new ReturnOperationConflictException();return Map.of("returnId",returnId,"orderId",orderId,"state",row.get("state"),"revision",row.get("revision"),"replayed",true);}
+  jdbc.update("INSERT INTO inventory_return(return_id,order_id,manifest_hash,state) VALUES (?,?,?,'RECEIVED')",returnId,orderId,hash);
+  for(var unit:ordered)jdbc.update("INSERT INTO inventory_return_unit(return_id,order_id,sku_id,unit_ordinal) VALUES (?,?,?,?)",returnId,orderId,unit.skuId(),unit.ordinal());
+  return Map.of("returnId",returnId,"orderId",orderId,"state","RECEIVED","revision",0,"replayed",false);
+ }
+ @Transactional Map<String,Object> inspectReturn(UUID returnId,long expectedRevision,UUID operationId,String actor,List<ReturnInspectionRules.Decision> decisions){
+  if(returnId==null||operationId==null||expectedRevision<0)throw new IllegalArgumentException("Invalid inspection identity or revision");
+  jdbc.query("SELECT pg_advisory_xact_lock(hashtextextended(?,0))",ps->ps.setString(1,"return-inspection-operation:"+operationId),rs->{rs.next();return null;});
+  var rows=jdbc.queryForList("SELECT order_id,state,revision FROM inventory_return WHERE return_id=? FOR UPDATE",returnId);if(rows.isEmpty())throw new ReturnNotFoundException();var parent=rows.getFirst();
+  var receivedRows=jdbc.queryForList("SELECT sku_id,unit_ordinal FROM inventory_return_unit WHERE return_id=? ORDER BY sku_id,unit_ordinal",returnId);
+  var received=receivedRows.stream().map(row->new ReturnInspectionRules.UnitKey((UUID)row.get("sku_id"),((Number)row.get("unit_ordinal")).intValue())).toList();
+  List<ReturnInspectionRules.Decision> validated=ReturnInspectionRules.validate(decisions,received);String hash=ReturnInspectionRules.hash(validated);
+  var prior=jdbc.queryForList("SELECT return_id,request_hash,previous_revision,next_revision,actor_subject,inspected_units,created_at FROM inventory_return_inspection_audit WHERE operation_id=?",operationId);
+  if(!prior.isEmpty()){var audit=prior.getFirst();if(!returnId.equals(audit.get("return_id"))||!hash.equals(audit.get("request_hash").toString().trim()))throw new ReturnOperationConflictException();return Map.of("returnId",returnId,"state","INSPECTED","revision",audit.get("next_revision"),"operationId",operationId,"actorSubject",audit.get("actor_subject"),"inspectedUnits",audit.get("inspected_units"),"replayed",true);}
+  long revision=((Number)parent.get("revision")).longValue();if(revision!=expectedRevision)throw new StaleReturnRevisionException();if(!"RECEIVED".equals(parent.get("state")))throw new IllegalStateException("Return has already been inspected");
+  if(actor==null||actor.isBlank()||actor.length()>160)throw new IllegalArgumentException("Invalid inspection actor");long next=revision+1;
+  for(var decision:validated){UUID sku=decision.skuId();int changed=jdbc.update("UPDATE inventory_return_unit SET condition=?,reason=?,inspected_by=?,inspected_at=now() WHERE return_id=? AND sku_id=? AND unit_ordinal=? AND condition='PENDING'",decision.condition(),decision.reason().trim(),actor,returnId,sku,decision.ordinal());if(changed!=1)throw new IllegalStateException("Return unit is already inspected");
+   if("SELLABLE".equals(decision.condition())){jdbc.update("INSERT INTO inventory_balance(warehouse_id,sku_id,on_hand) VALUES (?,?,0) ON CONFLICT DO NOTHING",WAREHOUSE,sku);long current=jdbc.queryForObject("SELECT on_hand FROM inventory_balance WHERE warehouse_id=? AND sku_id=? FOR UPDATE",Long.class,WAREHOUSE,sku);long updated=Math.addExact(current,1);String movementKey="return:"+returnId+":"+sku+":"+decision.ordinal();jdbc.update("INSERT INTO stock_movement(id,warehouse_id,sku_id,delta,actor,reason,idempotency_key,source) VALUES (?,?,?,?,?,?,?,'return-inspection')",UUID.randomUUID(),WAREHOUSE,sku,1,actor,"Sellable returned unit restocked",movementKey);jdbc.update("UPDATE inventory_balance SET on_hand=?,revision=revision+1 WHERE warehouse_id=? AND sku_id=?",updated,WAREHOUSE,sku);}
+  }
+  jdbc.update("INSERT INTO inventory_return_inspection_audit(operation_id,return_id,request_hash,previous_revision,next_revision,actor_subject,inspected_units) VALUES (?,?,?,?,?,?,?)",operationId,returnId,hash,revision,next,actor,validated.size());
+  jdbc.update("UPDATE inventory_return SET state='INSPECTED',revision=?,updated_at=now() WHERE return_id=? AND revision=?",next,returnId,revision);
+  return Map.of("returnId",returnId,"orderId",parent.get("order_id"),"state","INSPECTED","revision",next,"operationId",operationId,"actorSubject",actor,"inspectedUnits",validated.size(),"replayed",false);
+ }
+ List<Map<String,Object>> pendingReturns(){var parents=jdbc.queryForList("SELECT return_id AS \"returnId\",order_id AS \"orderId\",revision,created_at AS \"receivedAt\" FROM inventory_return WHERE state='RECEIVED' ORDER BY created_at,return_id");var result=new ArrayList<Map<String,Object>>();for(var parent:parents){var row=new LinkedHashMap<String,Object>(parent);row.put("units",jdbc.queryForList("SELECT sku_id AS \"skuId\",unit_ordinal AS ordinal,condition FROM inventory_return_unit WHERE return_id=? ORDER BY sku_id,unit_ordinal",parent.get("returnId")));result.add(row);}return result;}
+ static final class ReturnNotFoundException extends RuntimeException{}
+ static final class ReturnOperationConflictException extends RuntimeException{}
+ static final class StaleReturnRevisionException extends RuntimeException{}
  static final class InsufficientStockException extends RuntimeException{}
  static final class ReservationNotFoundException extends RuntimeException{}
 }

@@ -238,6 +238,25 @@ class SuperSportsAdminUiTests(unittest.TestCase):
             driver.find_elements(By.CSS_SELECTOR, ".coupon-card code")}
         self.wait.until(lambda driver: expected_coupons.issubset(coupon_codes(driver)) or
                         driver.find_elements(By.CSS_SELECTOR, '[role="alert"]'))
+
+    def test_return_inspection_operator_queue_when_fixture_is_provided(self):
+        return_id = os.environ.get("SUPERSPORTS_INSPECTABLE_RETURN_ID")
+        if not return_id:
+            self.skipTest("Set SUPERSPORTS_INSPECTABLE_RETURN_ID to a refunded return awaiting inspection.")
+        self.login("admin", "ADMIN_PASSWORD")
+        self.nav("Inventory")
+        receipt = self.wait.until(EC.visibility_of_element_located(
+            (By.XPATH, f"//article[contains(@class,'section-block')][.//span[contains(.,'{return_id}')]]")))
+        selects = receipt.find_elements(By.CSS_SELECTOR, "select")
+        reasons = receipt.find_elements(By.CSS_SELECTOR, "input[maxlength='500']")
+        self.assertTrue(selects)
+        self.assertEqual(len(selects), len(reasons))
+        for selector, reason in zip(selects, reasons):
+            Select(selector).select_by_value("SELLABLE")
+            reason.send_keys("Selenium fixture item inspected")
+        receipt.find_element(By.XPATH, ".//button[normalize-space()='Save inspection decisions']").click()
+        self.wait.until(EC.invisibility_of_element_located(
+            (By.XPATH, f"//article[contains(@class,'section-block')][.//span[contains(.,'{return_id}')]]")))
         self.assertTrue(expected_coupons.issubset(coupon_codes(self.driver)),
                         f"Fixture coupons missing; alert={self.driver.find_elements(By.CSS_SELECTOR, '[role=\"alert\"]') and self.driver.find_element(By.CSS_SELECTOR, '[role=\"alert\"]').text}; page={self.driver.find_element(By.CSS_SELECTOR, '.content').text}")
 

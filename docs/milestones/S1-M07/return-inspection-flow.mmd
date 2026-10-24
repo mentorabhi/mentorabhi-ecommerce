@@ -1,0 +1,15 @@
+sequenceDiagram
+  participant Orders
+  participant Payment
+  participant Inventory
+  actor Operator
+  Orders->>Payment: refund stable operation
+  Payment-->>Orders: refund receipt
+  Orders->>Orders: persist refund completion
+  Orders->>Inventory: register exact return unit manifest (worker scope)
+  Inventory-->>Orders: stable receipt operation
+  Operator->>Inventory: inspect every registered unit with expected revision
+  Inventory->>Inventory: atomically audit decisions and restock sellable units only
+  Inventory-->>Operator: inspection receipt and new revision
+  Note over Orders,Inventory: Inventory owns stock and inspection; no private table reads
+  Note over Inventory: Damaged/disputed units remain unavailable; refund remains final

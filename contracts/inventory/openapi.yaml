@@ -31,6 +31,31 @@ paths:
       summary: Restore quantities for one committed reservation exactly once after an accepted cancellation
       requestBody: {required: true, content: {application/json: {schema: {type: object, required: [operationId, fence], properties: {operationId: {type: string, format: uuid}, fence: {type: integer, minimum: 1}}}}}}
       responses: {'200': {description: Reservation reversed and stock movement appended}, '404': {description: Reservation not found}, '409': {description: Reservation is not committed or fence is stale}}
+  /api/v1/internal/checkout/inventory/returns/{returnId}/receive:
+    servers: [{url: /}]
+    post:
+      summary: Idempotently register the exact refunded return unit manifest for Inventory inspection
+      security: [{checkoutWorker: [checkout:inventory.return.receive]}]
+      parameters: [{in: path, name: returnId, required: true, schema: {type: string, format: uuid}}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, required: [orderId, units], properties: {orderId: {type: string, format: uuid}, units: {type: array, minItems: 1, maxItems: 5000, items: {type: object, required: [skuId, ordinal], properties: {skuId: {type: string, format: uuid}, ordinal: {type: integer, minimum: 0}}}}}}
+      responses: {'200': {description: Inventory receipt and revision}, '409': {description: Return ID reused with a changed manifest}, '422': {description: Invalid or duplicate return unit}}
+  /returns/pending:
+    get: {summary: List return units awaiting operator inspection, responses: {'200': {description: Inventory-owned return receipts and revision}}}
+  /returns/{returnId}/inspection:
+    post:
+      summary: Record a complete revisioned inspection and restock sellable units exactly once
+      parameters: [{in: path, name: returnId, required: true, schema: {type: string, format: uuid}}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, required: [expectedRevision, operationId, decisions], properties: {expectedRevision: {type: integer, minimum: 0}, operationId: {type: string, format: uuid}, decisions: {type: array, minItems: 1, items: {type: object, required: [skuId, ordinal, condition, reason], properties: {skuId: {type: string, format: uuid}, ordinal: {type: integer, minimum: 0}, condition: {type: string, enum: [SELLABLE, DAMAGED, DISPUTED]}, reason: {type: string, minLength: 1, maxLength: 500}}}}}}
+      responses: {'200': {description: Inspection receipt and new revision}, '404': {description: Inventory receipt not found}, '409': {description: Stale revision, duplicate operation conflict or already inspected}, '422': {description: Inspection must cover each received unit exactly once}}
 components:
   securitySchemes:
     bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+    checkoutWorker: {type: http, scheme: bearer, bearerFormat: JWT, description: Worker client, internal audience, and required inventory manifest scope}

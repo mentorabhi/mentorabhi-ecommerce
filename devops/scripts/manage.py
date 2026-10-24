@@ -459,7 +459,7 @@ def provision_local_identity(root=ROOT):
 
     checkout_scopes = (
         "checkout:catalog.read", "checkout:configuration.read", "checkout:inventory.reserve",
-        "checkout:inventory.protect", "checkout:inventory.commit", "checkout:inventory.release", "checkout:inventory.cancel",
+        "checkout:inventory.protect", "checkout:inventory.commit", "checkout:inventory.release", "checkout:inventory.cancel", "checkout:inventory.return.receive",
         "checkout:pricing.quote", "checkout:pricing.coupon.hold", "checkout:pricing.coupon.protect",
         "checkout:pricing.coupon.commit", "checkout:pricing.coupon.release",
         "checkout:payment.authorize", "checkout:payment.capture", "checkout:payment.status",

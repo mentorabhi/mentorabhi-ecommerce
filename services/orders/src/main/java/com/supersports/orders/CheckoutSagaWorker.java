@@ -68,6 +68,17 @@ class CheckoutSagaWorker {
         catch(RuntimeException failure){orders.retryReturn(returnId,fence,"RETURN_REFUND_RETRY");}
     }
 
+    @Scheduled(fixedDelayString="${checkout.worker-poll-ms:1000}")
+    void pollReturnInspectionRegistration(){
+        Map<String,Object> claim=orders.claimReturnInspectionRegistration();if(claim==null)return;
+        UUID returnId=(UUID)claim.get("return_id");
+        try{inventory.post().uri("/api/v1/internal/checkout/inventory/returns/{id}/receive",returnId).header("Authorization","Bearer "+workerToken()).contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("orderId",claim.get("order_id"),"units",claim.get("units"))).retrieve().body(Map.class);
+            orders.completeReturnInspectionRegistration(returnId);
+        }catch(org.springframework.web.client.HttpClientErrorException.Conflict conflict){orders.manualReviewReturnInspectionRegistration(returnId,"INSPECTION_MANIFEST_CONFLICT");}
+        catch(RuntimeException failure){orders.retryReturnInspectionRegistration(returnId,"INSPECTION_REGISTRATION_RETRY");}
+    }
+
     private void advanceCancellation(UUID operation,UUID order,String step,long fence,Map<String,Object> claim){
         String bearer="Bearer "+workerToken();UUID claimId=operationId(operation,"shipment-claim");Map<String,Object> result;String next;
         switch(step){

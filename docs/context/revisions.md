@@ -193,3 +193,7 @@ This is development only and unverified. No build, test, or runtime command was 
 ## 2026-10-24 — S1-M07 partial returns/refunds development checkpoint
 
 Designed and authored return requests with owner-scoped idempotency, delivery and return-window checks, revisioned Returns configuration, row-locked purchased-unit claims, deterministic integer largest-remainder allocation of merchandise/tax, serialized Payment refund retries, v2 return/refund events, and customer eligibility/status actions. Restock is deferred until separate Unit 5 inspection. Added service/UI/manual documentation and unit, integration and Selenium test source. This development remains unverified; no tests/builds have run.
+
+## 2026-10-24 — S1-M07 return inspection/restock development checkpoint
+
+Designed and authored the retryable Orders-to-Inventory registration boundary for refunded unit manifests, Inventory receipt persistence and revisioned all-unit inspection. Only sellable units create idempotent positive stock movements; damage/dispute outcomes retain actor and reason without affecting the completed refund. Added operator queue/form, narrowly scoped worker API, contract, persistence migrations, Java unit and real-stack integration assertions, Selenium fixture journey, review artifacts and a separate database/UI manual guide. Development only; no build, test, or runtime command was executed. Further M07 Units 6–8 and M08/M09 development remain before testing resumes.

@@ -34,3 +34,7 @@ Cancellation source and test cases are authored but unverified. Per the user's s
 
 Partial returns and refunds are also authored but unverified. Unit test, real-stack integration test, Selenium journey, policy setting audit, and manual owner checks are written; no execution has started. See [returns-refunds-manual-checks.md](returns-refunds-manual-checks.md).
 
+## Development-first checkpoint — Unit 5 inspection and restock
+
+Inventory receipt registration and complete per-unit SELLABLE/DAMAGED/DISPUTED inspection are authored with operation identity, revision fencing, audit actor/reason and sellable-only restock movement. Orders retries registration after refund completion using a persisted lease state. Operator UI, OpenAPI contract, Java unit tests, real-stack integration assertions, Selenium fixture journey and a separate manual guide are present. No build, test, or runtime check has been executed for this checkpoint; all outcomes remain unverified until Stage 1 development is complete.
+
