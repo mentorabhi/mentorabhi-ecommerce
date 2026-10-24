@@ -201,3 +201,7 @@ Designed and authored the retryable Orders-to-Inventory registration boundary fo
 ## 2026-10-24 — S1-M07 verified reviews and owned support development checkpoint
 
 Designed and authored separate Reviews and Support services with distinct PostgreSQL databases/roles, customer/operator realm audience boundaries, owner verification through minimal Orders endpoints, moderation and support audits, bounded customer text, duplicate review prevention, idempotent ticket/message operations, Compose wiring, contracts, storefront customer/operator interfaces, unit/integration/Selenium test source, and a separate manual guide. No build or test was run. M07 tracking-event mirroring and final integration remain, followed by M08/M09 development before verification starts.
+
+## 2026-10-24 — S1-M07 Unit 8 customer/operator integration checkpoint
+
+Added the operator shipment read/transition UI route and customer order tracking timeline for tracking ID, ETA, revision, and audit transitions. Updated Fulfillment contract, Selenium test source, main manual acceptance and Unit 8 design/review/diagram. Tracking remains queried from the owning Fulfillment service through Orders; no unsupported mirrored tracking event is emitted. This is unverified development; no build/test/runtime command ran. M08/M09 development remains before Stage 1 verification resumes.

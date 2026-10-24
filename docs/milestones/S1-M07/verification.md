@@ -40,5 +40,9 @@ Inventory receipt registration and complete per-unit SELLABLE/DAMAGED/DISPUTED i
 
 ## Development-first checkpoint — Units 6–7 reviews and support
 
-Added independent Reviews and Support Spring projects, database migrations/credentials, public/customer/operator API routes, minimal owner verification through Orders, pending moderation and audited decisions, owner-scoped tickets and idempotent messages, storefront customer/operator workflows, OpenAPI contracts, unit/integration/Selenium source and manual steps. New services are included in the core Compose profile. No build, test, or runtime check has been executed. Tracking-event mirroring and final Unit 8 integration remain open.
+Added independent Reviews and Support Spring projects, database migrations/credentials, public/customer/operator API routes, minimal owner verification through Orders, pending moderation and audited decisions, owner-scoped tickets and idempotent messages, storefront customer/operator workflows, OpenAPI contracts, unit/integration/Selenium source and manual steps. New services are included in the core Compose profile. No build, test, or runtime check has been executed. Unit 8 source integration is recorded below.
+
+## Development-first checkpoint — Unit 8 UI integration
+
+Authored operator shipment lookup/progression and customer tracking timeline UI, fulfillment read contract, same-origin route, Selenium source and updated manual acceptance. Tracking remains a read through Orders to the Fulfillment owner API; no cross-service database projection or unsafely synthesized tracking event is introduced. M07 code is not verified. No test, build or service command was run for this checkpoint.
 

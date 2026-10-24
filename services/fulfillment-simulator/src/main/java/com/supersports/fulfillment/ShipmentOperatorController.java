@@ -18,6 +18,9 @@ class ShipmentOperatorController {
     private final FulfillmentRepository repository;
     ShipmentOperatorController(FulfillmentRepository repository){this.repository=repository;}
 
+    @org.springframework.web.bind.annotation.GetMapping("/{orderId}")
+    Map<String,Object> shipment(@PathVariable UUID orderId){var result=repository.status(orderId);if(result==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Shipment not found");return result;}
+
     @PostMapping("/{orderId}/transitions")
     Map<String,Object> advance(@PathVariable UUID orderId,@RequestBody Request request,@AuthenticationPrincipal Jwt operator){
         if(request==null||request.operationId()==null||request.targetState()==null||request.reason()==null)

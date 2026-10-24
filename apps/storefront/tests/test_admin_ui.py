@@ -123,7 +123,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
     def test_local_admin_mobile_navigation_and_sign_out(self):
         self.driver.set_window_size(390, 844)
         self.login("admin", "ADMIN_PASSWORD")
-        for section in ("Prices & coupons", "Inventory", "Reviews", "Support", "Catalog"):
+        for section in ("Prices & coupons", "Inventory", "Shipments", "Reviews", "Support", "Catalog"):
             self.nav(section)
             self.wait.until(lambda driver: driver.find_element(By.TAG_NAME, "h1").text == f"{section}.")
         self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Sign out"]'))).click()
@@ -132,6 +132,16 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.driver.refresh()
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, '.login-shell')))
         self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, '.app-shell'))
+
+    def test_operator_advances_a_prepared_synthetic_shipment(self):
+        order_id=os.environ.get("SUPERSPORTS_SCHEDULED_ORDER_ID")
+        if not order_id:self.skipTest("Set SUPERSPORTS_SCHEDULED_ORDER_ID to a prepared scheduled shipment.")
+        self.login("admin","ADMIN_PASSWORD");self.nav("Shipments")
+        self.driver.find_element(By.CSS_SELECTOR,"input[placeholder='Paste a scheduled order UUID']").send_keys(order_id)
+        self.driver.find_element(By.XPATH,"//button[normalize-space()='Load shipment']").click()
+        self.wait.until(EC.visibility_of_element_located((By.XPATH,"//*[contains(.,'SCHEDULED')]")))
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,"//button[normalize-space()='Advance to HANDED_OFF']"))).click()
+        self.wait.until(EC.visibility_of_element_located((By.XPATH,"//*[contains(.,'HANDED_OFF')]")))
 
     def test_checkout_configuration_categories_update_and_audit_feedback(self):
         self.login("admin", "ADMIN_PASSWORD")

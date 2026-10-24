@@ -45,6 +45,12 @@ paths:
                 targetState: {type: string, enum: [HANDED_OFF, IN_TRANSIT, DELIVERED]}
                 reason: {type: string, minLength: 1, maxLength: 500}
       responses: {'200': {description: Idempotent transition receipt}, '404': {description: Shipment not found}, '409': {description: Stale revision, operation conflict or invalid state transition}, '422': {description: Invalid transition request}}
+  /operator/shipments/{orderId}:
+    get:
+      summary: Read one shipment state and its operator audit history
+      security: [{operatorBearer: []}]
+      parameters: [{in: path, name: orderId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Synthetic tracking state, revision, ETA and transitions}, '404': {description: Shipment not found}}
 components:
   securitySchemes:
     checkoutWorker: {type: http, scheme: bearer, bearerFormat: JWT, description: Exact checkout client, internal audience and fulfillment scope}

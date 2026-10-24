@@ -1,17 +1,17 @@
 # S1-M07 manual acceptance — post-purchase lifecycle
 
-Status: Development in progress. Payment ledger and Fulfillment/Orders tracking APIs are implemented in source. UI advancement, lifecycle mirror events, cancellation, returns, reviews and support await their implementation units. Per user direction, new automated execution resumes after all Stage 1 development is complete.
+Status: Development in progress and unverified. Payment ledger and Fulfillment/Orders tracking APIs, shipment operator/customer UI, cancellation, partial returns/refunds, inventory inspection, verified reviews/moderation and owned support are authored. Per user direction, automated execution resumes after all Stage 1 development is complete. Unit-specific service/UI/database checklists are in `cancellation-manual-checks.md`, `returns-refunds-manual-checks.md`, `return-inspection-manual-checks.md` and `reviews-support-manual-checks.md`.
 
 ## Start and health
 
 1. Run `./devops/scripts/supersports streaming-up` and `./devops/scripts/supersports status`.
 2. Confirm Orders, Payment, Fulfillment, Inventory, Reviews, Support, Kafka, Connect, Order History, PostgreSQL, identity and storefront report healthy.
-3. Open `http://localhost:3000` and `http://localhost:3000/admin`. Sign in using locally configured customer/operator accounts; passwords remain in ignored `.local` files.
+3. Open `http://localhost:3000` and `http://localhost:3000/admin`. Sign in using locally configured customer/operator accounts; passwords remain in ignored `.local` files. The operator workspace includes Shipments, Inventory inspection, Reviews and Support.
 
 ## Customer UI
 
 1. Sign in as a self-registered customer, complete a simulated purchase, and open Account → Orders.
-2. Open the owned order's tracking view and confirm the simulator state, stable tracking ID, revision, estimated delivery and transition history. In the operator workspace, advance one milestone at a time using the displayed revision; verify the reason/actor audit and retry the same operation ID. UI controls are part of Unit 8 development.
+2. Open the owned order's tracking view and confirm the simulator state, stable tracking ID, revision, estimated delivery and transition history. In the operator workspace, load its order ID and advance one milestone at a time; verify the reason/actor audit and retry the same operation ID through the API.
 3. Before handoff, request cancellation and confirm its final state and simulated refund/void summary. Repeat the request and verify effects are not duplicated.
 4. For a delivered order, request a partial line return. Confirm a second request cannot exceed the purchased quantity.
 5. Submit a review for the delivered line; confirm it remains pending and unpublished before moderation.
@@ -35,10 +35,10 @@ Use owner-scoped database accounts from ignored `devops/.local/bootstrap.env`; n
 3. With the synthetic API scenarios in the integration test, verify a repeated capture, over-refund, cross-order operation-key reuse and capture-after-void receive conflict; two concurrent refunds cannot exceed the capture.
 4. Query only the Payment database with its own read-only admin connection. Example: `SELECT operation, state, currency, amount_minor FROM payment_operation WHERE order_id = '<synthetic-order-uuid>' ORDER BY id;`
 
-### Tracking and handoff unit (API source implemented; UI awaits Unit 8)
+### Tracking and handoff unit
 
 1. Use a customer token to call `GET /api/v1/orders/{owned-order-id}/tracking`; confirm it returns only the owned order's simulator state and that a different customer receives 404.
-2. With the operator account, call `POST /api/v1/operator/shipments/{order-id}/transitions` using `{expectedRevision, operationId, targetState, reason}`. Advance `HANDED_OFF`, `IN_TRANSIT`, then `DELIVERED`, increasing the expected revision each time.
+2. In `/admin` → Shipments, load the order ID and advance `HANDED_OFF`, `IN_TRANSIT`, then `DELIVERED`. Confirm the customer order view shows tracking ID, ETA, state and transition history. The API is `POST /api/v1/operator/shipments/{order-id}/transitions` with `{expectedRevision, operationId, targetState, reason}`.
 3. Retry an identical operation ID/request and confirm its original receipt. Reuse that ID with a changed reason or target and expect 409; use a stale revision and expect 409; try to skip a milestone and expect 409.
 4. If Fulfillment is unavailable, the owned Orders tracking response reports `UNAVAILABLE` without disclosing another service's data. Read the transition audit only from the Fulfillment database owner connection.
 

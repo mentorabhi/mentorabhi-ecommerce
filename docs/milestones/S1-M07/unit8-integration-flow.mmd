@@ -1,0 +1,24 @@
+sequenceDiagram
+  actor C as Customer
+  actor OP as Operator
+  participant UI as Storefront
+  participant O as Orders
+  participant F as Fulfillment
+  participant I as Inventory
+  participant R as Reviews
+  participant S as Support
+  OP->>UI: Advance shipment with revision + operation ID
+  UI->>F: Operator transition
+  C->>UI: Open owned order
+  UI->>O: Tracking query with customer token
+  O->>F: Shipment state with worker identity
+  F-->>O: Authoritative synthetic tracking
+  O-->>UI: Owner-scoped tracking
+  C->>R: Review delivered SKU
+  R->>O: Verify owned delivered purchase
+  OP->>R: Moderate with reason
+  C->>S: Create/reply to ticket
+  S->>O: Verify optional linked order ownership
+  OP->>S: Reply/update status with audit
+  OP->>I: Inspect all returned units
+  I->>I: Restock SELLABLE units only

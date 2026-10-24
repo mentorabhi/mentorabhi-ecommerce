@@ -41,7 +41,7 @@ const money = (amount: number, currency: Currency) => new Intl.NumberFormat('en-
 function AdminApp() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [screen, setScreen] = useState<'catalog' | 'pricing' | 'inventory' | 'configuration' | 'reviews' | 'support'>('catalog')
+  const [screen, setScreen] = useState<'catalog' | 'pricing' | 'inventory' | 'configuration' | 'reviews' | 'support' | 'shipments'>('catalog')
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [prices, setPrices] = useState<Record<string, number>>({})
@@ -61,6 +61,7 @@ function AdminApp() {
     { id: 'configuration' as const, label: 'Configuration', icon: '⚙' },
     { id: 'reviews' as const, label: 'Reviews', icon: '★' },
     { id: 'support' as const, label: 'Support', icon: '✉' },
+    { id: 'shipments' as const, label: 'Shipments', icon: '➜' },
   ]
 
   useEffect(() => {
@@ -130,9 +131,17 @@ function AdminApp() {
       {screen==='configuration'&&configuration&&<Configurations snapshot={configuration} token={token} saving={saving} run={run} refresh={refresh} setMessage={setMessage}/>}
       {screen==='reviews'&&<ModerationQueue kind="reviews" token={token} run={run} saving={saving} setMessage={setMessage}/>}
       {screen==='support'&&<ModerationQueue kind="support" token={token} run={run} saving={saving} setMessage={setMessage}/>}
+      {screen==='shipments'&&<ShipmentSimulator token={token} run={run} saving={saving} setMessage={setMessage}/>}
       <footer className="footer"><span>Built for the love of the game.</span><span>SUPERSPORTS <b>·</b> LOCAL FIRST</span></footer>
     </div></main>
   </div>
+}
+
+function ShipmentSimulator({token,run,saving,setMessage}:{token:string;run:(f:()=>Promise<void>)=>Promise<void>;saving:boolean;setMessage:(s:string)=>void}){
+ const [orderId,setOrderId]=useState('');const [shipment,setShipment]=useState<Record<string,any>|null>(null)
+ const next:Record<string,string>={SCHEDULED:'HANDED_OFF',HANDED_OFF:'IN_TRANSIT',IN_TRANSIT:'DELIVERED'}
+ const load=async()=>setShipment(await api(`/api/fulfillment/operator/shipments/${orderId.trim()}`,token))
+ return <section className="section-block"><div className="section-heading"><div><span className="eyebrow">LOCAL SIMULATOR</span><h2>Shipment progression</h2></div><span className="result-count">NO CARRIER CONNECTED</span></div><p>Advance a synthetic shipment one audited step at a time.</p><form className="configuration-list" onSubmit={(event)=>{event.preventDefault();void run(load)}}><label>Order ID<input value={orderId} onChange={(event)=>setOrderId(event.target.value)} placeholder="Paste a scheduled order UUID" required/></label><button className="button secondary" disabled={saving}>Load shipment</button></form>{shipment&&<article className="configuration-row"><div><strong>{shipment.trackingId} · {shipment.state}</strong><code>Revision {shipment.revision}</code><small>Estimated delivery {shipment.estimatedDeliveryAt?new Date(shipment.estimatedDeliveryAt).toLocaleString('en-IN'):'Not scheduled'}</small></div>{next[shipment.state]&&<button className="button primary" disabled={saving} onClick={()=>void run(async()=>{await api(`/api/fulfillment/operator/shipments/${orderId.trim()}/transitions`,token,{method:'POST',body:JSON.stringify({expectedRevision:shipment.revision,operationId:crypto.randomUUID(),targetState:next[shipment.state],reason:'Operator advanced local shipment simulation'})});setMessage(`Shipment advanced to ${next[shipment.state]}.`);await load()})}>Advance to {next[shipment.state]}</button>}</article>}</section>
 }
 
 function ModerationQueue({kind,token,run,saving,setMessage}:{kind:'reviews'|'support';token:string;run:(f:()=>Promise<void>)=>Promise<void>;saving:boolean;setMessage:(s:string)=>void}){
