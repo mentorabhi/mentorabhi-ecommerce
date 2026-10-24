@@ -1,0 +1,19 @@
+sequenceDiagram
+    actor Test as Integration probe
+    participant O as Orders API
+    participant DB as Orders PostgreSQL
+    participant K as Kafka broker
+    participant C as Debezium Connect
+    participant H as Order History
+    Test->>C: Stop Connect
+    Test->>K: Stop broker
+    Test->>O: Synthetic checkout
+    O->>DB: Commit order + immutable outbox events
+    Note over DB: Source of truth remains durable during outage
+    Test->>K: Start broker; await healthy
+    Test->>C: Start connector; await RUNNING task
+    C->>DB: Resume retained logical-decoding position
+    C->>K: Publish outbox events
+    K->>H: Deliver partition records
+    H->>H: Deduplicate IDs and apply sequences
+    Test->>H: Assert complete order, matching event IDs, zero lag

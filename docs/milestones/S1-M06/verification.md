@@ -1,5 +1,12 @@
 # S1-M06 verification record
 
+## CDC and broker restart probe · 2026-10-24
+
+- Reviewed design, flow and owner review: [`cdc-restart-design.md`](cdc-restart-design.md), [`cdc-restart-flow.mmd`](cdc-restart-flow.mmd), [`cdc-restart-review.md`](cdc-restart-review.md).
+- `SUPERSPORTS_INTEGRATION=1 SUPERSPORTS_PROJECT=supersports .venv/bin/python -m unittest discover -s devops/tests -p test_streaming_integration.py -k cdc_resumes -v`: 1 live test passed in 135.883 seconds. Kafka and Connect were stopped, a checkout was accepted and persisted in Orders outbox during the outage, then Kafka was started before Connect. The connector/task recovered, History reached `FULFILLMENT_SCHEDULED`, source outbox event IDs/sequences exactly matched inbox rows with contiguous aggregate sequence, and consumer lag returned to zero.
+- The test restored both dependencies in `finally` and left its synthetic order/outbox/event records intact. This is a single-node, one-interval observation; snapshot/WAL overlap, longer WAL-retention and load are not proved.
+- Human Docker Desktop execution remains pending in [`manual-acceptance.md`](manual-acceptance.md).
+
 ## Transactional DLQ commit-boundary probe · 2026-10-24
 
 - Reviewed design/flow: [`dlq-crash-design.md`](dlq-crash-design.md), [`dlq-crash-flow.mmd`](dlq-crash-flow.mmd); review notes in [`design-review.md`](design-review.md).

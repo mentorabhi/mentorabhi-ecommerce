@@ -82,6 +82,53 @@ class StreamingIntegrationTests(unittest.TestCase):
         self.assertEqual(manage.request_json("http://127.0.0.1:8089/api/v1/order-history?customerKey=forged", token=self.customer)[0], 400)
         self.assertEqual(manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{order['id']}", token=self.other)[0], 404)
 
+    def test_cdc_resumes_outbox_after_connect_and_broker_restart(self):
+        self.wait_for_zero_lag()
+        status,products=manage.request_json("http://127.0.0.1:8081/api/v1/catalog/products?q=football")
+        self.assertEqual(status,200)
+        sku=products[0]["skus"][0]["id"]
+        order=None
+        try:
+            manage.compose(["--profile","streaming","stop","kafka-connect","kafka"],project=self.project)
+            status,order=manage.request_json("http://127.0.0.1:8086/api/v1/orders/checkout",token=self.customer,method="POST",
+                data=json.dumps({"lines":[{"skuId":sku,"quantity":1}],"couponCode":None}).encode(),
+                headers={"Idempotency-Key":"cdc-restart-"+uuid.uuid4().hex})
+            self.assertEqual(status,202)
+            pending=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","orders","-tA","-c",
+                f"SELECT count(*) FROM order_outbox WHERE aggregate_id='{order['orderId']}'"],project=self.project,capture=True)
+            self.assertGreater(int(pending.stdout.strip()),0,"outbox must commit while broker/Connect are stopped")
+
+            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka"],project=self.project)
+            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka-connect"],project=self.project)
+            deadline=time.monotonic()+120
+            while time.monotonic()<deadline:
+                try:
+                    with urlopen("http://127.0.0.1:8090/connectors/supersports-orders-outbox/status",timeout=3) as response:
+                        connector=json.loads(response.read())
+                    if connector["connector"]["state"]=="RUNNING" and connector["tasks"] and connector["tasks"][0]["state"]=="RUNNING":break
+                except (HTTPError,URLError,TimeoutError):pass
+                time.sleep(1)
+            else:self.fail("Debezium connector/task did not recover after broker restart")
+            deadline=time.monotonic()+90
+            while time.monotonic()<deadline:
+                projected_status,projected=manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{order['orderId']}",token=self.customer)
+                if projected_status==200 and projected["state"]=="FULFILLMENT_SCHEDULED":break
+                time.sleep(.5)
+            self.assertEqual(projected_status,200)
+            self.assertEqual(projected["state"],"FULFILLMENT_SCHEDULED")
+            source=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","orders","-tA","-c",
+                f"SELECT json_agg(json_build_object('eventId',payload->>'eventId','sequence',aggregate_sequence) ORDER BY aggregate_sequence) FROM order_outbox WHERE aggregate_id='{order['orderId']}'"],project=self.project,capture=True)
+            events=json.loads(source.stdout.strip())
+            history_target=manage.history_target(project=self.project)
+            inbox=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d",history_target["database"],"-tA","-c",
+                f"SELECT json_agg(json_build_object('eventId',event_id::text,'sequence',aggregate_sequence) ORDER BY aggregate_sequence) FROM event_inbox WHERE aggregate_id='{order['orderId']}'"],project=self.project,capture=True)
+            self.assertEqual(json.loads(inbox.stdout.strip()),events)
+            self.assertEqual([row["sequence"] for row in events],list(range(1,len(events)+1)))
+            self.wait_for_zero_lag()
+        finally:
+            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka"],project=self.project)
+            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka-connect"],project=self.project)
+
         _, products = manage.request_json("http://127.0.0.1:8081/api/v1/catalog/products?q=football")
         sku_id = products[0]["skus"][0]["id"]
         _, profile = manage.request_json("http://127.0.0.1:8085/api/v1/customer/profile", token=self.customer)
