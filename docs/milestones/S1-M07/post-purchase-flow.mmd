@@ -1,0 +1,24 @@
+flowchart LR
+  C[Customer UI]
+  A[Operator UI]
+  O[Orders API and persisted workflows]
+  F[Fulfillment simulator]
+  P[Payment simulator]
+  I[Inventory API]
+  R[Reviews service]
+  S[Support service]
+  K[Local Kafka]
+  H[Order History projection]
+  C -->|owned tracking/cancel/return| O
+  O -->|shipment status| F
+  O -->|void/refund operation| P
+  O -->|release reservation| I
+  O -->|transactional lifecycle events| K
+  K --> H
+  C -->|verified purchase review| R
+  A -->|moderate and inspect| R
+  A -->|inspection/restock decision| I
+  C -->|owned ticket| S
+  A -->|audited support response| S
+  C --> H
+  A --> O
