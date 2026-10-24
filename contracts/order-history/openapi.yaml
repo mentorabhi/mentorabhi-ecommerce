@@ -1,0 +1,100 @@
+openapi: 3.1.0
+info:
+  title: SuperSports Order History API
+  version: 1.0.0
+  description: Customer-owned CQRS view of Orders lifecycle events.
+servers:
+  - url: http://localhost:8089
+paths:
+  /api/v1/order-history:
+    get:
+      operationId: listCustomerOrderHistory
+      security:
+        - customerBearer: []
+      parameters:
+        - name: customerSubject
+          in: query
+          schema: {type: string}
+          description: Rejected. The owner is derived from the verified token.
+        - name: customerKey
+          in: query
+          schema: {type: string}
+          description: Rejected. The owner is derived from the verified token.
+        - name: owner
+          in: query
+          schema: {type: string}
+          description: Rejected. The owner is derived from the verified token.
+      responses:
+        '200':
+          description: Up to 100 orders owned by the authenticated customer.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [orders]
+                properties:
+                  orders:
+                    type: array
+                    items: {$ref: '#/components/schemas/OrderSummary'}
+        '400': {description: Caller-supplied owner filter is not allowed.}
+        '401': {description: Customer authentication is required.}
+  /api/v1/order-history/{orderId}:
+    get:
+      operationId: getCustomerOrderHistory
+      security:
+        - customerBearer: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Order history owned by the authenticated customer.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OrderDetail'}
+        '401': {description: Customer authentication is required.}
+        '404': {description: Order does not exist or belongs to another customer.}
+components:
+  securitySchemes:
+    customerBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    OrderSummary:
+      type: object
+      required: [id, state, currency, totalMinor, lines, createdAt, lastSequence]
+      properties:
+        id: {type: string, format: uuid}
+        state: {type: string, enum: [PENDING_PAYMENT, CONFIRMED, FULFILLMENT_SCHEDULED, FAILED]}
+        currency: {type: string, pattern: '^[A-Z]{3}$'}
+        totalMinor: {type: integer, minimum: 0}
+        lines:
+          type: array
+          items:
+            type: object
+            required: [skuId, productId, productTitle, quantity, unitPriceMinor, discountMinor, lineTotalMinor, currency]
+            properties:
+              skuId: {type: string, format: uuid}
+              productId: {type: string, format: uuid}
+              productTitle: {type: string}
+              quantity: {type: integer, minimum: 1}
+              unitPriceMinor: {type: integer, minimum: 0}
+              discountMinor: {type: integer, minimum: 0}
+              lineTotalMinor: {type: integer, minimum: 0}
+              currency: {type: string, pattern: '^[A-Z]{3}$'}
+        createdAt: {type: string, format: date-time}
+        lastSequence: {type: integer, minimum: 1}
+    OrderDetail:
+      type: object
+      required: [orderId, state, currency, totalMinor, lines, updatedAt, lastSequence]
+      properties:
+        orderId: {type: string, format: uuid}
+        state: {type: string, enum: [PENDING_PAYMENT, CONFIRMED, FULFILLMENT_SCHEDULED, FAILED]}
+        currency: {type: string, pattern: '^[A-Z]{3}$'}
+        totalMinor: {type: integer, minimum: 0}
+        lines: {$ref: '#/components/schemas/OrderSummary/properties/lines'}
+        updatedAt: {type: string, format: date-time}
+        lastSequence: {type: integer, minimum: 1}

@@ -24,6 +24,7 @@ x-app-runtime: &app-runtime
 services:
   postgres:
     image: "${POSTGRES_IMAGE:?Use devops/scripts/supersports}"
+    command: ["postgres", "-c", "wal_level=logical", "-c", "max_wal_senders=4", "-c", "max_replication_slots=4"]
     restart: unless-stopped
     mem_limit: 384m
     cpus: 1.0
@@ -40,6 +41,8 @@ services:
       ORDERS_DB_PASSWORD: "${ORDERS_DB_PASSWORD:?Run configure}"
       PAYMENT_DB_PASSWORD: "${PAYMENT_DB_PASSWORD:?Run configure}"
       FULFILLMENT_DB_PASSWORD: "${FULFILLMENT_DB_PASSWORD:?Run configure}"
+      CDC_DB_PASSWORD: "${CDC_DB_PASSWORD:?Run configure}"
+      ORDER_HISTORY_DB_PASSWORD: "${ORDER_HISTORY_DB_PASSWORD:?Run configure}"
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./devops/postgres/init.sh:/docker-entrypoint-initdb.d/10-supersports.sh:ro
@@ -211,6 +214,7 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUDIENCES: "supersports-customer-api"
       CHECKOUT_WORKER_CLIENT_ID: supersports-checkout-worker
       CHECKOUT_WORKER_CLIENT_SECRET: "${CHECKOUT_WORKER_CLIENT_SECRET:?Run configure}"
+      ORDER_HISTORY_OWNER_KEY: "${ORDER_HISTORY_OWNER_KEY:?Run configure}"
       CUSTOMER_BASE_URL: http://customer:8080
       CATALOG_BASE_URL: http://catalog:8080
       PRICING_BASE_URL: http://pricing:8080
@@ -274,5 +278,100 @@ services:
       identity: {condition: service_healthy}
     ports: ["127.0.0.1:3000:8080"]
 
+  kafka:
+    profiles: ["streaming"]
+    image: "${KAFKA_IMAGE:?Use devops/scripts/supersports}"
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.5
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_HEAP_OPTS: "-Xms128m -Xmx768m"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    ports: ["127.0.0.1:9092:9092"]
+
+  kafka-connect:
+    profiles: ["streaming"]
+    image: "${DEBEZIUM_CONNECT_IMAGE:?Use devops/scripts/supersports}"
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.0
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: "supersports-connect"
+      CONFIG_STORAGE_TOPIC: "supersports-connect-configs"
+      OFFSET_STORAGE_TOPIC: "supersports-connect-offsets"
+      STATUS_STORAGE_TOPIC: "supersports-connect-status"
+      CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_REST_PORT: "8083"
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_PLUGIN_PATH: /kafka/connect,/kafka/connect/debezium-connector-postgres
+      HEAP_OPTS: "-Xms128m -Xmx512m"
+    depends_on:
+      kafka: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/connectors >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 45s
+    ports: ["127.0.0.1:8090:8083"]
+
+  order-history:
+    profiles: ["streaming"]
+    image: "${ORDER_HISTORY_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args:
+        BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}"
+        JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}"
+        SERVICE_NAME: order-history
+        RELEASE_VERSION: "${RELEASE_VERSION:-s1-m06}"
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx384m -XX:MaxMetaspaceSize=128m"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_history
+      SPRING_DATASOURCE_USERNAME: supersports_order_history
+      SPRING_DATASOURCE_PASSWORD: "${ORDER_HISTORY_DB_PASSWORD:?Run configure}"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://localhost:8180/realms/supersports-customers"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "http://identity:8080/realms/supersports-customers/protocol/openid-connect/certs"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUDIENCES: "supersports-customer-api"
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      ORDER_HISTORY_OWNER_KEY: "${ORDER_HISTORY_OWNER_KEY:?Run configure}"
+    depends_on:
+      postgres: {condition: service_healthy}
+      identity: {condition: service_healthy}
+      kafka: {condition: service_healthy}
+    ports: ["127.0.0.1:8089:8080"]
+
 volumes:
   postgres-data:
+  kafka-data:

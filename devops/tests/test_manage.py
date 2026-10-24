@@ -192,7 +192,7 @@ class HttpProbeTests(unittest.TestCase):
 
 class ReleaseRegistryTests(unittest.TestCase):
     def test_records_exact_image_ids_and_does_not_overwrite_a_release(self):
-        images = {service: "sha256:" + str(i) * 64 for i, service in enumerate(manage.DEPLOYABLES, 1)}
+        images = {service: "sha256:" + f"{i:064x}" for i, service in enumerate(manage.DEPLOYABLES, 1)}
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             manage.record_release(root, "supersports", "v1", images)
@@ -232,7 +232,7 @@ class ReleaseRegistryTests(unittest.TestCase):
         from unittest.mock import patch, call
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            images = {service: "sha256:" + str(i) * 64 for i, service in enumerate(manage.DEPLOYABLES, 1)}
+            images = {service: "sha256:" + f"{i:064x}" for i, service in enumerate(manage.DEPLOYABLES, 1)}
             manage.record_release(root, "supersports", "v1", images)
             with patch.object(manage, "run") as run, \
                  patch.object(manage, "compose") as compose, \

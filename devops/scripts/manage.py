@@ -22,18 +22,21 @@ SECRET_KEYS = (
     "IDENTITY_DB_PASSWORD", "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD", "CUSTOMER_DB_PASSWORD", "ORDERS_DB_PASSWORD", "PAYMENT_DB_PASSWORD", "FULFILLMENT_DB_PASSWORD",
     "KEYCLOAK_ADMIN_PASSWORD", "CHECKOUT_WORKER_CLIENT_SECRET", "DEMO_CUSTOMER_PASSWORD",
     "DEMO_PLATFORM_ADMIN_PASSWORD", "DEMO_CATALOG_ADMIN_PASSWORD", "DEMO_INVENTORY_OPERATOR_PASSWORD",
+    "CDC_DB_PASSWORD", "ORDER_HISTORY_DB_PASSWORD", "ORDER_HISTORY_OWNER_KEY",
 )
 M02_SECRET_KEYS = (
     "POSTGRES_PASSWORD", "CATALOG_DB_PASSWORD", "CONFIGURATION_DB_PASSWORD",
     "IDENTITY_DB_PASSWORD", "KEYCLOAK_ADMIN_PASSWORD", "DEMO_CUSTOMER_PASSWORD",
     "DEMO_PLATFORM_ADMIN_PASSWORD", "DEMO_CATALOG_ADMIN_PASSWORD",
 )
-LEGACY_SECRET_KEYS = (*M02_SECRET_KEYS, "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD",
-                      "DEMO_INVENTORY_OPERATOR_PASSWORD", "CUSTOMER_DB_PASSWORD", "ORDERS_DB_PASSWORD", "CHECKOUT_WORKER_CLIENT_SECRET")
+PRE_M05_SECRET_KEYS = (*M02_SECRET_KEYS, "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD",
+                       "DEMO_INVENTORY_OPERATOR_PASSWORD", "CUSTOMER_DB_PASSWORD", "ORDERS_DB_PASSWORD", "CHECKOUT_WORKER_CLIENT_SECRET")
+LEGACY_SECRET_KEYS = (*PRE_M05_SECRET_KEYS, "PAYMENT_DB_PASSWORD", "FULFILLMENT_DB_PASSWORD")
 SERVICES = ("catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator")
-DEPLOYABLES = (*SERVICES, "storefront")
+STREAMING_SERVICES = ("order-history",)
+DEPLOYABLES = (*SERVICES, *STREAMING_SERVICES, "storefront")
 SERVICE_PORTS = (8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088)
-DEFAULT_VERSION = "s1-m05"
+DEFAULT_VERSION = "s1-m06"
 TOKEN_URL = "http://127.0.0.1:8180/realms/supersports/protocol/openid-connect/token"
 CUSTOMER_TOKEN_URL = "http://127.0.0.1:8180/realms/supersports-customers/protocol/openid-connect/token"
 
@@ -146,7 +149,7 @@ def configure(root: Path = ROOT) -> Path:
                 if not separator or key not in LEGACY_SECRET_KEYS or key in existing or not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", value):
                     raise
                 existing[key] = value
-            if set(existing) not in (set(M02_SECRET_KEYS), set(LEGACY_SECRET_KEYS)):
+            if set(existing) not in (set(M02_SECRET_KEYS), set(PRE_M05_SECRET_KEYS), set(LEGACY_SECRET_KEYS)):
                 raise
             with path.open("a") as handle:
                 for key in sorted(set(SECRET_KEYS) - set(existing)):
@@ -177,7 +180,7 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
     environment = os.environ.copy()
     environment.update(load_credentials(root / "devops/.local/bootstrap.env"))
     lock = json.loads((root / "devops/images.lock.json").read_text())
-    for key in ("BUILD_IMAGE", "JAVA_IMAGE", "POSTGRES_IMAGE", "KEYCLOAK_IMAGE"):
+    for key in ("BUILD_IMAGE", "JAVA_IMAGE", "POSTGRES_IMAGE", "KEYCLOAK_IMAGE", "KAFKA_IMAGE", "DEBEZIUM_CONNECT_IMAGE"):
         environment[key] = lock[key]
     for key in ("STOREFRONT_NODE_IMAGE", "STOREFRONT_NGINX_IMAGE"):
         environment[key] = lock[key]
@@ -214,6 +217,89 @@ def provision_databases(root=ROOT, project="supersports", version=DEFAULT_VERSIO
     command = compose_command(root, project, ["exec", "-T", "postgres", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"])
     command.extend(["-f", "/opt/supersports/provision.sql"])
     run(command, cwd=root)
+
+
+def register_orders_connector(root=ROOT, project="supersports", version=DEFAULT_VERSION):
+    publication_check = compose_command(root, project, ["exec", "-T", "postgres", "psql", "-U", "postgres", "-d", "orders", "-tAc", "SELECT 1 FROM pg_publication WHERE pubname='supersports_orders_publication'"])
+    environment = deployment_env(root, version)
+    publication = run(publication_check, environment=environment, capture=True, cwd=root).stdout.strip()
+    if publication != "1":
+        create_publication = compose_command(root, project, ["exec", "-T", "postgres", "psql", "-U", "postgres", "-d", "orders", "-v", "ON_ERROR_STOP=1", "-c", "CREATE PUBLICATION supersports_orders_publication FOR TABLE public.order_outbox"])
+        run(create_publication, environment=environment, cwd=root)
+    credentials = load_credentials(root / "devops/.local/bootstrap.env")
+    config = {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "tasks.max": "1",
+        "database.hostname": "postgres",
+        "database.port": "5432",
+        "database.user": "supersports_cdc",
+        "database.password": credentials["CDC_DB_PASSWORD"],
+        "database.dbname": "orders",
+        "topic.prefix": "supersports",
+        "plugin.name": "pgoutput",
+        "slot.name": "supersports_orders_outbox",
+        "publication.name": "supersports_orders_publication",
+        "publication.autocreate.mode": "disabled",
+        "table.include.list": "public.order_outbox",
+        "snapshot.mode": "initial",
+        "tombstones.on.delete": "false",
+        "transforms": "outbox",
+        "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
+        "transforms.outbox.table.field.event.id": "event_id",
+        "transforms.outbox.table.field.event.key": "aggregate_id",
+        "transforms.outbox.table.field.event.aggregate.type": "aggregate_type",
+        "transforms.outbox.table.field.event.type": "event_type",
+        "transforms.outbox.table.field.event.payload": "payload",
+        "transforms.outbox.route.by.field": "event_type",
+        "transforms.outbox.route.topic.replacement": "commerce.order.events.v1",
+        "transforms.outbox.table.expand.json.payload": "true",
+    }
+    base = "http://127.0.0.1:8090/connectors"
+    try:
+        with urlopen(base, timeout=10) as response:
+            names = json.loads(response.read())
+        if "supersports-orders-outbox" in names:
+            request = Request(base + "/supersports-orders-outbox/config", data=json.dumps(config).encode(),
+                              headers={"Content-Type": "application/json"}, method="PUT")
+            with urlopen(request, timeout=15):
+                pass
+        else:
+            request = Request(base, data=json.dumps({"name": "supersports-orders-outbox", "config": config}).encode(),
+                              headers={"Content-Type": "application/json"}, method="POST")
+            with urlopen(request, timeout=15):
+                pass
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as error:
+        raise RuntimeError("Could not configure the local Orders CDC connector; inspect Connect status.") from error
+
+
+def streaming_up(project="supersports", version=DEFAULT_VERSION):
+    provision_databases(project=project, version=version)
+    compose(["--profile", "streaming", "up", "-d", "--build", "--wait", "--wait-timeout", "240"],
+            project=project, version=version)
+    provision_local_identity()
+    wait_status("http://127.0.0.1:8090/connectors", timeout=180)
+    for topic, partitions in (("commerce.order.events.v1", 3), ("commerce.order.events.dlq.v1", 1)):
+        compose(["--profile", "streaming", "exec", "-T", "kafka", "/opt/kafka/bin/kafka-topics.sh",
+                 "--bootstrap-server", "localhost:9092", "--create", "--if-not-exists", "--topic", topic,
+                 "--partitions", str(partitions), "--replication-factor", "1"], project=project, version=version)
+    register_orders_connector(project=project, version=version)
+
+
+def streaming_status(project="supersports", version=DEFAULT_VERSION):
+    compose(["--profile", "streaming", "ps"], project=project, version=version)
+    try:
+        with urlopen("http://127.0.0.1:8090/connectors/supersports-orders-outbox/status", timeout=10) as response:
+            status = json.loads(response.read())
+        print("Orders CDC connector status:", status.get("connector", {}).get("state", "UNKNOWN"))
+        for task in status.get("tasks", []):
+            print(f"Orders CDC task {task.get('id')}: {task.get('state', 'UNKNOWN')}")
+        for name, count in (("commerce.order.events.v1", "3"), ("commerce.order.events.dlq.v1", "1")):
+            compose(["--profile", "streaming", "exec", "-T", "kafka", "/opt/kafka/bin/kafka-topics.sh",
+                     "--bootstrap-server", "localhost:9092", "--describe", "--topic", name], project=project, version=version)
+        compose(["--profile", "streaming", "exec", "-T", "kafka", "/opt/kafka/bin/kafka-consumer-groups.sh",
+                 "--bootstrap-server", "localhost:9092", "--describe", "--group", "order-history-v1"], project=project, version=version, check=False)
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+        print("Orders CDC connector status: unavailable")
 
 
 def provision_local_identity(root=ROOT):
@@ -443,9 +529,9 @@ def wait_status(url: str, expected: int = 200, timeout: int = 120):
 
 def unit(root=ROOT, project="supersports"):
     run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
-         "-s", "devops/tests", "-p", "test_manage.py", "-v"], cwd=root)
+         "-s", "devops/tests", "-p", "test_*.py", "-v"], cwd=root)
     image = json.loads((root / "devops/images.lock.json").read_text())["BUILD_IMAGE"]
-    for service in SERVICES:
+    for service in (*SERVICES, *STREAMING_SERVICES):
         run([
             "docker", "run", "--rm",
             "--mount", f"type=bind,source={root / 'services' / service},target=/workspace",
@@ -461,6 +547,9 @@ def integration(root=ROOT, project="supersports"):
     environment["SUPERSPORTS_INTEGRATION"] = "1"
     run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
          "-s", "devops/tests", "-p", "test_core_integration.py", "-v"],
+        environment=environment, cwd=root)
+    run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
+         "-s", "devops/tests", "-p", "test_streaming_integration.py", "-v"],
         environment=environment, cwd=root)
 
 
@@ -592,7 +681,7 @@ def main(argv=None):
     parser.add_argument("action", choices=[
         "doctor", "configure", "validate", "build", "up", "down", "status",
         "unit", "test", "reset", "release", "rollback",
-        "ui-test",
+        "ui-test", "streaming-up", "streaming-down", "stream-status", "restart",
     ])
     parser.add_argument("release_version", nargs="?")
     parser.add_argument("--project", default="supersports")
@@ -634,6 +723,18 @@ def main(argv=None):
                 recovery(project=project)
         elif action == "ui-test":
             ui_test()
+        elif action == "streaming-up":
+            streaming_up(project=project, version=version)
+        elif action == "streaming-down":
+            compose(["--profile", "streaming", "stop", *STREAMING_SERVICES, "kafka-connect", "kafka"], project=project, version=version)
+        elif action == "stream-status":
+            streaming_status(project=project, version=version)
+        elif action == "restart":
+            service = arguments.release_version
+            allowed = (*SERVICES, "kafka-connect", "kafka", *STREAMING_SERVICES)
+            if service not in allowed:
+                raise ValueError("Restart requires a known SuperSports service name.")
+            compose(["--profile", "streaming", "restart", service], project=project, version=version)
         elif action == "reset":
             compose(["down", "--volumes", "--remove-orphans"], project=project, version=version)
             print(f"Removed {project} runtime volumes; local credentials and build cache preserved.")

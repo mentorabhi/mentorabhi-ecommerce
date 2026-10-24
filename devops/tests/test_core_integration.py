@@ -421,7 +421,11 @@ class CoreIntegrationTests(unittest.TestCase):
         result = manage.compose(["ps", "--format", "json"], project=self.project, capture=True)
         # Compose emits one JSON object per line for multiple services.
         rows = [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
-        self.assertEqual({row["Service"] for row in rows}, {"postgres", "identity", "catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator", "storefront"})
+        core = {"postgres", "identity", "catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator", "storefront"}
+        streaming = {"kafka", "kafka-connect", "order-history"}
+        services = {row["Service"] for row in rows}
+        self.assertTrue(core.issubset(services), services)
+        self.assertTrue(services - core in (set(), streaming), services)
         for row in rows:
             publishers = row.get("Publishers") or []
             if row["Service"] == "postgres":

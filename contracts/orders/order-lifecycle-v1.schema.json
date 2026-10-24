@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://supersports.local/contracts/orders/order-lifecycle-v1.schema.json",
+  "title": "SuperSports order lifecycle integration event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "eventVersion", "aggregateType", "aggregateId", "aggregateSequence", "occurredAt", "customerKey", "data"],
+  "properties": {
+    "eventId": {"type": "string", "format": "uuid"},
+    "eventType": {"enum": ["OrderAccepted", "OrderConfirmed", "FulfillmentScheduled", "OrderPaymentDeclined", "OrderCheckoutExpired"]},
+    "eventVersion": {"const": 1},
+    "aggregateType": {"const": "Order"},
+    "aggregateId": {"type": "string", "format": "uuid"},
+    "aggregateSequence": {"type": "integer", "minimum": 1},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "customerKey": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "data": {"type": "object"}
+  },
+  "allOf": [
+    {"if": {"properties": {"eventType": {"const": "OrderAccepted"}}, "required": ["eventType"]}, "then": {"properties": {"data": {"$ref": "#/$defs/accepted"}}}},
+    {"if": {"properties": {"eventType": {"enum": ["OrderConfirmed", "FulfillmentScheduled"]}}, "required": ["eventType"]}, "then": {"properties": {"data": {"$ref": "#/$defs/transition"}}}},
+    {"if": {"properties": {"eventType": {"enum": ["OrderPaymentDeclined", "OrderCheckoutExpired"]}}, "required": ["eventType"]}, "then": {"properties": {"data": {"$ref": "#/$defs/failure"}}}}
+  ],
+  "$defs": {
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skuId", "productId", "productTitle", "quantity", "unitPriceMinor", "discountMinor", "lineTotalMinor", "currency"],
+      "properties": {
+        "skuId": {"type": "string", "format": "uuid"},
+        "productId": {"type": "string", "format": "uuid"},
+        "productTitle": {"type": "string", "minLength": 1, "maxLength": 240},
+        "quantity": {"type": "integer", "minimum": 1},
+        "unitPriceMinor": {"type": "integer", "minimum": 0},
+        "discountMinor": {"type": "integer", "minimum": 0},
+        "lineTotalMinor": {"type": "integer", "minimum": 0},
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}
+      }
+    },
+    "accepted": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["orderId", "checkoutRequestId", "state", "currency", "subtotalMinor", "discountMinor", "taxMinor", "shippingMinor", "totalMinor", "lines"],
+      "properties": {
+        "orderId": {"type": "string", "format": "uuid"},
+        "checkoutRequestId": {"type": "string", "format": "uuid"},
+        "state": {"const": "PENDING_PAYMENT"},
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+        "subtotalMinor": {"type": "integer", "minimum": 0},
+        "discountMinor": {"type": "integer", "minimum": 0},
+        "taxMinor": {"type": "integer", "minimum": 0},
+        "shippingMinor": {"type": "integer", "minimum": 0},
+        "totalMinor": {"type": "integer", "minimum": 0},
+        "lines": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/line"}}
+      }
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["orderId", "state"],
+      "properties": {"orderId": {"type": "string", "format": "uuid"}, "state": {"enum": ["CONFIRMED", "FULFILLMENT_SCHEDULED"]}}
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["orderId", "state", "reason"],
+      "properties": {"orderId": {"type": "string", "format": "uuid"}, "state": {"const": "FAILED"}, "reason": {"enum": ["PAYMENT_DECLINED", "QUOTE_EXPIRED"]}}
+    }
+  }
+}

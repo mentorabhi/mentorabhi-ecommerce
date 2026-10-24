@@ -17,17 +17,13 @@ flowchart LR
     inbox[(Inbox + payload hash)]
     gap[(Per-order gap buffer)]
     projection[(Versioned projection DB)]
-    audit[(Replay audit)]
   end
   consumer[At-least-once consumer]
   dlq[(DLQ topic
   Kafka transaction with offset)]
-  cli[Local operator replay / rebuild CLI]
   api[Customer API
   owner from verified token]
   ui[Storefront order history]
-  rebuild[New projection target
-  high-water catch-up + reconcile]
   migration -. legacy rows .-> outbox
   outbox --> wal --> connect --> kafka --> consumer
   consumer -->|in-order event| inbox
@@ -35,8 +31,8 @@ flowchart LR
   consumer -->|sequence gap| gap
   gap -. missing predecessor arrives .-> inbox
   consumer -->|invalid/poison| dlq
-  dlq --> cli --> consumer
-  cli --> audit
   projection --> api --> ui
-  rebuild -. replay to cutover marks .-> projection
-  rebuild -->|compare retained event IDs/hashes| Orders
+  planned[Future: operator-audited DLQ correction/replay]
+  rebuild[Future: candidate projection rebuild/reconcile/cutover]
+  consumer -. not implemented in this slice .-> planned
+  kafka -. replay retained history .-> rebuild

@@ -139,17 +139,24 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.wait.until(lambda driver: driver.find_element(By.TAG_NAME, "h1").text == "Configuration.")
         row_selector = "//article[contains(@class,'configuration-row')][.//code[normalize-space()='checkout.tax.rate-bps']]"
         row = self.wait.until(EC.visibility_of_element_located((By.XPATH, row_selector)))
-        original = row.find_element(By.NAME, "value").get_attribute("value")
-        changed = "1900" if original != "1900" else "1800"
-        field = row.find_element(By.NAME, "value"); field.clear(); field.send_keys(changed)
-        row.find_element(By.XPATH, ".//button[normalize-space()='Save']").click()
-        self.wait.until(lambda driver: changed in driver.find_element(By.XPATH, row_selector).find_element(By.NAME, "value").get_attribute("value"))
-        row = self.driver.find_element(By.XPATH, row_selector)
-        field = row.find_element(By.NAME, "value"); field.clear(); field.send_keys(original)
-        row.find_element(By.XPATH, ".//button[normalize-space()='Save']").click()
-        self.wait.until(lambda driver: original in driver.find_element(By.XPATH, row_selector).find_element(By.NAME, "value").get_attribute("value"))
+        changed = "1900" if row.find_element(By.NAME, "value").get_attribute("value") != "1900" else "1700"
+        section_selector = "//section[contains(@class,'section-block')][.//code[normalize-space()='checkout.tax.rate-bps']]"
+        def revision():
+            text = self.driver.find_element(By.XPATH, section_selector).find_element(By.CSS_SELECTOR, ".result-count").text
+            return int(text.split()[-1])
+        def save_tax(value, after_revision):
+            current = self.driver.find_element(By.XPATH, row_selector)
+            field = current.find_element(By.NAME, "value"); field.clear(); field.send_keys(value)
+            current.find_element(By.XPATH, ".//button[normalize-space()='Save']").click()
+            self.wait.until(lambda _driver: revision() > after_revision)
+            self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".notice.success")))
+        try:
+            save_tax(changed, revision())
+            self.assertIn("updated and recorded in the audit log", self.driver.find_element(By.CSS_SELECTOR, ".notice.success").text)
+        finally:
+            save_tax("1800", revision())
+        self.assertEqual(self.driver.find_element(By.XPATH, row_selector).find_element(By.NAME, "value").get_attribute("value"), "1800")
         self.assertIn("Commerce simulations", self.driver.find_element(By.CSS_SELECTOR, ".configuration-groups").text)
-        self.assertIn("recorded in the audit log", self.driver.find_element(By.CSS_SELECTOR, ".content").text)
         self.assert_no_react_hook_order_error()
 
     def test_catalog_login_products_art_and_product_creation(self):
@@ -383,7 +390,8 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.driver.find_element(By.XPATH, "//button[contains(., 'Wishlist')]").click()
         self.wait.until(lambda driver: "Saved to your wishlist." in driver.find_element(By.CSS_SELECTOR, ".shop-shell").text)
         self.driver.find_element(By.XPATH, "//button[contains(., 'Add to cart')]").click()
-        self.wait.until(lambda driver: "Added to your cart." in driver.find_element(By.CSS_SELECTOR, ".shop-shell").text)
+        self.wait.until(lambda driver: "Added to your cart." in driver.find_element(By.CSS_SELECTOR, ".shop-shell").text or driver.find_elements(By.CSS_SELECTOR, ".store-alert.error"))
+        self.assertIn("Added to your cart.", self.driver.find_element(By.CSS_SELECTOR, ".shop-shell").text)
         self.driver.find_element(By.XPATH, "//button[contains(., 'Add to cart')]").click()
         self.wait.until(lambda driver: "Added to your cart." in driver.find_element(By.CSS_SELECTOR, ".shop-shell").text)
         self.driver.find_element(By.CSS_SELECTOR, ".shop-actions a[href='/cart']").click()
