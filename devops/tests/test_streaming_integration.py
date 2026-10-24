@@ -42,6 +42,17 @@ class StreamingIntegrationTests(unittest.TestCase):
         inspected = manage.run(["docker", "inspect", "--format", "{{.RestartCount}}", container], capture=True)
         return int(inspected.stdout.strip())
 
+    def source_dlq_count(self,coordinate):
+        result=manage.compose(["--profile","streaming","exec","-T","kafka","/opt/kafka/bin/kafka-console-consumer.sh",
+            "--bootstrap-server","localhost:9092","--topic","commerce.order.events.dlq.v1","--from-beginning",
+            "--consumer-property","isolation.level=read_committed","--property","print.key=true","--property","print.value=false","--timeout-ms","2000"],
+            project=self.project,capture=True,check=False)
+        return sum(1 for line in result.stdout.splitlines() if line.split("\t",1)[0]==coordinate)
+
+    def arm_dlq_fault(self,boundary):
+        receipt=stream_operations.arm_dlq_fault(manage,boundary,project=self.project)
+        self.assertTrue(receipt["armed"])
+
     def wait_for_zero_lag(self):
         deadline = time.monotonic() + 45
         while time.monotonic() < deadline:
@@ -170,6 +181,37 @@ class StreamingIntegrationTests(unittest.TestCase):
             self.assertIn("append-only",immutable.stderr)
         finally:
             path.unlink(missing_ok=True)
+
+    def test_dlq_and_source_offset_commit_atomically_across_both_crash_boundaries(self):
+        self.wait_for_zero_lag()
+        for boundary in ("before-commit","after-commit"):
+            with self.subTest(boundary=boundary):
+                self.wait_for_zero_lag()
+                restarts=self.consumer_restart_count()
+                self.arm_dlq_fault(boundary)
+                demo=stream_operations.demo(manage,project=self.project)
+                coordinate=demo["sourceCoordinate"]
+                try:
+                    self.assertEqual(self.source_dlq_count(coordinate),1)
+                    deadline=time.monotonic()+30
+                    while time.monotonic()<deadline and self.consumer_restart_count()<=restarts:time.sleep(.5)
+                    self.assertGreater(self.consumer_restart_count(),restarts,"fault marker did not terminate the consumer at the requested boundary")
+                    self.wait_for_zero_lag()
+                    self.assertEqual(self.source_dlq_count(coordinate),1,"one source coordinate must have exactly one visible committed DLQ record")
+                    source_topic,partition,offset=coordinate.split(":")
+                    committed=manage.compose(["--profile","streaming","exec","-T","kafka","/opt/kafka/bin/kafka-consumer-groups.sh",
+                        "--bootstrap-server","localhost:9092","--describe","--group",manage.history_target(project=self.project)["group"]],
+                        project=self.project,capture=True)
+                    rows=[line.split() for line in committed.stdout.splitlines() if line.strip().startswith(f"{manage.history_target(project=self.project)['group']} {source_topic} {partition} ")]
+                    self.assertEqual(len(rows),1)
+                    self.assertGreater(int(rows[0][3]),int(offset),"source offset must advance only with its visible DLQ record")
+                    # Resolve the deliberately poisoned coordinate before later
+                    # reconciliation checks the retained Kafka history.
+                    stream_operations.replay(manage,coordinate,Path(demo["correctedPayloadFile"]),
+                        demo["operationId"],"resolve transactional DLQ crash probe",project=self.project)
+                    self.wait_for_zero_lag()
+                finally:
+                    Path(demo["correctedPayloadFile"]).unlink(missing_ok=True)
 
     def test_z_isolated_rebuild_failure_dry_run_cutover_and_new_event_delivery(self):
         self.wait_for_zero_lag()

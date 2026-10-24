@@ -67,6 +67,18 @@ def demo(manage, *, project="supersports", version="s1-m06"):
     return {**receipt, "correctedPayloadFile": filename}
 
 
+def arm_dlq_fault(manage,boundary,*,project="supersports",version="s1-m06"):
+    if boundary not in {"before-commit","after-commit"}:
+        raise ValueError("DLQ crash injection supports only before-commit or after-commit.")
+    marker="/tmp/order-history-fault/dlq-armed/"+boundary
+    script=("mkdir -p /tmp/order-history-fault/dlq-armed /tmp/order-history-fault/dlq-fired; "
+            "test ! -e /tmp/order-history-fault/dlq-armed/$1 || { echo 'one-shot DLQ fault already armed' >&2; exit 2; }; "
+            "rm -f /tmp/order-history-fault/dlq-fired/$1; "
+            ": > /tmp/order-history-fault/dlq-armed/$1")
+    manage.compose(["--profile","streaming","exec","-T","order-history","sh","-ec",script,"stream-dlq-fault",boundary],project=project,version=version)
+    return {"armed":True,"boundary":boundary,"marker":marker}
+
+
 def replay(manage, coordinate, payload_file, operation_id, reason, *, project="supersports", version="s1-m06"):
     if not isinstance(coordinate, str) or not re.fullmatch(r"commerce\.order\.events\.v1:[0-9]+:[0-9]+", coordinate):
         raise ValueError("Replay requires --source-coordinate <topic:partition:offset> from the Orders DLQ.")

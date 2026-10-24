@@ -88,4 +88,17 @@ class ConsumerCrashInjector {
             throw new IllegalStateException("Could not consume the local next-event consumer fault.", e);
         }
     }
+
+    boolean consumeDlqBoundary(String boundary) {
+        if (!java.util.Set.of("before-commit","after-commit").contains(boundary)) throw new IllegalArgumentException("Unknown DLQ transaction boundary.");
+        Path armed=directory.resolve("dlq-armed").resolve(boundary),fired=directory.resolve("dlq-fired").resolve(boundary);
+        try {Files.move(armed,fired,StandardCopyOption.ATOMIC_MOVE);return true;}
+        catch(java.nio.file.NoSuchFileException missing){return false;}
+        catch(AtomicMoveNotSupportedException unsupported){
+            try{Files.move(armed,fired);return true;}
+            catch(java.nio.file.NoSuchFileException missing){return false;}
+            catch(IOException error){throw new IllegalStateException("Could not consume the local DLQ transaction fault.",error);}
+        }
+        catch(IOException error){throw new IllegalStateException("Could not consume the local DLQ transaction fault.",error);}
+    }
 }

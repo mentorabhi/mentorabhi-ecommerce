@@ -194,6 +194,16 @@ class CommandTests(unittest.TestCase):
         self.assertIn("/tmp/order-history-fault/armed/$1", command[-3])
         self.assertEqual(command[-1], "NEXT")
 
+    def test_dlq_fault_is_limited_to_named_transaction_boundaries(self):
+        import stream_operations
+        from unittest.mock import patch
+        with self.assertRaises(ValueError):stream_operations.arm_dlq_fault(manage,"unknown")
+        with patch.object(manage,"compose") as compose:
+            result=stream_operations.arm_dlq_fault(manage,"before-commit")
+        self.assertTrue(result["armed"])
+        self.assertEqual(result["boundary"],"before-commit")
+        self.assertIn("dlq-armed/$1",compose.call_args.args[0][-3])
+
 
 
 class HttpProbeTests(unittest.TestCase):

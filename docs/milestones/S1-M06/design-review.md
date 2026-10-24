@@ -1,5 +1,9 @@
 # S1-M06 design review
 
+## Transactional DLQ crash boundary addendum — 2026-10-24
+
+The previous matrix left pre/post Kafka transaction commit crash probes open. The reviewed [fault design](dlq-crash-design.md) adds one-shot local markers, poison event flow, before/after commit process halts, exact broker-visible DLQ count/source offsets, and restart proof. It uses the real source and DLQ topics with a single broker; this establishes transaction behavior only for the local profile, not replicated durability. No blocker remains for implementation.
+
 Revision 1 · 2026-10-24 · Two independent review passes; findings resolved in design revision 2 and manual checklist revision 2.
 
 ## Review roles and result
@@ -30,6 +34,10 @@ The reviewer focused on outbox/CDC and ordering confirmed the revised design and
 Design is approved for implementation with no architectural blocker. Runtime feasibility, image version/ARM64/license verification, exact M06 CLI behavior and manual execution are not claimed complete by this document.
 
 Version compatibility baseline checked against official project sources on 2026-10-24: [Apache Kafka downloads](https://kafka.apache.org/community/downloads/), [Debezium 3.7 release notes](https://debezium.io/docs/releases/), [Debezium Kafka Connect deployment](https://debezium.io/installation/kafka-connect/), [Debezium supported database matrix](https://debezium.io/databases/), and the [official Apache Kafka image manifest](https://hub.docker.com/r/apache/kafka/tags). Kafka 4.3.1 and Debezium 3.7.0.Final are compatible at the Connect/broker version level. The Apache Kafka and Quay Debezium image indexes and Linux ARM64 manifests were inspected and pinned in `devops/images.lock.json`.
+
+## Transactional DLQ crash-probe review · 2026-10-24
+
+The reviewed [crash-boundary design](dlq-crash-design.md) and editable [sequence flow](dlq-crash-flow.mmd) add a pre-commit and post-commit process halt around Kafka's transactional DLQ plus source-offset commit. A stable transactional producer ID fences the crashed producer, and a read-committed assertion counts only durable DLQ output. The probe replays the corrected event after each boundary so retained-history reconciliation can account for the synthetic poison. Both boundaries passed on the live stack in the integration test; the broader streaming suite still surfaced six older unresolved poison coordinates already retained in this local Kafka history, so its rebuild reconciliation did not pass on this data set. Those records remain explicit cleanup/reconciliation evidence, not a claimed clean pass.
 
 ## Runtime implementation review update
 

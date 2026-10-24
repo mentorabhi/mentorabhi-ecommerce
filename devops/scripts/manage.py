@@ -769,7 +769,7 @@ def main(argv=None):
     parser.add_argument("action", choices=[
         "doctor", "configure", "validate", "build", "up", "down", "status",
         "unit", "test", "reset", "release", "rollback",
-        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "restart", "stream-demo-poison", "stream-replay", "stream-reconcile", "stream-rebuild",
+        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "stream-dlq-fault", "restart", "stream-demo-poison", "stream-replay", "stream-reconcile", "stream-rebuild",
     ])
     parser.add_argument("release_version", nargs="?")
     parser.add_argument("--project", default="supersports")
@@ -779,6 +779,7 @@ def main(argv=None):
     parser.add_argument("--order-id")
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--next-event", action="store_true")
+    parser.add_argument("--stage",choices=["before-commit","after-commit"])
     parser.add_argument("--source-coordinate")
     parser.add_argument("--corrected-payload-file")
     parser.add_argument("--operation-id")
@@ -831,6 +832,12 @@ def main(argv=None):
                 raise ValueError("Fault injection is one-shot; pass --once.")
             stream_fault(arguments.release_version, arguments.order_id, next_event=arguments.next_event,
                          project=project, version=version)
+        elif action == "stream-dlq-fault":
+            if not arguments.once:raise ValueError("DLQ crash injection is one-shot; pass --once.")
+            if arguments.stage is None:raise ValueError("Select --stage before-commit or --stage after-commit.")
+            import stream_operations
+            with stream_operations.exclusive(sys.modules[__name__],project):
+                print(json.dumps(stream_operations.arm_dlq_fault(sys.modules[__name__],arguments.stage,project=project,version=version)))
         elif action in ("stream-demo-poison", "stream-replay", "stream-rebuild", "stream-reconcile"):
             import stream_operations
             import projection_operations

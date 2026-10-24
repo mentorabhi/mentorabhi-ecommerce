@@ -29,7 +29,7 @@ Orders PostgreSQL remains authoritative. Kafka Connect offsets/internal topics, 
 
 ## Current scope and known work
 
-Implemented: versioned envelope/backfill, Debezium CDC, event topic, durable inbox/projection, per-order sequence handling, owner-scoped reads, transactional poison-to-DLQ handling, deterministic consumer crash injection, and authenticated operator correction/replay. Consumer validation follows `contracts/orders/order-lifecycle-v1.schema.json`. Canonical hashes deduplicate formatting/numeric equivalents; legacy raw hashes remain available as evidence.
+Implemented: versioned envelope/backfill, Debezium CDC, event topic, durable inbox/projection, per-order sequence handling, owner-scoped reads, transactional poison-to-DLQ handling, deterministic consumer crash injection, and authenticated operator correction/replay. Consumer validation follows `contracts/orders/order-lifecycle-v1.schema.json`. Canonical hashes deduplicate formatting/numeric equivalents; legacy raw hashes remain available as evidence. The single local consumer instance uses a stable transaction ID per consumer group to fence interrupted DLQ transactions on restart.
 
 Local operator commands: `stream-demo-poison` and `stream-replay --source-coordinate ... --corrected-payload-file ... --operation-id ... --reason ...`. The CLI uses a transient non-web container, verifies the operator token, and records immutable audit plus resumable publication intent. See the [manual guide](../../docs/milestones/S1-M06/manual-acceptance.md) and [workflow detail](../../docs/milestones/S1-M06/operator-workflows.md).
 

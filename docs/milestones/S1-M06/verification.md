@@ -1,5 +1,14 @@
 # S1-M06 verification record
 
+## Transactional DLQ commit-boundary probe · 2026-10-24
+
+- Reviewed design/flow: [`dlq-crash-design.md`](dlq-crash-design.md), [`dlq-crash-flow.mmd`](dlq-crash-flow.mmd); review notes in [`design-review.md`](design-review.md).
+- `.venv/bin/python -m unittest devops.tests.test_manage -q`: 27 passed. Dockerized Order History Maven tests: 20 passed after adding the crash-injector tests. `git diff --check` passed before the focused live rerun.
+- `SUPERSPORTS_INTEGRATION=1 SUPERSPORTS_PROJECT=supersports .venv/bin/python -m unittest discover -s devops/tests -p test_streaming_integration.py -k dlq_and_source -v`: 1 test passed in 95.081 seconds. Both pre-commit and post-commit process halts recovered, each source coordinate had exactly one read-committed DLQ record, each corresponding group offset advanced past its source record, and the poison correction was published and drained.
+- The broader four-journey streaming discovery exercised projection ownership, both crash points, audited replay and rebuild. The first three journeys passed; rebuild stopped at initial reconciliation because six older retained DLQ poison records at offsets 100–105 were unresolved in the persistent local history. This exposed a real data-set condition; it is not counted as a passing rebuild run. Two new crash-probe poison records were corrected and replayed by the test.
+- The arm command clears only the matching fired marker on a fresh explicit arm; an already-armed marker is still rejected. This makes the one-shot probe repeatable across local reruns without weakening its one-event firing behavior.
+- Human execution remains pending in [`manual-acceptance.md`](manual-acceptance.md).
+
 ## Latest freshness and host-access checkpoint — 2026-10-24
 
 Implemented observed freshness (`CURRENT`, `DELAYED`, `BLOCKED`, `UNAVAILABLE`), owner-scoped pending gaps and storefront fallback to owned Orders records. The [design/review](freshness-and-ordering.md) precedes implementation; its isolated runtime probe remains planned.

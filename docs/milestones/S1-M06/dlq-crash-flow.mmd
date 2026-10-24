@@ -1,0 +1,20 @@
+sequenceDiagram
+  participant H as History consumer
+  participant K as Kafka transaction coordinator
+  participant S as Source topic / consumer offset
+  participant D as DLQ topic
+  H->>S: poll invalid event at coordinate
+  H->>K: begin transaction
+  H->>D: send poison with source headers
+  H->>K: stage source offset
+  alt crash before commit
+    H--xK: process halts; transaction aborts
+    Note over S: source offset remains unchanged
+    Note over D: aborted write stays hidden to read_committed
+    H->>S: restart and redeliver
+    H->>K: commit DLQ record and source offset atomically
+  else commit then crash
+    H->>K: commit DLQ and offset atomically
+    H--xK: process halts before next poll
+    Note over S,D: record and offset are both durable
+  end

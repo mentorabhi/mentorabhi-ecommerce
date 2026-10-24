@@ -2,6 +2,7 @@ package com.supersports.orderhistory;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,5 +39,18 @@ class ConsumerCrashInjectorTest {
         try (var files = Files.list(directory.resolve("fired"))) {
             assertTrue(files.count() == 2);
         }
+    }
+
+    @Test void dlqBoundariesAreNamedOneShotAndAtomicallyFired() throws Exception {
+        ConsumerCrashInjector injector=new ConsumerCrashInjector(directory);
+        assertThrows(IllegalArgumentException.class,()->injector.consumeDlqBoundary("../../bad"));
+        Files.createDirectories(directory.resolve("dlq-armed"));
+        Files.createDirectories(directory.resolve("dlq-fired"));
+        Files.createFile(directory.resolve("dlq-armed/before-commit"));
+        assertTrue(injector.consumeDlqBoundary("before-commit"));
+        assertFalse(injector.consumeDlqBoundary("before-commit"));
+        assertTrue(Files.exists(directory.resolve("dlq-fired/before-commit")));
+        Files.createFile(directory.resolve("dlq-armed/after-commit"));
+        assertTrue(injector.consumeDlqBoundary("after-commit"));
     }
 }
