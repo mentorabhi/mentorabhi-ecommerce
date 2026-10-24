@@ -1,0 +1,39 @@
+flowchart LR
+  customer[Customer browser]
+  orders[Orders API and durable Saga worker]
+  orderdb[(Orders PostgreSQL\norders, steps, idempotency, outbox)]
+  catalog[Catalog\nactive SKU validation]
+  pricing[Pricing\nprice book and coupon holds]
+  inventory[Inventory\natomic stock reservations]
+  customerSvc[Customer\nprofile and address]
+  payments[Payment simulator\nidempotent auth/capture/void/refund]
+  fulfillment[Fulfillment simulator\nidempotent shipment schedule]
+  config[Configuration\nversioned simulation settings]
+  identity[Local Keycloak\ncheckout worker service account]
+  outbox[Order outbox\nKafka publication in M06]
+
+  customer -->|customer token, lines, coupon, idempotency key| orders
+  orders <-->|owner-scoped reads/writes| orderdb
+  orders -->|synchronous profile/address snapshot; no token persisted| customerSvc
+  orders -->|active SKU checks| catalog
+  orders -->|versioned simulation settings| config
+  orders -->|atomic quote, hold, protect, commit/release| pricing
+  orders -->|reserve, protect, consume/release| inventory
+  orders -->|authorize / capture / status / compensate| payments
+  orders -->|schedule after confirmation| fulfillment
+  orders -->|client credentials, internal audience only| identity
+  identity -.->|narrow internal token| inventory
+  identity -.->|narrow internal token| catalog
+  identity -.->|narrow internal token| pricing
+  identity -.->|narrow internal token| payments
+  identity -.->|narrow internal token| fulfillment
+  identity -.->|narrow internal token| config
+  orderdb -->|same commit as order confirmation| outbox
+  orders -->|202 order ID; poll owned state| customer
+
+  classDef app fill:#d9f99d,stroke:#3f6212,color:#1f2937
+  classDef data fill:#fef3c7,stroke:#a16207,color:#1f2937
+  classDef ui fill:#dbeafe,stroke:#1d4ed8,color:#1f2937
+  class customer ui
+  class orders,catalog,pricing,inventory,customerSvc,payments,fulfillment,config,identity app
+  class orderdb,outbox data
