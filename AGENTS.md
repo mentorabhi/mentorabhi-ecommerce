@@ -26,4 +26,5 @@ The baseline machine has 16 GB RAM. Run explicit profiles, measure actual memory
 
 ## Autonomy
 The user authorizes work in this repository, Git operations and starting/stopping its services. Proceed without routine permission questions; ask for material requirement ambiguity. Environment-enforced approval requirements still apply.
+At each milestone checkpoint, create a relevant commit on the active stage branch and push that branch to the configured Git remote. At the start of each new stage, create and publish a branch named for the stage (for example, `stage1`). Do not force-push or overwrite remote history.
 Never publish or send messages externally without authorization. Never commit credentials, local state or generated build output.

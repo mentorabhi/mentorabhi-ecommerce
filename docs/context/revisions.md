@@ -1,6 +1,10 @@
 # Revision history
 Append dated entries with reason, changed artifacts, evidence and remaining work.
 
+## 2026-10-24 — Stage branch and milestone push policy
+
+The user specified that every milestone checkpoint must be committed and pushed, and that every stage starts on a branch named for the stage. Recorded this in AGENTS.md and project context. Added `origin` for `https://github.com/mentorabhi/mentorabhi-ecommerce.git`; pushed `feat/s1-m05-checkout-orders` at `21dac40`, then created and pushed `stage1` at the same commit. Future milestone commits must push the active stage branch; do not force-push or overwrite remote history.
+
 ## 2026-10-23 — Revision 1, S1-M01 draft
 Captured the original requirements and Google planning baseline plus all subsequent user decisions.
 Added accepted requirements, actor/acceptance examples, baseline architecture, local-first ADR, testing strategy and traceability.
