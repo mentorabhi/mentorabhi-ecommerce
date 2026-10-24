@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://supersports.local/contracts/orders/order-lifecycle-v2.schema.json",
+  "title": "SuperSports post-purchase order lifecycle event v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "eventVersion", "aggregateType", "aggregateId", "aggregateSequence", "occurredAt", "customerKey", "data"],
+  "properties": {
+    "eventId": {"type": "string", "format": "uuid"},
+    "eventType": {"enum": ["OrderCancelled", "OrderReturnRequested", "OrderRefundCompleted", "ShipmentMilestoneRecorded"]},
+    "eventVersion": {"const": 2},
+    "aggregateType": {"const": "Order"},
+    "aggregateId": {"type": "string", "format": "uuid"},
+    "aggregateSequence": {"type": "integer", "minimum": 1},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "customerKey": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "data": {"type": "object"}
+  },
+  "allOf": [
+    {"if": {"properties": {"eventType": {"const": "OrderCancelled"}}, "required": ["eventType"]}, "then": {"properties": {"data": {"$ref": "#/$defs/cancelled"}}}},
+    {"if": {"properties": {"eventType": {"const": "OrderReturnRequested"}}, "required": ["eventType"]}, "then": {"properties": {"data": {"$ref": "#/$defs/return"}}}},
+    {"if": {"properties": {"eventType": {"const": "OrderRefundCompleted"}}, "required": ["eventType"]}, "then": {"properties": {"data": {"$ref": "#/$defs/refund"}}}},
+    {"if": {"properties": {"eventType": {"const": "ShipmentMilestoneRecorded"}}, "required": ["eventType"]}, "then": {"properties": {"data": {"$ref": "#/$defs/shipment"}}}}
+  ],
+  "$defs": {
+    "cancelled": {
+      "type": "object", "additionalProperties": false,
+      "required": ["orderId", "state", "operationId", "refundMinor", "currency", "reasonCode"],
+      "properties": {
+        "orderId": {"type": "string", "format": "uuid"}, "state": {"const": "CANCELLED"},
+        "operationId": {"type": "string", "format": "uuid"}, "refundMinor": {"type": "integer", "minimum": 0},
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}, "reasonCode": {"enum": ["CUSTOMER_REQUEST", "SIMULATED_POLICY"]}
+      }
+    },
+    "return": {
+      "type": "object", "additionalProperties": false,
+      "required": ["orderId", "state", "returnId", "lines", "policyRevision"],
+      "properties": {
+        "orderId": {"type": "string", "format": "uuid"}, "state": {"const": "DELIVERED"},
+        "returnId": {"type": "string", "format": "uuid"}, "policyRevision": {"type": "integer", "minimum": 1},
+        "lines": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["skuId", "quantity"], "properties": {"skuId": {"type": "string", "format": "uuid"}, "quantity": {"type": "integer", "minimum": 1}}}}
+      }
+    },
+    "refund": {
+      "type": "object", "additionalProperties": false,
+      "required": ["orderId", "state", "refundId", "amountMinor", "currency", "reasonCode"],
+      "properties": {
+        "orderId": {"type": "string", "format": "uuid"}, "state": {"enum": ["CANCELLED", "DELIVERED"]},
+        "refundId": {"type": "string", "format": "uuid"}, "amountMinor": {"type": "integer", "minimum": 0},
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}, "reasonCode": {"enum": ["CANCELLATION", "RETURN"]}
+      }
+    },
+    "shipment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["orderId", "state", "shipmentState", "shipmentRevision", "operationId"],
+      "properties": {
+        "orderId": {"type": "string", "format": "uuid"}, "state": {"enum": ["FULFILLMENT_SCHEDULED", "DELIVERED"]},
+        "shipmentState": {"enum": ["HANDED_OFF", "IN_TRANSIT", "DELIVERED"]},
+        "shipmentRevision": {"type": "integer", "minimum": 1}, "operationId": {"type": "string", "format": "uuid"}
+      }
+    }
+  }
+}

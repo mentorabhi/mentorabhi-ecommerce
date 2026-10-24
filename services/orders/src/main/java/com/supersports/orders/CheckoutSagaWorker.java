@@ -41,6 +41,38 @@ class CheckoutSagaWorker {
         try{advance(id,step,fence);}catch(PaymentDeclinedException e){compensateDeclined(id,fence);}catch(RuntimeException e){orders.sagaRetry(id,fence,"CHECKOUT_STEP_RETRY");}
     }
 
+    @Scheduled(fixedDelayString="${checkout.worker-poll-ms:1000}")
+    void pollPostPurchase(){
+        Map<String,Object> claim=orders.claimPostPurchase();if(claim==null)return;
+        UUID operation=(UUID)claim.get("operation_id"),order=(UUID)claim.get("order_id");
+        String step=claim.get("current_step").toString();long fence=((Number)claim.get("fence")).longValue();
+        try{advanceCancellation(operation,order,step,fence,claim);}
+        catch(org.springframework.web.client.HttpClientErrorException.Conflict conflict){
+            if("CLAIM_SHIPMENT".equals(step))orders.postPurchaseReject(operation,fence,"HANDOFF_WON");
+            else orders.postPurchaseManualReview(operation,fence,"CANCELLATION_CONFLICT");
+        }catch(RuntimeException failure){orders.postPurchaseRetry(operation,fence,"CANCELLATION_STEP_RETRY");}
+    }
+
+    private void advanceCancellation(UUID operation,UUID order,String step,long fence,Map<String,Object> claim){
+        String bearer="Bearer "+workerToken();UUID claimId=operationId(operation,"shipment-claim");Map<String,Object> result;String next;
+        switch(step){
+            case "CLAIM_SHIPMENT" -> {result=fulfillment.post().uri("/api/v1/internal/checkout/fulfillment/{id}/cancel-claim",order).header("Authorization",bearer).contentType(MediaType.APPLICATION_JSON).body(Map.of("expectedRevision",claim.get("expected_shipment_revision"),"operationId",claimId)).retrieve().body(Map.class);next="REFUND_PAYMENT";}
+            case "REFUND_PAYMENT" -> {
+                long amount=((Number)claim.get("total_minor")).longValue();
+                if(amount==0)result=Map.of("state","SKIPPED","amountMinor",0L);
+                else result=payment.post().uri("/api/v1/internal/checkout/payments/refund").header("Authorization",bearer).contentType(MediaType.APPLICATION_JSON).body(Map.of("orderId",order.toString(),"operationKey","cancel:"+operation+":refund","fence",fence,"amountMinor",amount,"currency",claim.get("currency"),"authorizationMode","APPROVE")).retrieve().body(Map.class);
+                next="RESTOCK_INVENTORY";
+            }
+            case "RESTOCK_INVENTORY" -> {result=inventory.post().uri("/api/v1/internal/checkout/inventory/reservations/{id}/cancel",order).header("Authorization",bearer).contentType(MediaType.APPLICATION_JSON).body(Map.of("operationId",operationId(operation,"inventory-restock"),"fence",fence)).retrieve().body(Map.class);next="FINALIZE_SHIPMENT";}
+            case "FINALIZE_SHIPMENT" -> {result=fulfillment.post().uri("/api/v1/internal/checkout/fulfillment/{id}/cancel-finalize",order).header("Authorization",bearer).contentType(MediaType.APPLICATION_JSON).body(Map.of("claimOperationId",claimId,"operationId",operationId(operation,"shipment-finalize"))).retrieve().body(Map.class);result=new LinkedHashMap<>(result);result.put("refundMinor",claim.get("total_minor"));result.put("currency",claim.get("currency"));next="DONE";}
+            default -> {orders.postPurchaseManualReview(operation,fence,"UNKNOWN_CANCELLATION_STEP");return;}
+        }
+        String opKey="cancel:"+operation+":"+step.toLowerCase(java.util.Locale.ROOT);
+        orders.postPurchaseStep(operation,fence,step,next,step,opKey,result==null?Map.of():result);
+    }
+
+    private UUID operationId(UUID parent,String purpose){return PostPurchaseCancellationRules.operationId(parent,purpose);}
+
     private void advance(UUID id,String step,long fence){
         Map<String,Object> order=orders.sagaOrder(id);if(order==null)return;
         Map<String,Object> quote=(Map<String,Object>)order.get("quoteSnapshot");String bearer="Bearer "+workerToken();Map<String,Object> settings=(Map<String,Object>)quote.get("simulationSettings");

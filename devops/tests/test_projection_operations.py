@@ -44,6 +44,18 @@ class ReconciliationTests(unittest.TestCase):
         self.assertEqual(result["orders"],1)
         self.assertEqual(result["totalsMinor"],{"INR":123})
 
+    def test_v2_order_state_is_reconciled_from_the_versioned_event_payload(self):
+        source,inspection=self.fixtures()
+        event=source["events"][0]
+        event.update(eventVersion=2,eventType="OrderCancelled",aggregateSequence=2,
+            data={"orderId":event["aggregateId"],"state":"CANCELLED","operationId":"op","refundMinor":123,"currency":"INR","reasonCode":"CUSTOMER_REQUEST"})
+        source["orders"][0].update(state="CANCELLED",lastSequence=2)
+        inspection["scan"]["events"][0].update(canonicalHash=digest(event))
+        inspection["snapshot"]["events"][0].update(canonicalHash=digest(event))
+        inspection["snapshot"]["orders"][0].update(state="CANCELLED",lastSequence=2)
+        inspection["snapshot"]["timeline"][0].update(eventType="OrderCancelled",state="CANCELLED",sequence=2)
+        self.assertTrue(projection.compare_snapshot(source,inspection)["ok"])
+
     def test_equal_counts_do_not_hide_hash_id_owner_state_amount_or_timeline_corruption(self):
         mutations=[lambda i:i["scan"]["events"][0].update(canonicalHash="bad"),
                    lambda i:i["snapshot"]["events"][0].update(eventId="other"),

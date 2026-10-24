@@ -36,5 +36,28 @@ class OrdersController {
         catch(RestClientException error){shipment=Map.of("state","UNAVAILABLE");}
         return Map.of("orderId",orderId,"tracking",shipment);
     }
+    @GetMapping("/{orderId}/cancellation-eligibility") Map<String,Object> cancellationEligibility(@PathVariable UUID orderId,@AuthenticationPrincipal Jwt jwt){
+        var eligibility=repository.cancellationEligibility(orderId,jwt.getSubject());if(eligibility==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        if(!"FULFILLMENT_SCHEDULED".equals(eligibility.get("orderState")))return Map.of("eligible",false,"reasonCode","ORDER_NOT_CANCELLABLE");
+        try{var tracking=fulfillment.fulfillmentStatus(orderId);boolean eligible=tracking!=null&&PostPurchaseCancellationRules.eligible(eligibility.get("orderState").toString(),tracking.get("state").toString());
+            var response=new java.util.LinkedHashMap<String,Object>();response.put("eligible",eligible);response.put("reasonCode",eligible?"ELIGIBLE":"HANDOFF_OR_FULFILLMENT_STARTED");response.put("shipmentRevision",tracking==null?null:tracking.get("revision"));return response;
+        }catch(RestClientException failure){throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Fulfillment status is unavailable");}
+    }
+    @PostMapping("/{orderId}/cancellations") ResponseEntity<Map<String,Object>> cancel(@PathVariable UUID orderId,@RequestHeader("Idempotency-Key")String key,@RequestBody CancellationRequest request,@AuthenticationPrincipal Jwt jwt){
+        if(key.isBlank()||key.length()>120||request==null)throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,"Invalid cancellation request");
+        try{PostPurchaseCancellationRules.requireCustomerReason(request.reasonCode());}catch(IllegalArgumentException invalid){throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,"Invalid cancellation reason");}
+        var owned=repository.cancellationEligibility(orderId,jwt.getSubject());if(owned==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        if(!"FULFILLMENT_SCHEDULED".equals(owned.get("orderState")))throw new ResponseStatusException(HttpStatus.CONFLICT,"Order is not eligible for cancellation");
+        try{var shipment=fulfillment.fulfillmentStatus(orderId);if(shipment==null||!"SCHEDULED".equals(shipment.get("state")))throw new ResponseStatusException(HttpStatus.CONFLICT,"Shipment handoff already started");
+            String hash=java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(request.reasonCode().getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+            var result=repository.startCancellation(orderId,jwt.getSubject(),key,hash,((Number)shipment.get("revision")).longValue());
+            if(result==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            return ResponseEntity.accepted().body(Map.of("orderId",orderId,"operationId",result.get("operation_id"),"status",result.get("status"),"currentStep",result.get("current_step")));
+        }catch(RestClientException failure){throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Fulfillment status is unavailable");}
+        catch(java.security.NoSuchAlgorithmException impossible){throw new IllegalStateException(impossible);}
+        catch(IllegalStateException conflict){throw new ResponseStatusException(HttpStatus.CONFLICT,conflict.getMessage());}
+    }
+    @GetMapping("/{orderId}/cancellations/{operationId}") Map<String,Object> cancellation(@PathVariable UUID orderId,@PathVariable UUID operationId,@AuthenticationPrincipal Jwt jwt){var result=repository.cancellation(orderId,operationId,jwt.getSubject());if(result==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND);return result;}
     @GetMapping("/{orderId}") Map<String,Object> order(@PathVariable UUID orderId,@AuthenticationPrincipal Jwt jwt){var result=repository.order(orderId,jwt.getSubject());if(result==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND);return result;}
+    record CancellationRequest(String reasonCode){}
 }

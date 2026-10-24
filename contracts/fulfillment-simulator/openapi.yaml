@@ -13,6 +13,20 @@ paths:
       summary: Read shipment state through the checkout worker service identity
       security: [{checkoutWorker: []}]
       responses: {'200': {description: Shipment state, revision, synthetic ETA and transition history}}
+  /internal/checkout/fulfillment/{orderId}/cancel-claim:
+    post:
+      summary: Atomically claim cancellation while shipment remains scheduled and before handoff
+      security: [{checkoutWorker: []}]
+      parameters: [{in: path, name: orderId, required: true, schema: {type: string, format: uuid}}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [expectedRevision, operationId], properties: {expectedRevision: {type: integer, minimum: 0}, operationId: {type: string, format: uuid}}}}}}
+      responses: {'200': {description: Cancellation claim receipt}, '404': {description: Shipment not found}, '409': {description: Handoff won or shipment revision changed}}
+  /internal/checkout/fulfillment/{orderId}/cancel-finalize:
+    post:
+      summary: Finalize cancellation after refund and restock succeed
+      security: [{checkoutWorker: []}]
+      parameters: [{in: path, name: orderId, required: true, schema: {type: string, format: uuid}}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [claimOperationId, operationId], properties: {claimOperationId: {type: string, format: uuid}, operationId: {type: string, format: uuid}}}}}}
+      responses: {'200': {description: Cancelled shipment receipt}, '404': {description: Shipment not found}, '409': {description: Claim is no longer valid}}
   /operator/shipments/{orderId}/transitions:
     post:
       summary: Advance one deterministic simulated shipment milestone

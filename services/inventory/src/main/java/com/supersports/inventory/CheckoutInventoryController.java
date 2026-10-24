@@ -38,6 +38,13 @@ class CheckoutInventoryController {
     @PostMapping("/{orderId}/protect") @org.springframework.transaction.annotation.Transactional Map<String,Object> protect(@PathVariable UUID orderId,@RequestHeader("X-Checkout-Fence")long fence) { return transition(orderId,fence,"PROTECTED"); }
     @PostMapping("/{orderId}/commit") @org.springframework.transaction.annotation.Transactional Map<String,Object> commit(@PathVariable UUID orderId,@RequestHeader("X-Checkout-Fence")long fence) { return transition(orderId,fence,"COMMITTED"); }
     @PostMapping("/{orderId}/release") @org.springframework.transaction.annotation.Transactional Map<String,Object> release(@PathVariable UUID orderId,@RequestHeader("X-Checkout-Fence")long fence) { return transition(orderId,fence,"RELEASED"); }
+    @PostMapping("/{orderId}/cancel") @org.springframework.transaction.annotation.Transactional Map<String,Object> cancel(@PathVariable UUID orderId,@RequestBody CancellationRequest request) {
+        if(request==null||request.operationId()==null||request.fence()<1)throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,"Invalid cancellation request");
+        try{repository.acceptCheckoutFence(orderId,request.fence());return repository.cancelCommittedReservation(orderId,request.operationId());}
+        catch(InventoryRepository.StaleCheckoutFenceException error){throw new ResponseStatusException(HttpStatus.CONFLICT,"Stale checkout fence");}
+        catch(InventoryRepository.ReservationNotFoundException error){throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Reservation not found");}
+        catch(IllegalStateException error){throw new ResponseStatusException(HttpStatus.CONFLICT,error.getMessage());}
+    }
     private Map<String,Object> transition(UUID id,long fence,String state) {
         try { repository.acceptCheckoutFence(id,fence);return repository.transitionReservation(id,state); }
         catch (InventoryRepository.StaleCheckoutFenceException e) { throw new ResponseStatusException(HttpStatus.CONFLICT,"Stale checkout fence"); }
@@ -46,4 +53,5 @@ class CheckoutInventoryController {
     }
     record ReservationRequest(String orderId,String expiresAt,List<ReservationLine> lines,long fence) {}
     record ReservationLine(String skuId,long quantity) {}
+    record CancellationRequest(UUID operationId,long fence){}
 }

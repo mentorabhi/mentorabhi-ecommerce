@@ -1,0 +1,11 @@
+flowchart LR
+  A[Immutable v1 producer events] --> W[Orders outbox writer]
+  B[Post-purchase owner transaction] --> V2[Allowlisted v2 writer]
+  V2 --> SC[Version 2 JSON Schema]
+  W --> K[Debezium and Kafka]
+  SC --> K
+  K --> C[History validates v1 or v2]
+  C --> I[Shared inbox ID/hash and sequence rules]
+  I --> P[Owner-scoped order projection and timeline]
+  C -->|unknown version/type/schema| D[Transactional DLQ]
+  P --> R[Rebuild and reconciliation validate both versions]

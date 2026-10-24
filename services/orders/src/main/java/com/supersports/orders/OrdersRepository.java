@@ -15,6 +15,47 @@ class OrdersRepository {
     private final OutboxEventWriter eventWriter;
     OrdersRepository(JdbcTemplate jdbc,OutboxEventWriter eventWriter) { this.jdbc = jdbc;this.eventWriter=eventWriter; }
 
+    @Transactional Map<String,Object> startCancellation(UUID orderId,String subject,String key,String payloadHash,long shipmentRevision){
+        var owned=jdbc.queryForList("SELECT o.state,o.currency,o.total_minor,s.fence FROM customer_order o JOIN checkout_saga s ON s.order_id=o.id WHERE o.id=? AND o.customer_subject=? FOR UPDATE OF o,s",orderId,subject);
+        if(owned.isEmpty())return null;var order=owned.getFirst();
+        var sameKey=jdbc.queryForList("SELECT operation_id,order_id,payload_hash,status,current_step,fence FROM post_purchase_operation WHERE customer_subject=? AND idempotency_key=? FOR UPDATE",subject,key);
+        if(!sameKey.isEmpty()){var prior=sameKey.getFirst();if(!orderId.equals(prior.get("order_id"))||!payloadHash.equals(prior.get("payload_hash")))throw new IllegalStateException("IDEMPOTENCY_CONFLICT");return new java.util.HashMap<>(prior);}
+        if(!"FULFILLMENT_SCHEDULED".equals(order.get("state")))throw new IllegalStateException("ORDER_NOT_CANCELLABLE");
+        UUID id=UUID.randomUUID();long fence=((Number)order.get("fence")).longValue()+1;
+        int inserted=jdbc.update("INSERT INTO post_purchase_operation(operation_id,order_id,customer_subject,idempotency_key,payload_hash,operation_type,status,current_step,fence,expected_shipment_revision) VALUES (?,?,?, ?,?,'CANCEL','PENDING','CLAIM_SHIPMENT',?,?) ON CONFLICT DO NOTHING",id,orderId,subject,key,payloadHash,fence,shipmentRevision);
+        if(inserted==0){var prior=jdbc.queryForList("SELECT operation_id,order_id,payload_hash,status,current_step,fence FROM post_purchase_operation WHERE customer_subject=? AND idempotency_key=? OR order_id=? AND operation_type='CANCEL' FOR UPDATE",subject,key,orderId);
+            if(prior.isEmpty())throw new IllegalStateException("CANCELLATION_CONFLICT");var row=prior.getFirst();
+            if(!orderId.equals(row.get("order_id"))||!payloadHash.equals(row.get("payload_hash")))throw new IllegalStateException("IDEMPOTENCY_CONFLICT");
+            return new java.util.HashMap<>(row);
+        }
+        return Map.of("operation_id",id,"order_id",orderId,"status","PENDING","current_step","CLAIM_SHIPMENT","fence",fence,"currency",order.get("currency"),"total_minor",order.get("total_minor"),"expected_shipment_revision",shipmentRevision,"replayed",false);
+    }
+
+    @Transactional Map<String,Object> claimPostPurchase(){
+        var rows=jdbc.queryForList("SELECT operation_id,order_id,current_step,fence,expected_shipment_revision FROM post_purchase_operation WHERE status IN ('PENDING','RUNNING') AND next_attempt_at<=now() AND (lease_until IS NULL OR lease_until<now()) ORDER BY next_attempt_at LIMIT 1 FOR UPDATE SKIP LOCKED");
+        if(rows.isEmpty())return null;var row=rows.getFirst();UUID operation=(UUID)row.get("operation_id");long fence=((Number)row.get("fence")).longValue()+1;
+        jdbc.update("UPDATE post_purchase_operation SET status='RUNNING',lease_owner=?,lease_until=now()+interval '30 seconds',fence=?,attempt=attempt+1,updated_at=now() WHERE operation_id=?",UUID.randomUUID().toString(),fence,operation);
+        var result=new java.util.HashMap<String,Object>(row);result.put("fence",fence);
+        var details=jdbc.queryForList("SELECT customer_subject,currency,total_minor FROM customer_order WHERE id=?",row.get("order_id")).getFirst();result.putAll(details);
+        return result;
+    }
+    @Transactional void postPurchaseStep(UUID operation,long fence,String expected,String next,String step,String operationKey,Map<String,Object> result){
+        int changed=jdbc.update("UPDATE post_purchase_operation SET current_step=?,status=?,lease_owner=NULL,lease_until=NULL,next_attempt_at=now(),last_error_code=NULL,updated_at=now() WHERE operation_id=? AND fence=? AND current_step=?",next,next.equals("DONE")?"COMPLETED":"RUNNING",operation,fence,expected);
+        if(changed!=1)return;
+        jdbc.update("INSERT INTO post_purchase_operation_step(operation_id,step,operation_key,state,result) VALUES (?,?,?,'SUCCEEDED',?::jsonb) ON CONFLICT(operation_id,step) DO UPDATE SET result=EXCLUDED.result,state='SUCCEEDED',updated_at=now()",operation,step,operationKey,OrdersJson.write(result));
+        if(next.equals("DONE")){UUID order=jdbc.queryForObject("SELECT order_id FROM post_purchase_operation WHERE operation_id=?",UUID.class,operation);
+            int changedOrder=jdbc.update("UPDATE customer_order SET state='CANCELLED',updated_at=now() WHERE id=? AND state='FULFILLMENT_SCHEDULED'",order);
+            if(changedOrder!=1)throw new IllegalStateException("Order state changed before cancellation commit");
+            var data=Map.of("orderId",order,"state","CANCELLED","operationId",operation,"refundMinor",result.get("refundMinor"),"currency",result.get("currency"),"reasonCode","CUSTOMER_REQUEST");
+            eventWriter.appendPostPurchase(order,subject(order),"OrderCancelled",data);
+        }
+    }
+    @Transactional void postPurchaseRetry(UUID operation,long fence,String code){jdbc.update("UPDATE post_purchase_operation SET status='RUNNING',lease_owner=NULL,lease_until=NULL,next_attempt_at=now()+least(interval '30 seconds',interval '1 second'*power(2,least(attempt,5))),last_error_code=?,updated_at=now() WHERE operation_id=? AND fence=?",code,operation,fence);}
+    @Transactional void postPurchaseManualReview(UUID operation,long fence,String code){jdbc.update("UPDATE post_purchase_operation SET status='MANUAL_REVIEW',current_step='MANUAL_REVIEW',lease_owner=NULL,lease_until=NULL,last_error_code=?,updated_at=now() WHERE operation_id=? AND fence=?",code,operation,fence);}
+    @Transactional void postPurchaseReject(UUID operation,long fence,String code){jdbc.update("UPDATE post_purchase_operation SET status='REJECTED',current_step='REJECTED',lease_owner=NULL,lease_until=NULL,last_error_code=?,updated_at=now() WHERE operation_id=? AND fence=?",code,operation,fence);}
+    Map<String,Object> cancellationEligibility(UUID orderId,String subject){var rows=jdbc.queryForList("SELECT state FROM customer_order WHERE id=? AND customer_subject=?",orderId,subject);return rows.isEmpty()?null:Map.of("orderState",rows.getFirst().get("state"));}
+    Map<String,Object> cancellation(UUID orderId,UUID operationId,String subject){var rows=jdbc.queryForList("SELECT operation_id AS \"operationId\",order_id AS \"orderId\",status,current_step AS \"currentStep\",last_error_code AS \"errorCode\",created_at AS \"createdAt\",updated_at AS \"updatedAt\" FROM post_purchase_operation WHERE order_id=? AND operation_id=? AND customer_subject=?",orderId,operationId,subject);return rows.isEmpty()?null:rows.getFirst();}
+
     @Transactional
     Map<String,Object> claimSaga() {
         var rows=jdbc.queryForList("SELECT order_id,current_step,fence FROM checkout_saga WHERE state IN ('RUNNING','FULFILLMENT_PENDING') AND next_attempt_at<=now() AND (lease_until IS NULL OR lease_until<now()) ORDER BY next_attempt_at LIMIT 1 FOR UPDATE SKIP LOCKED");

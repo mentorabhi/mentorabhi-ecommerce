@@ -90,6 +90,21 @@ class CustomerOrderHistoryUiTests(unittest.TestCase):
         rows=self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,".order-row")))
         self.assertTrue(any(expected_prefix in row.text for row in rows),"unavailable history must fall back to current owned Orders records")
 
+    def test_customer_can_cancel_a_synthetic_order_before_handoff(self):
+        expected_order=os.environ.get("SUPERSPORTS_CANCELLABLE_ORDER_ID")
+        if not expected_order:self.skipTest("Provide a synthetic scheduled order ID dedicated to cancellation acceptance.")
+        self._login_orders()
+        prefix=expected_order[:8].upper()
+        rows=self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,".order-row")))
+        matching=next((row for row in rows if prefix in row.text),None)
+        self.assertIsNotNone(matching,"the authenticated customer must see the prepared owned order")
+        matching.click()
+        button=self.wait.until(EC.element_to_be_clickable((By.XPATH,"//button[normalize-space()='Cancel order']")))
+        button.click()
+        self.wait.until(EC.text_to_be_present_in_element((By.CSS_SELECTOR,".order-detail h2"),"CANCELLED"))
+        status=self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,".order-detail [role='status']")))
+        self.assertIn("completed",status.text.lower())
+
 
 if __name__ == "__main__":
     unittest.main()

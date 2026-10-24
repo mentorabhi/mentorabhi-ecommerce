@@ -95,10 +95,12 @@ def replay(manage, coordinate, payload_file, operation_id, reason, *, project="s
         raise ValueError("Correction must be an ordinary JSON file no larger than 256 KiB.")
     payload = path.read_text()
     try:
-        schema = json.loads((manage.ROOT / "contracts/orders/order-lifecycle-v1.schema.json").read_text())
+        version=json.loads(payload).get("eventVersion")
+        if version not in (1,2):raise ValueError("unsupported event version")
+        schema = json.loads((manage.ROOT / f"contracts/orders/order-lifecycle-v{version}.schema.json").read_text())
         Draft202012Validator(schema, format_checker=FormatChecker()).validate(json.loads(payload))
     except (ValidationError, json.JSONDecodeError) as error:
-        raise ValueError("Correction does not satisfy the order-lifecycle-v1 event contract.") from error
+        raise ValueError("Correction does not satisfy its versioned order-lifecycle event contract.") from error
     return operator(manage, {"action": "replay", "sourceCoordinate": coordinate,
                             "correctedPayload": payload, "operationId": operation_id, "reason": reason},
                     project=project, version=version)

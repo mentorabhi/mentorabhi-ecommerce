@@ -1,0 +1,19 @@
+sequenceDiagram
+    actor Customer
+    participant O as Orders API and workflow
+    participant DB as Orders database
+    participant F as Fulfillment
+    participant P as Payment Simulator
+    participant I as Inventory
+    participant K as CDC/Kafka/History
+    Customer->>O: Cancel owned order with idempotency key
+    O->>DB: Lock order, verify completed checkout and pre-handoff state
+    DB->>DB: Persist fenced cancellation operation
+    O->>F: Claim cancellation against expected shipment revision
+    F->>F: Lock shipment row; reject if handoff already won
+    O->>P: Refund captured total with deterministic operation ID
+    O->>I: Restore committed reservation once under cancellation operation
+    O->>F: Finalize claimed shipment as CANCELLED
+    O->>DB: Mark order CANCELLED and append v2 event atomically
+    DB-->>K: Debezium publishes committed cancellation fact
+    O-->>Customer: Original operation receipt/state on retry

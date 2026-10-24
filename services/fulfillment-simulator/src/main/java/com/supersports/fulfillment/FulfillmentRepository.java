@@ -75,6 +75,33 @@ class FulfillmentRepository {
         return response;
     }
 
+    @Transactional
+    Map<String,Object> claimCancellation(UUID order,long expectedRevision,UUID operationId){
+        var rows=jdbc.queryForList("SELECT state,revision,cancel_claim_operation_id FROM shipment WHERE order_id=? FOR UPDATE",order);
+        if(rows.isEmpty())throw new ShipmentNotFoundException();var row=rows.getFirst();
+        if(row.get("cancel_claim_operation_id")!=null){
+            if(operationId.equals(row.get("cancel_claim_operation_id")))return Map.of("orderId",order,"state",row.get("state"),"revision",row.get("revision"),"replayed",true);
+            throw new InvalidTransitionException();
+        }
+        if(!"SCHEDULED".equals(row.get("state"))||((Number)row.get("revision")).longValue()!=expectedRevision)throw new StaleRevisionException();
+        long next=expectedRevision+1;
+        jdbc.update("UPDATE shipment SET state='CANCEL_CLAIMED',revision=?,cancel_claim_operation_id=? WHERE order_id=? AND revision=?",next,operationId,order,expectedRevision);
+        jdbc.update("INSERT INTO shipment_cancellation_audit(operation_id,order_id,action,previous_state,next_state,previous_revision,next_revision) VALUES (?,?,'CLAIM','SCHEDULED','CANCEL_CLAIMED',?,?)",operationId,order,expectedRevision,next);
+        return Map.of("orderId",order,"state","CANCEL_CLAIMED","revision",next,"replayed",false);
+    }
+
+    @Transactional
+    Map<String,Object> finalizeCancellation(UUID order,UUID claimId,UUID operationId){
+        var rows=jdbc.queryForList("SELECT state,revision,cancel_claim_operation_id,cancellation_operation_id FROM shipment WHERE order_id=? FOR UPDATE",order);
+        if(rows.isEmpty())throw new ShipmentNotFoundException();var row=rows.getFirst();
+        if(operationId.equals(row.get("cancellation_operation_id")))return Map.of("orderId",order,"state","CANCELLED","revision",row.get("revision"),"replayed",true);
+        if(!"CANCEL_CLAIMED".equals(row.get("state"))||!claimId.equals(row.get("cancel_claim_operation_id"))||row.get("cancellation_operation_id")!=null)throw new InvalidTransitionException();
+        long previous=((Number)row.get("revision")).longValue(),next=previous+1;
+        jdbc.update("UPDATE shipment SET state='CANCELLED',revision=?,cancellation_operation_id=? WHERE order_id=? AND revision=?",next,operationId,order,previous);
+        jdbc.update("INSERT INTO shipment_cancellation_audit(operation_id,order_id,action,previous_state,next_state,previous_revision,next_revision) VALUES (?,?,'CANCEL','CANCEL_CLAIMED','CANCELLED',?,?)",operationId,order,previous,next);
+        return Map.of("orderId",order,"state","CANCELLED","revision",next,"replayed",false);
+    }
+
     private Map<String,Object> shipmentResponse(Map<String,Object> row,boolean replayed){
         return Map.of("orderId",row.get("order_id"),"trackingId",row.get("tracking_id"),"state",row.get("state"),
             "revision",row.get("revision"),"estimatedDeliveryAt",row.get("estimated_delivery_at"),"replayed",replayed);

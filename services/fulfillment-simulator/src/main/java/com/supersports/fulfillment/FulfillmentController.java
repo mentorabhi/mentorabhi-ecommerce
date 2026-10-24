@@ -28,5 +28,22 @@ class FulfillmentController {
     @GetMapping("/{orderId}")
     Map<String,Object> status(@PathVariable UUID orderId){return repo.status(orderId);}
 
+    @PostMapping("/{orderId}/cancel-claim")
+    Map<String,Object> claimCancellation(@PathVariable UUID orderId,@RequestBody CancellationClaim request){
+        try{return repo.claimCancellation(orderId,request.expectedRevision(),request.operationId());}
+        catch(FulfillmentRepository.ShipmentNotFoundException error){throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Shipment not found");}
+        catch(FulfillmentRepository.StaleRevisionException error){throw new ResponseStatusException(HttpStatus.CONFLICT,"Shipment changed or handoff already won");}
+        catch(FulfillmentRepository.InvalidTransitionException error){throw new ResponseStatusException(HttpStatus.CONFLICT,"Shipment cannot be cancelled");}
+    }
+
+    @PostMapping("/{orderId}/cancel-finalize")
+    Map<String,Object> finalizeCancellation(@PathVariable UUID orderId,@RequestBody CancellationFinalize request){
+        try{return repo.finalizeCancellation(orderId,request.claimOperationId(),request.operationId());}
+        catch(FulfillmentRepository.ShipmentNotFoundException error){throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Shipment not found");}
+        catch(FulfillmentRepository.InvalidTransitionException error){throw new ResponseStatusException(HttpStatus.CONFLICT,"Cancellation claim is no longer valid");}
+    }
+
     record Request(String orderId,long fence,String operationKey){}
+    record CancellationClaim(long expectedRevision,UUID operationId){}
+    record CancellationFinalize(UUID claimOperationId,UUID operationId){}
 }

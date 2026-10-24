@@ -48,8 +48,9 @@ def compare_snapshot(source, inspection, expected_audit=None):
             if not matches:errors.append("INBOX_EVENT_HASH_MISMATCH:"+event_id)
         step=timeline.get(event_id)
         if step:
+            expected_state=event.get("data",{}).get("state") if event.get("eventVersion")==2 else STATES.get(event["eventType"])
             fields=(step["orderId"]==event["aggregateId"] and step["sequence"]==event["aggregateSequence"]
-                    and step["eventType"]==event["eventType"] and step["state"]==STATES.get(event["eventType"]))
+                    and step["eventType"]==event["eventType"] and step["state"]==expected_state)
             try:
                 time_matches=abs((datetime.fromisoformat(step["occurredAt"])-datetime.fromisoformat(event["occurredAt"])).total_seconds())<=0.000001
             except (ValueError,TypeError):time_matches=False

@@ -22,7 +22,9 @@ class FulfillmentSecurity {
     private AuthorizationManager<RequestAuthorizationContext> checkoutScope(){
         return (authentication,context)->{
             Authentication current=authentication.get();
-            String required="POST".equals(context.getRequest().getMethod())?"checkout:fulfillment.schedule":"checkout:fulfillment.status";
+            String path=context.getRequest().getRequestURI();
+            String required="GET".equals(context.getRequest().getMethod())?"checkout:fulfillment.status":
+                path.endsWith("/cancel-claim")||path.endsWith("/cancel-finalize")?"checkout:fulfillment.cancel":"checkout:fulfillment.schedule";
             boolean allowed=current instanceof JwtAuthenticationToken token
                 &&token.getToken().getAudience().contains("supersports-checkout-internal-api")
                 &&"supersports-checkout-worker".equals(token.getToken().getClaimAsString("azp"))

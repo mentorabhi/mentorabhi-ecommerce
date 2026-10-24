@@ -56,6 +56,7 @@ class InventorySecurity {
                         .requestMatchers(HttpMethod.POST, "/api/v1/internal/checkout/inventory/reservations/*/protect").access(checkoutScope("checkout:inventory.protect"))
                         .requestMatchers(HttpMethod.POST, "/api/v1/internal/checkout/inventory/reservations/*/commit").access(checkoutScope("checkout:inventory.commit"))
                         .requestMatchers(HttpMethod.POST, "/api/v1/internal/checkout/inventory/reservations/*/release").access(checkoutScope("checkout:inventory.release"))
+                        .requestMatchers(HttpMethod.POST, "/api/v1/internal/checkout/inventory/reservations/*/cancel").access(checkoutScope("checkout:inventory.cancel"))
                         .requestMatchers("/api/v1/internal/checkout/**").denyAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/inventory/**").access(operatorAudience())
                         .requestMatchers(HttpMethod.POST, "/api/v1/inventory/**").access(operatorAudience())

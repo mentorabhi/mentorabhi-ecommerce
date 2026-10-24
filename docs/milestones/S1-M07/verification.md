@@ -14,6 +14,10 @@ Implemented in source, with execution intentionally deferred by the user until S
 
 No build, unit test, integration test or UI test was run for this checkpoint, per the current development-first instruction. Review and manual steps are in [`tracking-handoff-review.md`](tracking-handoff-review.md) and [`manual-acceptance.md`](manual-acceptance.md). Do not treat the implementation as verified yet.
 
+## Event compatibility development checkpoint
+
+Added immutable `order-lifecycle-v2.schema.json`, an allowlisted Orders v2 writer entry point, strict History parsing for v1/v2 envelopes, v2 state handling in rebuild reconciliation, and version-selecting schema validation for replay/streaming fixtures. V1 schema and writer path remain unchanged. Test source covers v2 schema, privacy rejection, parser allowlist and reconciliation state, but no tests/build were executed under the user's development-first direction. No v2 event is emitted until cancellation/return flows are implemented.
+
 ## Unit 1 — Payment ledger bounds
 
 Design/review before code: [`payment-ledger-design.md`](payment-ledger-design.md), [`payment-ledger-flow.mmd`](payment-ledger-flow.mmd). Migration preflight on the existing local Payment DB found 67 authorization rows and 54 capture rows, with no order having duplicate authorization/capture/void. Migration V2 applied successfully.
@@ -24,3 +28,7 @@ Design/review before code: [`payment-ledger-design.md`](payment-ledger-design.md
 - Payment service rebuilt/recreated and healthy; readiness returned UP.
 
 Not full CI. Remaining M07 units, UI, final integration/recovery, owner manual acceptance and milestone completion remain open. No payment provider is connected.
+# Development-first checkpoint — Unit 3 cancellation
+
+Cancellation source and test cases are authored but unverified. Per the user's sequencing instruction, no build, test, or runtime checks have been run after the M06 checkpoint. The consolidated verification pass begins from M06 after development across all Stage 1 milestones is complete. Manual owner checks are in [cancellation-manual-checks.md](cancellation-manual-checks.md).
+

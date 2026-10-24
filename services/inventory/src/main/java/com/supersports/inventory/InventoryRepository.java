@@ -53,6 +53,23 @@ import java.util.*;import java.sql.Timestamp;import java.time.Instant;import org
   }
   jdbc.update("UPDATE inventory_reservation SET state=?,updated_at=now() WHERE id=?",target,id);return Map.of("orderId",orderId,"state",target,"replayed",false);
  }
+ @Transactional Map<String,Object> cancelCommittedReservation(UUID orderId,UUID operationId){
+  jdbc.query("SELECT pg_advisory_xact_lock(hashtextextended(?,0))",ps->ps.setString(1,"reservation-cancel:"+orderId),rs->{rs.next();return null;});
+  var rows=jdbc.queryForList("SELECT id,state,cancellation_operation_id FROM inventory_reservation WHERE order_id=? FOR UPDATE",orderId);
+  if(rows.isEmpty())throw new ReservationNotFoundException();var reservation=rows.getFirst();
+  if(operationId.equals(reservation.get("cancellation_operation_id")))return Map.of("orderId",orderId,"state","CANCELLED","replayed",true);
+  if(reservation.get("cancellation_operation_id")!=null||!"COMMITTED".equals(reservation.get("state")))throw new IllegalStateException("Only a committed reservation can be cancelled");
+  UUID reservationId=(UUID)reservation.get("id");
+  for(var line:jdbc.queryForList("SELECT warehouse_id,sku_id,quantity FROM inventory_reservation_line WHERE reservation_id=? ORDER BY sku_id",reservationId)){
+   UUID sku=(UUID)line.get("sku_id");long qty=((Number)line.get("quantity")).longValue();UUID warehouse=(UUID)line.get("warehouse_id");
+   Long current=jdbc.queryForObject("SELECT on_hand FROM inventory_balance WHERE warehouse_id=? AND sku_id=? FOR UPDATE",Long.class,warehouse,sku);
+   long next=Math.addExact(current,qty);String key="cancel:"+operationId+":"+sku;
+   jdbc.update("INSERT INTO stock_movement(id,warehouse_id,sku_id,delta,actor,reason,idempotency_key,source) VALUES (?,?,?,?,?,?,?,'cancellation')",UUID.randomUUID(),warehouse,sku,qty,"supersports-orders","Committed order cancellation restock",key);
+   jdbc.update("UPDATE inventory_balance SET on_hand=?,revision=revision+1 WHERE warehouse_id=? AND sku_id=?",next,warehouse,sku);
+  }
+  jdbc.update("UPDATE inventory_reservation SET state='CANCELLED',cancellation_operation_id=?,updated_at=now() WHERE id=?",operationId,reservationId);
+  return Map.of("orderId",orderId,"state","CANCELLED","replayed",false);
+ }
  static final class InsufficientStockException extends RuntimeException{}
  static final class ReservationNotFoundException extends RuntimeException{}
 }

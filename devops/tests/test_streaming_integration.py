@@ -122,14 +122,15 @@ class StreamingIntegrationTests(unittest.TestCase):
                          "Redelivery after database commit must not duplicate projected sequence events")
         self.assertEqual(manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{accepted['orderId']}", token=self.other)[0], 404)
 
-        schema = json.loads((ROOT / "contracts/orders/order-lifecycle-v1.schema.json").read_text())
-        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+        schemas={version:json.loads((ROOT/f"contracts/orders/order-lifecycle-v{version}.schema.json").read_text()) for version in (1,2)}
+        validators={version:Draft202012Validator(schema,format_checker=FormatChecker()) for version,schema in schemas.items()}
         query = manage.compose_command(ROOT, self.project, ["exec", "-T", "postgres", "psql", "-U", "postgres", "-d", "orders", "-tA", "-c", "SELECT payload::text FROM order_outbox ORDER BY id"])
         rows = manage.run(query, environment=manage.deployment_env(ROOT), capture=True).stdout.splitlines()
         self.assertGreaterEqual(len(rows), 60)
         for index, row in enumerate(rows):
             with self.subTest(outbox_row=index + 1):
-                validator.validate(json.loads(row))
+                event=json.loads(row)
+                validators[event["eventVersion"]].validate(event)
 
         private_read = manage.compose(["exec", "-T", "postgres", "sh", "-ec",
             'export PGPASSWORD="$ORDER_HISTORY_DB_PASSWORD"; exec psql -X -A -t -h 127.0.0.1 -U supersports_order_history -d orders -c "SELECT 1"'],

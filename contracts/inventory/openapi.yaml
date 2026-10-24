@@ -25,6 +25,12 @@ paths:
   /api/v1/internal/checkout/inventory/reservations/{orderId}/release:
     servers: [{url: /}]
     post: {summary: Release an uncommitted hold idempotently; requires X-Checkout-Fence, responses: {'200': {description: Released reservation}, '404': {description: Reservation not found}, '409': {description: Stale fence}}}
+  /api/v1/internal/checkout/inventory/reservations/{orderId}/cancel:
+    servers: [{url: /}]
+    post:
+      summary: Restore quantities for one committed reservation exactly once after an accepted cancellation
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [operationId, fence], properties: {operationId: {type: string, format: uuid}, fence: {type: integer, minimum: 1}}}}}}
+      responses: {'200': {description: Reservation reversed and stock movement appended}, '404': {description: Reservation not found}, '409': {description: Reservation is not committed or fence is stale}}
 components:
   securitySchemes:
     bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}

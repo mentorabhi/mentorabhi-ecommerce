@@ -180,3 +180,12 @@ Used the existing reviewed isolated-probe design to run a one-partition event se
 ## 2026-10-24 — M07 Unit 2 tracking and handoff development
 
 Following the user's development-first sequencing update, added a reviewed Fulfillment transition design/flow before source changes. Fulfillment now has an additive shipment revision/ETA/audit schema, strict sequential simulated milestones, row/advisory-lock serialized operation replay, an operator-audience transition endpoint, and the original checkout worker API remains separately scoped. Orders now has a customer-owned tracking endpoint using only its own ownership check and the checkout worker service identity; dependency failure is represented as UNAVAILABLE. Added contract updates, a pure transition rule unit test and manual steps. No new build or test was executed; this checkpoint remains unverified until Stage 1 development is complete.
+
+## 2026-10-24 — M07 event compatibility foundation
+
+Before cancellation development, designed and reviewed a versioned event compatibility layer because the immutable v1 consumer rejects unknown lifecycle facts. Added an allowlisted v2 event schema, separate Orders writer path, strict dual-version History parser, v2 state-aware rebuild reconciliation and version-selecting event validation/replay. V1 remains untouched and no v2 event has been emitted. Unit/schema/reconciliation test source is authored; execution awaits the consolidated post-development test pass.
+## 2026-10-24 — S1-M07 cancellation development checkpoint
+
+Added a customer-owned, idempotent cancellation path spanning Orders, Inventory and Fulfillment. Fulfillment row-locks a scheduled shipment into `CANCEL_CLAIMED` before any money or stock side effect; handoff conflicts reject the operation. Orders persists a fenced step workflow, Payment receives the simulated full refund, Inventory restores committed quantities with unique movement identities, and Fulfillment finalizes the cancellation. The final Orders transaction marks the order cancelled and appends the allowlisted v2 `OrderCancelled` event. Added customer API, storefront control/status, narrow service scopes, OpenAPI updates, migrations, unit/Selenium test source, and a separate manual acceptance guide.
+
+This is development only and unverified. No build, test, or runtime command was run for the change. Consolidated testing remains deferred until all Stage 1 development is complete, starting from M06. See `docs/milestones/S1-M07/cancellation-design.md`, `cancellation-review.md`, and `cancellation-manual-checks.md`.
