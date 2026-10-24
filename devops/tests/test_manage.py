@@ -158,6 +158,27 @@ class CommandTests(unittest.TestCase):
             with self.subTest(version=version), self.assertRaises(ValueError):
                 manage.validated_version(version)
 
+    def test_stream_fault_requires_known_target_one_shot_and_order_uuid(self):
+        from unittest.mock import patch
+        with self.assertRaises(ValueError):
+            manage.stream_fault("unknown", "00000000-0000-0000-0000-000000000001")
+        with self.assertRaises(ValueError):
+            manage.stream_fault("consumer-after-db-commit", "not-a-uuid")
+        with patch.object(manage, "compose") as compose:
+            manage.stream_fault("consumer-after-db-commit", "00000000-0000-0000-0000-000000000001")
+        command = compose.call_args.args[0]
+        self.assertEqual(command[0:3], ["--profile", "streaming", "exec"])
+        self.assertIn("/tmp/order-history-fault/armed/$1", command[-3])
+        self.assertEqual(command[-1], "00000000-0000-0000-0000-000000000001")
+
+    def test_stream_fault_can_arm_the_next_valid_order_event(self):
+        from unittest.mock import patch
+        with patch.object(manage, "compose") as compose:
+            manage.stream_fault("consumer-after-db-commit", next_event=True)
+        command = compose.call_args.args[0]
+        self.assertIn("/tmp/order-history-fault/armed/$1", command[-3])
+        self.assertEqual(command[-1], "NEXT")
+
 
 
 class HttpProbeTests(unittest.TestCase):

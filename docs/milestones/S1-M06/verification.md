@@ -19,21 +19,21 @@ Command: `SE_OFFLINE=true ./devops/scripts/ci`
 - Helm lint/render and intended negative cases passed. Terraform format/init/validate/test passed (3 tests); no cloud provisioning occurred.
 - Core integration suite passed twice (22 tests per pass), before and after recovery checks.
 - Recovery checks passed: application/migration state across service restart; readiness/liveness behavior and reconnection through PostgreSQL outage; identity token issuance recovered.
-- Streaming integration passed twice in CI; a subsequent rerun also passed after adding an explicit database-private-table access assertion. It checks live checkout to Kafka to projection, customer list/detail ownership, caller owner-filter rejection, payloads against the event schema, and denial of the Order History runtime role's connection to the Orders database.
+- Streaming integration passed twice in the original full CI; follow-up targeted reruns passed after adding the explicit database-private-table assertion and deterministic consumer crash test. The crash test waits for zero lag, arms the one-shot fault, checks out an order, observes the container restart, and verifies the projected sequence count equals `lastSequence` after redelivery. The earlier schema and owner-isolation assertions continue to run in that same integration journey.
 - Selenium suite passed: 7 journeys, including customer login, asynchronous projected order list, opening an order, and order detail. The configuration test restores tax to 1800 even when an assertion fails.
 
 ## Database evidence
 
-After CI/recovery and test-created synthetic orders:
+After the latest streaming integration/recovery run and test-created synthetic orders:
 
-- Orders outbox: 104 events, 104 distinct event IDs, 0 rows missing event ID, sequence or customer key.
-- Order History inbox: 104 events, 104 distinct event IDs.
-- Projection states: 24 `FULFILLMENT_SCHEDULED`, 16 `FAILED`.
+- Orders outbox: 122 events, 122 distinct event IDs, 0 rows missing event ID, sequence or customer key.
+- Order History inbox: 122 events, 122 distinct event IDs; 46 projected orders.
 - The source and inbox totals match; consumer lag is zero. Reconciliation here covers retained outbox/inbox counts and the tested customer projection path only. It is not the designed full historical replay/rebuild reconciliation.
 
 ## Open acceptance and limitations
 
 - The owner must perform and record the separate [manual acceptance checklist](manual-acceptance.md).
 - Peak memory, throughput and sustained lag under load have not been measured.
-- Poison correction/replay with an operator audit, isolated candidate projection rebuild/reconciliation/cutover and deterministic consumer crash injection remain unimplemented. Full M06 design completion is therefore open; do not represent those behaviors as tested.
+- Operator-audited poison correction/replay and isolated candidate projection rebuild/reconciliation/cutover remain unimplemented. Full M06 design completion is therefore open; do not represent those behaviors as tested.
+- Follow-up after the initial full CI: `.venv/bin/python -m unittest discover -s devops/tests -p test_manage.py -v` passed (25 tests); the order-history Maven module passed six unit tests; the full streaming integration journey passed, including injected exit after database commit, container restart, replay deduplication and owner isolation. Full CI has not been rerun after this follow-up change.
 - Review evidence is in [design-review.md](design-review.md). This report contains measured runtime facts separately from the deferred design proposal.

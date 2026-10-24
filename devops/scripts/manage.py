@@ -12,6 +12,7 @@ import stat
 import subprocess
 import sys
 import time
+from uuid import UUID
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -300,6 +301,31 @@ def streaming_status(project="supersports", version=DEFAULT_VERSION):
                  "--bootstrap-server", "localhost:9092", "--describe", "--group", "order-history-v1"], project=project, version=version, check=False)
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
         print("Orders CDC connector status: unavailable")
+
+
+def stream_fault(mode: str | None, order_id: str | None = None, next_event: bool = False,
+                 project="supersports", version=DEFAULT_VERSION):
+    if mode != "consumer-after-db-commit" or (order_id is None) == (not next_event):
+        raise ValueError("Use stream-fault consumer-after-db-commit --once and exactly one of --order-id <UUID> or --next-event.")
+    if next_event:
+        marker = "NEXT"
+    else:
+        try:
+            marker = str(UUID(order_id))
+        except (ValueError, AttributeError) as error:
+            raise ValueError("Fault injection requires a valid order UUID.") from error
+    script = (
+        "mkdir -p /tmp/order-history-fault/armed /tmp/order-history-fault/fired; "
+        "test ! -e /tmp/order-history-fault/fired/$1 || "
+        "{ echo 'one-shot fault already consumed for this order' >&2; exit 2; }; "
+        "test ! -e /tmp/order-history-fault/armed/$1 || "
+        "{ echo 'one-shot fault already armed for this order' >&2; exit 2; }; "
+        ": > /tmp/order-history-fault/armed/$1"
+    )
+    compose(["--profile", "streaming", "exec", "-T", "order-history", "sh", "-ec", script, "stream-fault", marker],
+            project=project, version=version)
+    target = "the next valid order event" if next_event else f"order {marker}"
+    print(f"Armed one-shot crash after Order History commits {target} and before it commits the Kafka offset.")
 
 
 def provision_local_identity(root=ROOT):
@@ -681,13 +707,16 @@ def main(argv=None):
     parser.add_argument("action", choices=[
         "doctor", "configure", "validate", "build", "up", "down", "status",
         "unit", "test", "reset", "release", "rollback",
-        "ui-test", "streaming-up", "streaming-down", "stream-status", "restart",
+        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "restart",
     ])
     parser.add_argument("release_version", nargs="?")
     parser.add_argument("--project", default="supersports")
     parser.add_argument("--version", default=DEFAULT_VERSION)
     parser.add_argument("--confirm-reset")
     parser.add_argument("--recovery", action="store_true")
+    parser.add_argument("--order-id")
+    parser.add_argument("--once", action="store_true")
+    parser.add_argument("--next-event", action="store_true")
     arguments = parser.parse_args(argv)
     try:
         project = validated_project_name(arguments.project)
@@ -729,6 +758,11 @@ def main(argv=None):
             compose(["--profile", "streaming", "stop", *STREAMING_SERVICES, "kafka-connect", "kafka"], project=project, version=version)
         elif action == "stream-status":
             streaming_status(project=project, version=version)
+        elif action == "stream-fault":
+            if not arguments.once:
+                raise ValueError("Fault injection is one-shot; pass --once.")
+            stream_fault(arguments.release_version, arguments.order_id, next_event=arguments.next_event,
+                         project=project, version=version)
         elif action == "restart":
             service = arguments.release_version
             allowed = (*SERVICES, "kafka-connect", "kafka", *STREAMING_SERVICES)

@@ -1,6 +1,6 @@
 # S1-M06 — Outbox, Kafka and CQRS projections
 
-Revision 4 · 2026-10-24 · CDC and owner-scoped projection implemented; automated/runtime evidence is in [verification](verification.md). Manual acceptance remains open.
+Revision 5 · 2026-10-24 · CDC, owner-scoped projection and deterministic consumer crash injection implemented; automated/runtime evidence is in [verification](verification.md). Manual acceptance remains open.
 
 Design: [outbox and projection design](design.md). Review: [design review](design-review.md). Decision: [ADR 0006](../../decisions/0006-orders-outbox-cdc-and-history-projection.md). Editable flow: [event-flow.mmd](event-flow.mmd). Manual checks: [manual acceptance](manual-acceptance.md). Source architecture: [S1-M06 diagram](../../../architecture/stage-1/S1-M06.excalidraw).
 
@@ -17,4 +17,4 @@ Publish committed order events from the Orders transactional outbox to local Kaf
 - Keep Kafka optional in the lightweight local profile; provide a complete streaming profile and document memory use on the 16 GB baseline.
 - No cloud services or hosted messaging/schema services.
 
-The first implementation slice delivers transactional outbox enrichment/backfill, Debezium CDC, local Kafka, durable consumer inbox and per-order projection, plus customer-scoped list/detail reads. Poison-event correction replay, operator audit workflow, isolated projection rebuild/reconciliation and deterministic consumer fault injection remain pending follow-up work. The manual guide describes only executable checks and calls out these gaps explicitly; the full original design objective is not yet complete.
+Implemented scope delivers transactional outbox enrichment/backfill, Debezium CDC, local Kafka, durable consumer inbox and per-order projection, customer-scoped list/detail reads, and a one-shot crash after projection commit/before Kafka offset commit. Streaming integration proves container restart and duplicate-safe redelivery. Poison-event correction replay with operator audit and isolated projection rebuild/reconciliation/cutover remain pending. The manual guide describes executable checks and calls out those gaps; the full original design objective is not yet complete.

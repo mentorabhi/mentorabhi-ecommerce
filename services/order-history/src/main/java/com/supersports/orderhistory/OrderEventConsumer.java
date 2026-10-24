@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory;
 @Component
 class OrderEventConsumer implements SmartLifecycle {
     private static final Logger log=LoggerFactory.getLogger(OrderEventConsumer.class);
-    private final HistoryProjector projector;private final String brokers,topic,dlq,group;private final AtomicBoolean running=new AtomicBoolean();private Thread thread;
-    OrderEventConsumer(HistoryProjector projector,@Value("${spring.kafka.bootstrap-servers}")String brokers,@Value("${order-history.topic}")String topic,@Value("${order-history.dlq-topic}")String dlq,@Value("${order-history.consumer-group}")String group){this.projector=projector;this.brokers=brokers;this.topic=topic;this.dlq=dlq;this.group=group;}
+    private final HistoryProjector projector;private final ConsumerCrashInjector crashInjector;private final String brokers,topic,dlq,group;private final AtomicBoolean running=new AtomicBoolean();private Thread thread;
+    OrderEventConsumer(HistoryProjector projector,ConsumerCrashInjector crashInjector,@Value("${spring.kafka.bootstrap-servers}")String brokers,@Value("${order-history.topic}")String topic,@Value("${order-history.dlq-topic}")String dlq,@Value("${order-history.consumer-group}")String group){this.projector=projector;this.crashInjector=crashInjector;this.brokers=brokers;this.topic=topic;this.dlq=dlq;this.group=group;}
     @Override public synchronized void start(){if(!running.compareAndSet(false,true))return;thread=new Thread(this::consume,"order-history-kafka-consumer");thread.setDaemon(true);thread.start();}
     private void consume(){while(running.get()){try{consumeSession();}catch(RuntimeException error){if(running.get()){log.error("Order History consumer session failed; it will reconnect",error);sleep(1000);}}}}
     private void consumeSession(){
@@ -36,7 +36,7 @@ class OrderEventConsumer implements SmartLifecycle {
             while(running.get()){
                 var records=consumer.poll(Duration.ofMillis(500));
                 for(ConsumerRecord<String,String> record:records){
-                    try{HistoryProjector.Outcome outcome=projector.project(record.value(),record.topic(),record.partition(),record.offset());consumer.commitSync(Map.of(new TopicPartition(record.topic(),record.partition()),new OffsetAndMetadata(record.offset()+1)));if(outcome==HistoryProjector.Outcome.PARKED)log.warn("Order history event parked for an aggregate sequence gap");}
+                    try{HistoryProjector.Outcome outcome=projector.project(record.value(),record.topic(),record.partition(),record.offset());if(crashInjector.consumeIfArmed(projector.aggregateId(record.value()).toString())){log.error("Injecting one-shot crash after the Order History database commit and before the Kafka offset commit");Runtime.getRuntime().halt(86);}consumer.commitSync(Map.of(new TopicPartition(record.topic(),record.partition()),new OffsetAndMetadata(record.offset()+1)));if(outcome==HistoryProjector.Outcome.PARKED)log.warn("Order history event parked for an aggregate sequence gap");}
                     catch(HistoryProjector.PoisonEventException poison){sendToDlq(producer,consumer,record,poison.code());}
                     catch(org.springframework.dao.DataAccessException transientFailure){consumer.seek(new TopicPartition(record.topic(),record.partition()),record.offset());log.error("Order History database failure; Kafka offset remains uncommitted");sleep(1000);break;}
                 }

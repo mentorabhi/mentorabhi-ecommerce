@@ -26,6 +26,11 @@ class HistoryProjector {
         catch(PoisonEventException e){throw e;}catch(RuntimeException e){throw e;}
     }
 
+    UUID aggregateId(String raw){
+        try{return HistoryRules.parse(read(raw)).aggregateId();}
+        catch(RuntimeException e){throw new IllegalStateException("A committed order projection contained an invalid event envelope",e);}
+    }
+
     private Outcome projectTransaction(HistoryRules.Event event,Map<String,Object> envelope,String hash,String topic,int partition,long offset){
         var seen=jdbc.query("SELECT payload_hash FROM event_inbox WHERE event_id=?",(rs,n)->rs.getString(1),event.eventId());
         if(!seen.isEmpty()){if(!hash.equals(seen.getFirst()))throw new PoisonEventException("EVENT_ID_PAYLOAD_CONFLICT");return Outcome.DUPLICATE;}

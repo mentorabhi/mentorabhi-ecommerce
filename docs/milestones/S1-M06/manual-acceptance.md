@@ -23,6 +23,7 @@ Storefront URL: http://localhost:3000 · Operator UI: http://localhost:3000/admi
 - [ ] Place a new synthetic order in the storefront. Confirm it first appears as an accepted order and then its status advances asynchronously.
 - [ ] Read a small sample from `commerce.order.events.v1` using the local Kafka console consumer. Confirm the key is the order ID and payload fields include event ID, event version and aggregate sequence. Confirm payloads do not contain a delivery address, email address, raw customer subject or payment instrument.
 - [ ] Restart Kafka Connect once more and place another synthetic order. Confirm the new order is projected once and the consumer catches up.
+- [ ] Wait until `stream-status` shows zero consumer lag, then run `./devops/scripts/supersports stream-fault consumer-after-db-commit --once --next-event`. Place one synthetic order. Confirm Order History restarts once, the order appears after recovery, and its projected event sequences have no duplicates. The fault marker applies to the next valid event only.
 
 ## 3. Read-only database checks
 
@@ -43,7 +44,7 @@ docker stats --no-stream
 
 ## Scope still pending
 
-Poison-event injection, audited correction replay, candidate projection rebuild/reconciliation and deterministic process-crash injection are described in the reviewed design, but are not implemented in this revision. Do not treat those procedures as passed or attempt the earlier proposed `stream-demo-poison`, `stream-replay`, `stream-rebuild`, `stream-reconcile` or `stream-fault` commands; they do not exist yet. They remain required follow-up work before the full M06 design objective can be marked complete.
+Audited poison correction replay and candidate projection rebuild/reconciliation/cutover remain unimplemented. Do not treat those procedures as passed or attempt `stream-demo-poison`, `stream-replay`, `stream-rebuild` or `stream-reconcile`; those commands do not exist yet. Deterministic consumer crash injection is implemented and covered by the manual step above and streaming integration suite.
 
 ## Human result
 
