@@ -146,6 +146,62 @@ class CoreIntegrationTests(unittest.TestCase):
         self.assertEqual(fulfillment_status, 200)
         self.assertEqual(shipment["state"], "SCHEDULED")
 
+    def test_delivered_order_partial_return_is_owned_idempotent_and_refunded_once(self):
+        _,products=manage.request_json(f"{CATALOG}/api/v1/catalog/products?q=football")
+        sku_id=products[0]["skus"][0]["id"]
+        _,profile=manage.request_json(f"{CUSTOMER}/api/v1/customer/profile",token=self.store_customer)
+        address={"fullName":"Return Test","phone":"9876543210","line1":"12 Test Road","line2":"","city":"Pune","state":"Maharashtra","postalCode":"411001","country":"IN","expectedRevision":profile["revision"]}
+        self.assertEqual(manage.request_json(f"{CUSTOMER}/api/v1/customer/profile",token=self.store_customer,method="PUT",data=json.dumps(address).encode())[0],200)
+        payload={"lines":[{"skuId":sku_id,"quantity":2}],"couponCode":None}
+        status,accepted=manage.request_json(f"{ORDERS}/api/v1/orders/checkout",token=self.store_customer,method="POST",data=json.dumps(payload).encode(),headers={"Idempotency-Key":"return-checkout-"+uuid.uuid4().hex})
+        self.assertEqual(status,202);order_id=accepted["orderId"]
+        deadline=time.monotonic()+45
+        while time.monotonic()<deadline:
+            _,order=manage.request_json(f"{ORDERS}/api/v1/orders/{order_id}",token=self.store_customer)
+            if order["state"] in ("FULFILLMENT_SCHEDULED","FAILED","MANUAL_REVIEW"):break
+            time.sleep(.5)
+        self.assertEqual(order["state"],"FULFILLMENT_SCHEDULED",order)
+        fulfillment="http://127.0.0.1:8088/api/v1"
+        for target in ("HANDED_OFF","IN_TRANSIT","DELIVERED"):
+            _,tracking=manage.request_json(f"{ORDERS}/api/v1/orders/{order_id}/tracking",token=self.store_customer)
+            transition={"expectedRevision":tracking["tracking"]["revision"],"operationId":str(uuid.uuid4()),"targetState":target,"reason":"Synthetic return acceptance journey"}
+            transition_status,_=manage.request_json(f"{fulfillment}/operator/shipments/{order_id}/transitions",token=self.local_admin,method="POST",data=json.dumps(transition).encode())
+            self.assertEqual(transition_status,200)
+        eligibility_status,eligibility=manage.request_json(f"{ORDERS}/api/v1/orders/{order_id}/returns/eligibility",token=self.store_customer)
+        self.assertEqual(eligibility_status,200);self.assertTrue(eligibility["eligible"])
+        return_payload={"lines":[{"skuId":sku_id,"quantity":1}]};key="return-"+uuid.uuid4().hex;return_url=f"{ORDERS}/api/v1/orders/{order_id}/returns"
+        status,created=manage.request_json(return_url,token=self.store_customer,method="POST",data=json.dumps(return_payload).encode(),headers={"Idempotency-Key":key})
+        self.assertEqual(status,202)
+        replay_status,replay=manage.request_json(return_url,token=self.store_customer,method="POST",data=json.dumps(return_payload).encode(),headers={"Idempotency-Key":key})
+        self.assertEqual(replay_status,202);self.assertEqual(replay["returnId"],created["returnId"])
+        changed={"lines":[{"skuId":sku_id,"quantity":2}]}
+        self.assertEqual(manage.request_json(return_url,token=self.store_customer,method="POST",data=json.dumps(changed).encode(),headers={"Idempotency-Key":key})[0],409)
+        self.assertEqual(manage.request_json(f"{return_url}/{created['returnId']}",token=self.store_customer_b)[0],404)
+        deadline=time.monotonic()+30
+        while time.monotonic()<deadline:
+            _,operation=manage.request_json(f"{return_url}/{created['returnId']}",token=self.store_customer)
+            if operation["status"] in ("COMPLETED","MANUAL_REVIEW"):break
+            time.sleep(.5)
+        self.assertEqual(operation["status"],"COMPLETED",operation)
+        racing_keys=["return-race-"+uuid.uuid4().hex,"return-race-"+uuid.uuid4().hex]
+        def claim_last_unit(key):return manage.request_json(return_url,token=self.store_customer,method="POST",data=json.dumps(return_payload).encode(),headers={"Idempotency-Key":key})
+        with ThreadPoolExecutor(max_workers=2) as pool:race=list(pool.map(claim_last_unit,racing_keys))
+        successes=[body for status,body in race if status==202]
+        self.assertEqual(sum(status==409 for status,_ in race),1,race);self.assertEqual(len(successes),1,race)
+        second=successes[0]
+        deadline=time.monotonic()+30
+        while time.monotonic()<deadline:
+            _,second_operation=manage.request_json(f"{return_url}/{second['returnId']}",token=self.store_customer)
+            if second_operation["status"] in ("COMPLETED","MANUAL_REVIEW"):break
+            time.sleep(.5)
+        self.assertEqual(second_operation["status"],"COMPLETED",second_operation)
+        order_check=self.psql("orders","orders","SELECT concat(o.state,':',count(*)) FROM customer_order o JOIN return_request r ON r.order_id=o.id WHERE o.id=$$"+order_id+"$$ GROUP BY o.state")
+        self.assertEqual(order_check.returncode,0,order_check.stderr);self.assertEqual(order_check.stdout.strip(),"DELIVERED:1")
+        allocation_check=self.psql("orders","orders","SELECT sum(merchandise_refund_minor+tax_refund_minor) FROM return_unit_allocation WHERE order_id=$$"+order_id+"$$")
+        self.assertEqual(allocation_check.returncode,0,allocation_check.stderr);self.assertEqual(allocation_check.stdout.strip(),str(int(operation["amountMinor"])+int(second_operation["amountMinor"])))
+        payment_check=self.psql("payment","payment","SELECT concat(sum(amount_minor),':',count(*)) FROM payment_operation WHERE order_id=$$"+order_id+"$$ AND operation=$$REFUND$$")
+        self.assertEqual(payment_check.returncode,0,payment_check.stderr);self.assertEqual(payment_check.stdout.strip(),str(int(operation["amountMinor"])+int(second_operation["amountMinor"]))+":2")
+
     def test_declined_payment_releases_stock_without_capture(self):
         settings_url=f"{CONFIGURATION}/api/v1/configuration"
         _,snapshot=manage.request_json(settings_url,token=self.admin)

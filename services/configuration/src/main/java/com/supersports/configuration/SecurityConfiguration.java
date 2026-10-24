@@ -36,9 +36,11 @@ class SecurityConfiguration {
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/internal/checkout/configuration").access(checkoutConfigurationRead())
+                        .requestMatchers(HttpMethod.GET, "/api/v1/internal/checkout/configuration/returns-policy").access(checkoutConfigurationRead())
                         .requestMatchers("/api/v1/internal/checkout/**").denyAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/configuration").access(operatorAudience())
                         .requestMatchers(HttpMethod.PUT, "/api/v1/configuration/checkout/**").access(operatorAudience())
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/configuration/returns/**").access(operatorAudience())
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))
                 .build();

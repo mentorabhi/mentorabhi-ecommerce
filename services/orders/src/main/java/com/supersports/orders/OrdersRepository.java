@@ -54,7 +54,64 @@ class OrdersRepository {
     @Transactional void postPurchaseManualReview(UUID operation,long fence,String code){jdbc.update("UPDATE post_purchase_operation SET status='MANUAL_REVIEW',current_step='MANUAL_REVIEW',lease_owner=NULL,lease_until=NULL,last_error_code=?,updated_at=now() WHERE operation_id=? AND fence=?",code,operation,fence);}
     @Transactional void postPurchaseReject(UUID operation,long fence,String code){jdbc.update("UPDATE post_purchase_operation SET status='REJECTED',current_step='REJECTED',lease_owner=NULL,lease_until=NULL,last_error_code=?,updated_at=now() WHERE operation_id=? AND fence=?",code,operation,fence);}
     Map<String,Object> cancellationEligibility(UUID orderId,String subject){var rows=jdbc.queryForList("SELECT state FROM customer_order WHERE id=? AND customer_subject=?",orderId,subject);return rows.isEmpty()?null:Map.of("orderState",rows.getFirst().get("state"));}
+    @Transactional(readOnly=true) Map<String,Object> cancellationReplay(UUID orderId,String subject,String key,String hash){var rows=jdbc.queryForList("SELECT operation_id,order_id,payload_hash,status,current_step FROM post_purchase_operation WHERE customer_subject=? AND idempotency_key=?",subject,key);if(rows.isEmpty())return null;var row=rows.getFirst();if(!orderId.equals(row.get("order_id"))||!hash.equals(row.get("payload_hash")))throw new IllegalStateException("IDEMPOTENCY_CONFLICT");var result=new java.util.LinkedHashMap<String,Object>();result.put("orderId",orderId);result.put("operationId",row.get("operation_id"));result.put("status",row.get("status"));result.put("currentStep",row.get("current_step"));result.put("replayed",true);return result;}
     Map<String,Object> cancellation(UUID orderId,UUID operationId,String subject){var rows=jdbc.queryForList("SELECT operation_id AS \"operationId\",order_id AS \"orderId\",status,current_step AS \"currentStep\",last_error_code AS \"errorCode\",created_at AS \"createdAt\",updated_at AS \"updatedAt\" FROM post_purchase_operation WHERE order_id=? AND operation_id=? AND customer_subject=?",orderId,operationId,subject);return rows.isEmpty()?null:rows.getFirst();}
+
+    @Transactional(readOnly=true) Map<String,Object> returnReplay(UUID orderId,String subject,String key,String hash){
+        var rows=jdbc.queryForList("SELECT return_id,order_id,payload_hash,status,current_step,amount_minor,currency FROM return_request WHERE customer_subject=? AND idempotency_key=?",subject,key);
+        if(rows.isEmpty())return null;var row=rows.getFirst();if(!orderId.equals(row.get("order_id"))||!hash.equals(row.get("payload_hash")))throw new IllegalStateException("RETURN_IDEMPOTENCY_CONFLICT");return returnResponse(row);
+    }
+
+    @Transactional Map<String,Object> startReturn(UUID orderId,String subject,String key,String hash,Map<UUID,Integer> requested,Instant deliveredAt,long windowDays,long policyRevision){
+        var orderRows=jdbc.queryForList("SELECT o.state,o.tax_minor,o.currency,s.fence FROM customer_order o JOIN checkout_saga s ON s.order_id=o.id WHERE o.id=? AND o.customer_subject=? FOR UPDATE OF o,s",orderId,subject);
+        if(orderRows.isEmpty())return null;var order=orderRows.getFirst();
+        var replay=jdbc.queryForList("SELECT return_id,order_id,payload_hash,status,current_step,amount_minor,currency FROM return_request WHERE customer_subject=? AND idempotency_key=? FOR UPDATE",subject,key);
+        if(!replay.isEmpty()){var prior=replay.getFirst();if(!orderId.equals(prior.get("order_id"))||!hash.equals(prior.get("payload_hash")))throw new IllegalStateException("RETURN_IDEMPOTENCY_CONFLICT");return returnResponse(prior);}
+        if(!ReturnRequestRules.withinWindow(deliveredAt,Instant.now(),windowDays))throw new IllegalStateException("RETURN_WINDOW_EXPIRED");
+        var lineRows=jdbc.queryForList("SELECT sku_id,quantity,line_total_minor FROM customer_order_line WHERE order_id=? ORDER BY sku_id FOR UPDATE",orderId);
+        var lines=lineRows.stream().map(row->new ReturnRefundAllocation.Line((UUID)row.get("sku_id"),((Number)row.get("quantity")).intValue(),((Number)row.get("line_total_minor")).longValue())).toList();
+        var orderLines=new java.util.HashMap<UUID,ReturnRefundAllocation.Line>();lines.forEach(line->orderLines.put(line.skuId(),line));
+        if(requested==null||requested.isEmpty()||requested.keySet().stream().anyMatch(sku->!orderLines.containsKey(sku)))throw new IllegalArgumentException("Return contains an unknown order line");
+        var claimedRows=jdbc.queryForList("SELECT sku_id,count(*) AS quantity FROM return_unit_allocation WHERE order_id=? GROUP BY sku_id",orderId);
+        var claimed=new java.util.HashMap<UUID,Integer>();claimedRows.forEach(row->claimed.put((UUID)row.get("sku_id"),((Number)row.get("quantity")).intValue()));
+        requested.forEach((sku,quantity)->{if(quantity==null||quantity<1||claimed.getOrDefault(sku,0)+quantity>orderLines.get(sku).quantity())throw new IllegalStateException("RETURN_QUANTITY_EXCEEDED");});
+        List<ReturnRefundAllocation.Unit> allocations=ReturnRefundAllocation.allocate(lines,((Number)order.get("tax_minor")).longValue(),claimed,requested);
+        long amount=allocations.stream().mapToLong(ReturnRefundAllocation.Unit::refundMinor).reduce(0,Math::addExact);
+        UUID returnId=UUID.randomUUID();long fence=jdbc.queryForObject("UPDATE checkout_saga SET fence=fence+1,updated_at=now() WHERE order_id=? RETURNING fence",Long.class,orderId);
+        jdbc.update("INSERT INTO return_request(return_id,order_id,customer_subject,idempotency_key,payload_hash,status,current_step,amount_minor,currency,policy_revision,window_days,delivered_at,fence) VALUES (?,?,?, ?,?,'PENDING','REFUND',?,?,?,?,?,?)",returnId,orderId,subject,key,hash,amount,order.get("currency"),policyRevision,windowDays,Timestamp.from(deliveredAt),fence);
+        for(var unit:allocations)jdbc.update("INSERT INTO return_unit_allocation(return_id,order_id,sku_id,unit_ordinal,merchandise_refund_minor,tax_refund_minor) VALUES (?,?,?,?,?,?)",returnId,orderId,unit.skuId(),unit.ordinal(),unit.merchandiseMinor(),unit.taxMinor());
+        String state=order.get("state").toString();if(!"DELIVERED".equals(state)){
+            if(!"FULFILLMENT_SCHEDULED".equals(state))throw new IllegalStateException("ORDER_NOT_RETURNABLE");
+            jdbc.update("UPDATE customer_order SET state='DELIVERED',updated_at=now() WHERE id=?",orderId);
+        }
+        var requestedLines=requested.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry->Map.of("skuId",entry.getKey().toString(),"quantity",entry.getValue())).toList();
+        eventWriter.appendPostPurchase(orderId,subject,"OrderReturnRequested",Map.of("orderId",orderId,"state","DELIVERED","returnId",returnId,"lines",requestedLines,"policyRevision",policyRevision));
+        var result=new java.util.LinkedHashMap<String,Object>();result.put("returnId",returnId);result.put("orderId",orderId);result.put("status","PENDING");result.put("currentStep","REFUND");result.put("amountMinor",amount);result.put("currency",order.get("currency"));result.put("policyRevision",policyRevision);return result;
+    }
+
+    @Transactional Map<String,Object> claimReturn(){
+        var candidates=jdbc.queryForList("SELECT r.return_id,r.order_id,r.current_step FROM return_request r WHERE r.status IN ('PENDING','RUNNING') AND r.next_attempt_at<=now() AND (r.lease_until IS NULL OR r.lease_until<now()) AND NOT EXISTS (SELECT 1 FROM return_request earlier WHERE earlier.order_id=r.order_id AND earlier.status IN ('PENDING','RUNNING') AND (earlier.created_at,earlier.return_id)<(r.created_at,r.return_id)) ORDER BY r.created_at,r.return_id LIMIT 1 FOR UPDATE OF r SKIP LOCKED");
+        if(candidates.isEmpty())return null;var row=candidates.getFirst();UUID order=(UUID)row.get("order_id"),returnId=(UUID)row.get("return_id");
+        long fence=jdbc.queryForObject("UPDATE checkout_saga SET fence=fence+1,updated_at=now() WHERE order_id=? RETURNING fence",Long.class,order);
+        jdbc.update("UPDATE return_request SET status='RUNNING',lease_owner=?,lease_until=now()+interval '30 seconds',fence=?,attempt=attempt+1,updated_at=now() WHERE return_id=?",UUID.randomUUID().toString(),fence,returnId);
+        var details=jdbc.queryForList("SELECT amount_minor,currency,customer_subject FROM return_request WHERE return_id=?",returnId).getFirst();var result=new java.util.HashMap<String,Object>(row);result.putAll(details);result.put("fence",fence);return result;
+    }
+    @Transactional void retryReturn(UUID returnId,long fence,String code){jdbc.update("UPDATE return_request SET status='RUNNING',lease_owner=NULL,lease_until=NULL,next_attempt_at=now()+least(interval '30 seconds',interval '1 second'*power(2,least(attempt,5))),last_error_code=?,updated_at=now() WHERE return_id=? AND fence=?",code,returnId,fence);}
+    @Transactional void manualReviewReturn(UUID returnId,long fence,String code){jdbc.update("UPDATE return_request SET status='MANUAL_REVIEW',current_step='MANUAL_REVIEW',lease_owner=NULL,lease_until=NULL,last_error_code=?,updated_at=now() WHERE return_id=? AND fence=?",code,returnId,fence);}
+    @Transactional void completeReturn(UUID returnId,long fence){
+        var rows=jdbc.queryForList("SELECT order_id,customer_subject,amount_minor,currency,status FROM return_request WHERE return_id=? FOR UPDATE",returnId);if(rows.isEmpty())return;var row=rows.getFirst();
+        if("COMPLETED".equals(row.get("status")))return;
+        int changed=jdbc.update("UPDATE return_request SET status='COMPLETED',current_step='DONE',lease_owner=NULL,lease_until=NULL,last_error_code=NULL,updated_at=now() WHERE return_id=? AND fence=? AND status='RUNNING'",returnId,fence);if(changed!=1)return;
+        UUID order=(UUID)row.get("order_id");eventWriter.appendPostPurchase(order,row.get("customer_subject").toString(),"OrderRefundCompleted",Map.of("orderId",order,"state","DELIVERED","refundId",returnId,"amountMinor",row.get("amount_minor"),"currency",row.get("currency").toString().trim(),"reasonCode","RETURN"));
+    }
+    Map<String,Object> returnStatus(UUID orderId,UUID returnId,String subject){
+        var rows=jdbc.queryForList("SELECT return_id AS \"returnId\",order_id AS \"orderId\",status,current_step AS \"currentStep\",amount_minor AS \"amountMinor\",currency,policy_revision AS \"policyRevision\",window_days AS \"windowDays\",delivered_at AS \"deliveredAt\",last_error_code AS \"errorCode\",created_at AS \"createdAt\",updated_at AS \"updatedAt\" FROM return_request WHERE order_id=? AND return_id=? AND customer_subject=?",orderId,returnId,subject);if(rows.isEmpty())return null;var result=new java.util.LinkedHashMap<String,Object>(rows.getFirst());result.put("lines",jdbc.queryForList("SELECT sku_id AS \"skuId\",count(*) AS quantity,sum(merchandise_refund_minor+tax_refund_minor) AS \"refundMinor\" FROM return_unit_allocation WHERE return_id=? GROUP BY sku_id ORDER BY sku_id",returnId));return result;
+    }
+    List<Map<String,Object>> returnableLines(UUID orderId,String subject){
+        if(!ownsOrder(orderId,subject))return null;
+        return jdbc.queryForList("SELECT l.sku_id AS \"skuId\",l.product_title AS \"productTitle\",l.quantity-COALESCE(a.claimed,0) AS \"returnableQuantity\",l.line_total_minor AS \"lineTotalMinor\" FROM customer_order_line l LEFT JOIN (SELECT sku_id,count(*) AS claimed FROM return_unit_allocation WHERE order_id=? GROUP BY sku_id) a ON a.sku_id=l.sku_id WHERE l.order_id=? ORDER BY l.sku_id",orderId,orderId);
+    }
+    private Map<String,Object> returnResponse(Map<String,Object> row){var result=new java.util.LinkedHashMap<String,Object>();result.put("returnId",row.get("return_id"));result.put("orderId",row.get("order_id"));result.put("status",row.get("status"));result.put("currentStep",row.get("current_step"));result.put("amountMinor",row.get("amount_minor"));result.put("currency",row.get("currency"));result.put("replayed",true);return result;}
 
     @Transactional
     Map<String,Object> claimSaga() {

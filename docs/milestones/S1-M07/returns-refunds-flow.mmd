@@ -1,0 +1,18 @@
+sequenceDiagram
+  actor Customer
+  participant Orders
+  participant Fulfillment
+  participant Payment
+  participant Outbox
+  Customer->>Orders: POST partial return + idempotency key
+  Orders->>Orders: verify owner, lock order/lines, reserve unit slots
+  Orders->>Fulfillment: read synthetic delivery state
+  Fulfillment-->>Orders: DELIVERED + delivered timestamp
+  Orders->>Orders: validate window and immutable per-unit refund allocation
+  Orders->>Outbox: OrderReturnRequested v2 in claim transaction
+  Orders-->>Customer: 202 returnId/status
+  Orders->>Payment: REFUND with stable operation key and amount
+  Payment-->>Orders: refund ledger receipt
+  Orders->>Outbox: OrderRefundCompleted v2 with receipt transaction
+  Note over Orders,Payment: Retry uses identical operation ID and amount; Payment cap remains authoritative
+  Note over Orders: Inventory restock waits for Unit 5 inspection

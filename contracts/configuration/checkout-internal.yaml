@@ -15,6 +15,10 @@ paths:
           description: Versioned tax, per-currency shipping, reservation timeout and payment simulation mode
         '401': {description: Missing or invalid token}
         '403': {description: Wrong client, audience or operation scope}
+  /returns-policy:
+    get:
+      summary: Read the current revisioned local return window
+      responses: {'200': {description: Window in days and policy revision}, '401': {description: Missing or invalid token}, '403': {description: Wrong client, audience or operation scope}}
 components:
   securitySchemes:
     checkoutWorker:

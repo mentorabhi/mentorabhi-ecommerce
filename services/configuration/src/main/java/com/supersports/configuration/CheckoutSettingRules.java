@@ -11,6 +11,7 @@ final class CheckoutSettingRules {
             case "shipping.INR","shipping.USD" -> {if(number<0||number>100000000)throw new IllegalArgumentException("Shipping amount is outside the supported range");yield Long.toString(number);}
             case "inventory.reservation-seconds" -> {if(number<60||number>1800)throw new IllegalArgumentException("Reservation duration must be from 60 to 1800 seconds");yield Long.toString(number);}
             case "payment.authorization-mode" -> {if(!normalized.equals("APPROVE")&&!normalized.equals("DECLINE"))throw new IllegalArgumentException("Authorization mode must be APPROVE or DECLINE");yield normalized;}
+            case "returns.window-days" -> {if(number<1||number>90)throw new IllegalArgumentException("Return window must be from 1 to 90 days");yield Long.toString(number);}
             default -> throw new IllegalArgumentException("This setting is not operator-editable");
         };
     }

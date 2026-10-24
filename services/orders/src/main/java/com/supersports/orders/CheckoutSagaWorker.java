@@ -53,6 +53,21 @@ class CheckoutSagaWorker {
         }catch(RuntimeException failure){orders.postPurchaseRetry(operation,fence,"CANCELLATION_STEP_RETRY");}
     }
 
+    @Scheduled(fixedDelayString="${checkout.worker-poll-ms:1000}")
+    void pollReturns(){
+        Map<String,Object> claim=orders.claimReturn();if(claim==null)return;
+        UUID returnId=(UUID)claim.get("return_id");long fence=((Number)claim.get("fence")).longValue();long amount=((Number)claim.get("amount_minor")).longValue();
+        try{
+            if(amount>0){UUID order=(UUID)claim.get("order_id");
+                Map<String,Object> receipt=payment.post().uri("/api/v1/internal/checkout/payments/refund").header("Authorization","Bearer "+workerToken()).contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("orderId",order.toString(),"operationKey","return:"+returnId+":refund","fence",fence,"amountMinor",amount,"currency",claim.get("currency").toString().trim(),"authorizationMode","APPROVE")).retrieve().body(Map.class);
+                if(receipt==null||!"REFUNDED".equals(receipt.get("state"))){orders.manualReviewReturn(returnId,fence,"PAYMENT_REFUND_UNCONFIRMED");return;}
+            }
+            orders.completeReturn(returnId,fence);
+        }catch(org.springframework.web.client.HttpClientErrorException.Conflict conflict){orders.manualReviewReturn(returnId,fence,"PAYMENT_REFUND_CONFLICT");}
+        catch(RuntimeException failure){orders.retryReturn(returnId,fence,"RETURN_REFUND_RETRY");}
+    }
+
     private void advanceCancellation(UUID operation,UUID order,String step,long fence,Map<String,Object> claim){
         String bearer="Bearer "+workerToken();UUID claimId=operationId(operation,"shipment-claim");Map<String,Object> result;String next;
         switch(step){
@@ -105,6 +120,10 @@ class CheckoutSagaWorker {
     }
     Map<String,Object> fulfillmentStatus(UUID orderId){
         return fulfillment.get().uri("/api/v1/internal/checkout/fulfillment/{orderId}",orderId)
+            .header("Authorization","Bearer "+workerToken()).retrieve().body(Map.class);
+    }
+    Map<String,Object> returnsPolicy(){
+        return configuration.get().uri("/api/v1/internal/checkout/configuration/returns-policy")
             .header("Authorization","Bearer "+workerToken()).retrieve().body(Map.class);
     }
     private void compensateDeclined(UUID id,long fence){

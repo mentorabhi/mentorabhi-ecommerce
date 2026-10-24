@@ -157,6 +157,18 @@ class SuperSportsAdminUiTests(unittest.TestCase):
             save_tax("1800", revision())
         self.assertEqual(self.driver.find_element(By.XPATH, row_selector).find_element(By.NAME, "value").get_attribute("value"), "1800")
         self.assertIn("Commerce simulations", self.driver.find_element(By.CSS_SELECTOR, ".configuration-groups").text)
+        return_row="//article[contains(@class,'configuration-row')][.//code[normalize-space()='returns.window-days']]"
+        self.wait.until(EC.visibility_of_element_located((By.XPATH,return_row)))
+        self.assertIn("Returns policy",self.driver.find_element(By.CSS_SELECTOR,".configuration-groups").text)
+        return_field=self.driver.find_element(By.XPATH,return_row).find_element(By.NAME,"value")
+        prior=return_field.get_attribute("value");changed_window="21" if prior!="21" else "28"
+        def save_window(value):
+            current=self.driver.find_element(By.XPATH,return_row);field=current.find_element(By.NAME,"value");field.clear();field.send_keys(value)
+            current.find_element(By.XPATH,".//button[normalize-space()='Save']").click()
+            self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,".notice.success")))
+            self.wait.until(lambda _driver:self.driver.find_element(By.XPATH,return_row).find_element(By.NAME,"value").get_attribute("value")==value)
+        try:save_window(changed_window)
+        finally:save_window(prior)
         self.assert_no_react_hook_order_error()
 
     def test_catalog_login_products_art_and_product_creation(self):

@@ -32,3 +32,5 @@ Not full CI. Remaining M07 units, UI, final integration/recovery, owner manual a
 
 Cancellation source and test cases are authored but unverified. Per the user's sequencing instruction, no build, test, or runtime checks have been run after the M06 checkpoint. The consolidated verification pass begins from M06 after development across all Stage 1 milestones is complete. Manual owner checks are in [cancellation-manual-checks.md](cancellation-manual-checks.md).
 
+Partial returns and refunds are also authored but unverified. Unit test, real-stack integration test, Selenium journey, policy setting audit, and manual owner checks are written; no execution has started. See [returns-refunds-manual-checks.md](returns-refunds-manual-checks.md).
+

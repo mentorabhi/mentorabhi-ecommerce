@@ -64,6 +64,30 @@ paths:
         - {in: path, name: orderId, required: true, schema: {type: string, format: uuid}}
         - {in: path, name: operationId, required: true, schema: {type: string, format: uuid}}
       responses: {'200': {description: Operation state}, '404': {description: Missing or not owned by caller}}
+  /{orderId}/returns/eligibility:
+    get:
+      summary: Check delivered-order return window and remaining quantities for the authenticated customer
+      parameters: [{in: path, name: orderId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Return policy revision, eligibility reason and returnable order-line quantities}, '404': {description: Missing or not owned by caller}, '503': {description: Fulfillment or Configuration service unavailable}}
+  /{orderId}/returns:
+    post:
+      summary: Claim partial return quantities under immutable refund allocation and request a simulated refund
+      parameters:
+        - {in: path, name: orderId, required: true, schema: {type: string, format: uuid}}
+        - {in: header, name: Idempotency-Key, required: true, schema: {type: string, minLength: 1, maxLength: 120}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, required: [lines], properties: {lines: {type: array, minItems: 1, maxItems: 50, items: {type: object, required: [skuId, quantity], properties: {skuId: {type: string, format: uuid}, quantity: {type: integer, minimum: 1, maximum: 100}}}}}}
+      responses: {'202': {description: Return and refund operation accepted}, '404': {description: Missing or not owned by caller}, '409': {description: Idempotency conflict or requested units already claimed}, '422': {description: Not delivered, return window expired or invalid lines}, '503': {description: Fulfillment or Configuration service unavailable}}
+  /{orderId}/returns/{returnId}:
+    get:
+      summary: Read the authenticated customer's partial return, immutable allocation and simulated refund status
+      parameters:
+        - {in: path, name: orderId, required: true, schema: {type: string, format: uuid}}
+        - {in: path, name: returnId, required: true, schema: {type: string, format: uuid}}
+      responses: {'200': {description: Owner-scoped return/refund state}, '404': {description: Missing or not owned by caller}}
 components:
   securitySchemes:
     customerBearer: {type: http, scheme: bearer, bearerFormat: JWT, description: Customer realm token with supersports-customer-api audience}

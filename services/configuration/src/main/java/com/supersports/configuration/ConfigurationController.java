@@ -28,5 +28,10 @@ class ConfigurationController {
         catch(ConfigurationRepository.StaleConfigurationException e){throw new ResponseStatusException(HttpStatus.CONFLICT,"Configuration changed; refresh and retry");}
         catch(IllegalArgumentException e){throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,e.getMessage());}
     }
+    @PutMapping("/api/v1/configuration/returns/{key}") ConfigurationRepository.SettingUpdate updateReturn(@PathVariable String key,@RequestBody SettingInput input,@AuthenticationPrincipal Jwt jwt){
+        try{return repository.updateReturnSetting(key,input.value(),input.expectedRevision(),jwt.getSubject());}
+        catch(ConfigurationRepository.StaleConfigurationException e){throw new ResponseStatusException(HttpStatus.CONFLICT,"Configuration changed; refresh and retry");}
+        catch(IllegalArgumentException e){throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,e.getMessage());}
+    }
     record SettingInput(String value,long expectedRevision){}
 }

@@ -8,4 +8,5 @@ class CheckoutConfigurationController {
     private final ConfigurationRepository repository;
     CheckoutConfigurationController(ConfigurationRepository repository){this.repository=repository;}
     @GetMapping ConfigurationRepository.CheckoutSettings settings(){return repository.checkoutSettings();}
+    @GetMapping("/returns-policy") ConfigurationRepository.ReturnPolicy returnsPolicy(){return repository.returnsPolicy();}
 }

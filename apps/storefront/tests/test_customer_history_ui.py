@@ -105,6 +105,20 @@ class CustomerOrderHistoryUiTests(unittest.TestCase):
         status=self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,".order-detail [role='status']")))
         self.assertIn("completed",status.text.lower())
 
+    def test_customer_can_request_one_partial_return_for_a_delivered_order(self):
+        expected_order=os.environ.get("SUPERSPORTS_RETURNABLE_ORDER_ID")
+        if not expected_order:self.skipTest("Provide a dedicated delivered order with at least one returnable unit.")
+        self._login_orders()
+        prefix=expected_order[:8].upper()
+        rows=self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,".order-row")))
+        matching=next((row for row in rows if prefix in row.text),None)
+        self.assertIsNotNone(matching,"the authenticated customer must see the delivered order")
+        matching.click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,"//button[normalize-space()='Return 1 unit']"))).click()
+        self.wait.until(EC.text_to_be_present_in_element((By.CSS_SELECTOR,".return-status"),"completed"))
+        status=self.driver.find_element(By.CSS_SELECTOR,".return-status")
+        self.assertIn("simulated refund",status.text.lower())
+
 
 if __name__ == "__main__":
     unittest.main()

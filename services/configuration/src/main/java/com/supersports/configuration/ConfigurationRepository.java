@@ -46,7 +46,26 @@ class ConfigurationRepository {
         long global=jdbc.queryForObject("SELECT revision FROM bootstrap_metadata WHERE service='configuration'",Long.class);
         return new SettingUpdate(storageKey,next,revision,global);
     }
+    @Transactional SettingUpdate updateReturnSetting(String key,String value,long expectedRevision,String actor){
+        if(!"window-days".equals(key))throw new IllegalArgumentException("Unknown returns setting");
+        String storageKey="returns.window-days";var rows=jdbc.queryForList("SELECT value,revision,activation_mode FROM configuration_setting WHERE key=? FOR UPDATE",storageKey);
+        if(rows.isEmpty()||!"OPERATOR_EDITABLE".equals(rows.getFirst().get("activation_mode")))throw new IllegalArgumentException("Setting is not editable");
+        var row=rows.getFirst();long current=((Number)row.get("revision")).longValue();if(current!=expectedRevision)throw new StaleConfigurationException();
+        String next=CheckoutSettingRules.normalize(storageKey,value);
+        String old=row.get("value").toString();long revision=current+1;
+        jdbc.update("UPDATE configuration_setting SET value=?,revision=? WHERE key=?",next,revision,storageKey);
+        jdbc.update("INSERT INTO configuration_setting_audit(setting_key,old_value,new_value,old_revision,new_revision,actor) VALUES (?,?,?,?,?,?)",storageKey,old,next,current,revision,actor);
+        jdbc.update("UPDATE bootstrap_metadata SET revision=revision+1 WHERE service='configuration'");
+        long global=jdbc.queryForObject("SELECT revision FROM bootstrap_metadata WHERE service='configuration'",Long.class);
+        return new SettingUpdate(storageKey,next,revision,global);
+    }
     public record SettingUpdate(String key,String value,long settingRevision,long revision){}
     static final class StaleConfigurationException extends RuntimeException{}
     public record CheckoutSettings(long revision,int taxRateBps,long shippingInrMinor,long shippingUsdMinor,int reservationSeconds,String authorizationMode){}
+    @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ) ReturnPolicy returnsPolicy(){
+        var rows=jdbc.queryForList("SELECT value,revision FROM configuration_setting WHERE key='returns.window-days'");
+        if(rows.isEmpty())throw new IllegalStateException("Return policy is not configured");var row=rows.getFirst();
+        return new ReturnPolicy(Long.parseLong(row.get("value").toString()),((Number)row.get("revision")).longValue());
+    }
+    public record ReturnPolicy(long windowDays,long policyRevision){}
 }

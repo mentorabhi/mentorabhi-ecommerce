@@ -12,7 +12,8 @@ Repository intake and execution order: [implementation units](implementation-uni
 - Unit 2 tracking and handoff: owner API, shipment revision/audit, operator transition API, and owner-verified Orders tracking route are now implemented in source. Operator/storefront controls and versioned lifecycle mirroring remain for Unit 8. New build and test execution is deferred until Stage 1 development is complete; scope/evidence is in [Unit 2 design](tracking-handoff-design.md), [flow](tracking-handoff-flow.mmd), [review](tracking-handoff-review.md), and the revised [manual guide](manual-acceptance.md).
 - Event compatibility foundation: immutable v1 plus allowlisted v2 post-purchase schema and dual-version History parser are implemented ahead of Units 3/4; no v2 event is emitted yet. See [event design](post-purchase-events-design.md), [flow](post-purchase-events-flow.mmd), and [review](post-purchase-events-review.md).
 - Unit 3 cancellation workflow: Orders, Inventory, Fulfillment, customer API/UI, v2 event emission and acceptance guide are now authored. This is unverified development; no tests or build have run for this slice. See [cancellation design](cancellation-design.md), [flow](cancellation-flow.mmd), [review](cancellation-review.md), and [manual checks](cancellation-manual-checks.md).
-- Units 4–8 remain to be developed in dependency order.
+- Unit 4 partial returns/refunds: Orders request ledger, deterministic immutable allocation, Payment refund worker, revisioned Configuration policy and customer UI/API are now authored, unverified. See [design](returns-refunds-design.md), [flow](returns-refunds-flow.mmd), [review](returns-refunds-review.md), and [manual checks](returns-refunds-manual-checks.md).
+- Units 5–8 remain to be developed in dependency order.
 
 ## Objective
 

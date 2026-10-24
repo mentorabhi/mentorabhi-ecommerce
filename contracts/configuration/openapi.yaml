@@ -31,6 +31,16 @@ paths:
         '200': {description: Updated value and global/setting revisions}
         '409': {description: Stale setting revision}
         '422': {description: Unsupported key or invalid setting value}
+  /returns/{key}:
+    put:
+      summary: Update an allow-listed local return policy with optimistic revision and actor audit
+      parameters: [{in: path, name: key, required: true, schema: {type: string, enum: [window-days]}}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, required: [value, expectedRevision], properties: {value: {type: string, pattern: '^[0-9]+$'}, expectedRevision: {type: integer, minimum: 1}}}
+      responses: {'200': {description: Updated return window}, '409': {description: Stale revision}, '422': {description: Invalid value; allowed range is 1 to 90 days}}
 components:
   securitySchemes:
     operatorBearer:

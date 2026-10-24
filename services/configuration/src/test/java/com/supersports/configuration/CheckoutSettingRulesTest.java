@@ -9,9 +9,10 @@ class CheckoutSettingRulesTest {
         assertThat(CheckoutSettingRules.normalize("shipping.INR","0")).isEqualTo("0");
         assertThat(CheckoutSettingRules.normalize("inventory.reservation-seconds","600")).isEqualTo("600");
         assertThat(CheckoutSettingRules.normalize("payment.authorization-mode","DECLINE")).isEqualTo("DECLINE");
+        assertThat(CheckoutSettingRules.normalize("returns.window-days","30")).isEqualTo("30");
     }
     @Test void rejectsOutOfRangeAndUnknownSettings(){
-        for(var input:new String[][]{{"tax.rate-bps","10001"},{"tax.rate-bps","-1"},{"shipping.USD","bad"},{"inventory.reservation-seconds","59"},{"payment.authorization-mode","REAL"},{"store.currency","USD"}})
+        for(var input:new String[][]{{"tax.rate-bps","10001"},{"tax.rate-bps","-1"},{"shipping.USD","bad"},{"inventory.reservation-seconds","59"},{"payment.authorization-mode","REAL"},{"returns.window-days","0"},{"returns.window-days","91"},{"store.currency","USD"}})
             assertThatThrownBy(()->CheckoutSettingRules.normalize(input[0],input[1])).isInstanceOf(IllegalArgumentException.class);
     }
 }
