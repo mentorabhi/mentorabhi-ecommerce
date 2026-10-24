@@ -30,8 +30,8 @@ Existing architecture/ diagrams are proposals from that baseline, not implemente
 Use the repository-local .venv for all Python execution and package management: .venv/bin/python and .venv/bin/python -m pip. Never install project dependencies globally. Bootstrap the environment with python3 -m venv .venv. Current verified local interpreter is Python 3.14.7, recorded in verification evidence; dependency/version selection remains S1-M02 work.
 
 ## Current state
-S1-M01 is checkpointed as s1-m01-design-v1 (7ef04c4). S1-M02 is locally verified and checkpointed as `s1-m02-bootstrap` (cf50e8e), with the review limitation recorded in its milestone evidence. S1-M03 design/diagram are reviewed; Catalog, Pricing, Inventory, deterministic fixtures, and the admin UI are the active implementation scope. The customer storefront remains S1-M04; Nova remains later. No remote repository has been specified.
-Scope now: domain ownership, acceptance scenarios, local profiles, repository conventions and review. S1-M02 implements bootstrap. S1-M03 implements catalog, pricing administration and inventory fixtures; S1-M04 implements the storefront.
+S1-M01 is checkpointed as s1-m01-design-v1 (7ef04c4). S1-M02 is locally verified and checkpointed as `s1-m02-bootstrap` (cf50e8e), with the review limitation recorded in its milestone evidence. S1-M03 catalog, pricing, inventory, fixtures and admin UI are committed as `6617e40` on `feat/s1-m03-catalog-inventory`; automated checks passed, while owner manual review and peak/load memory checks remain pending. S1-M04 design is underway on `feat/s1-m04-customer-storefront`; implementation awaits the customer identity policy decision recorded in its design. Nova remains later. No remote repository has been specified.
+Scope now: customer storefront, search and ownership boundaries. S1-M02 implements bootstrap; S1-M03 merchandising administration; S1-M04 customer browsing and customer-owned cart/profile; S1-M05 checkout.
 Application code must follow the corresponding reviewed design. Do not interpret the full roadmap as implemented or claim S1-M01 runtime tests passed.
 
 ## Stage gates

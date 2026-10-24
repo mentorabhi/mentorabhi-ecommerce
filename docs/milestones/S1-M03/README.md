@@ -1,6 +1,6 @@
 # S1-M03 — Catalog, pricing, inventory and fixtures
 
-Revision 5 · 2026-10-24 · Status: implementation verified; code review was skipped due to the session usage limit; checkpoint pending.
+Revision 6 · 2026-10-24 · Status: implementation verified and committed as `6617e40`; code review was skipped due to the session usage limit.
 
 Design: [S1-M03 catalog and inventory contract](../../../design/S1-M03/catalog-inventory.md). Editable diagram: [Excalidraw source](../../../design/S1-M03/catalog-inventory.excalidraw); preview: [SVG](../../../design/S1-M03/catalog-inventory.svg).
 Manual end-user checks: [S1-M03 manual acceptance](manual-acceptance.md).
