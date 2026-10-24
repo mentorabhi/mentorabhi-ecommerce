@@ -1,0 +1,113 @@
+name: supersports
+services:
+  neo4j:
+    image: "${NEO4J_IMAGE:?Use devops/scripts/supersports configure}"
+    profiles: ["graph"]
+    environment:
+      NEO4J_AUTH: "neo4j/${GRAPH_DB_PASSWORD:?Run configure}"
+      GRAPH_DB_PASSWORD: "${GRAPH_DB_PASSWORD:?Run configure}"
+      NEO4J_server_memory_heap_initial__size: 128m
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 256m
+    ports: ["127.0.0.1:7474:7474", "127.0.0.1:7687:7687"]
+    volumes: ["graph-data:/data"]
+    mem_limit: 1536m
+    cpus: 2.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p \"$$GRAPH_DB_PASSWORD\" 'RETURN 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+  trino:
+    image: "${TRINO_IMAGE:?Use devops/scripts/supersports configure}"
+    profiles: ["analytics"]
+    ports: ["127.0.0.1:8089:8080"]
+    volumes:
+      - ./devops/trino:/etc/trino:ro
+      - lakehouse-data:/warehouse:ro
+    mem_limit: 1024m
+    cpus: 2.0
+    environment:
+      LAKEHOUSE_DB_PASSWORD: "${LAKEHOUSE_DB_PASSWORD:?Run configure}"
+    depends_on:
+      postgres: {condition: service_healthy}
+    restart: unless-stopped
+  analytics-api:
+    profiles: ["analytics"]
+    build:
+      context: .
+      dockerfile: devops/docker/analytics-api.Dockerfile
+    image: supersports/analytics-api:local
+    depends_on:
+      trino: {condition: service_started}
+    mem_limit: 256m
+    cpus: 0.75
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health/ready', timeout=2)"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+  superset:
+    profiles: ["dashboards"]
+    build:
+      context: .
+      dockerfile: devops/docker/superset.Dockerfile
+    image: supersports/superset:6.1.0-local
+    ports: ["127.0.0.1:8095:8088"]
+    environment:
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      SUPERSET_SECRET_KEY: "${SUPERSET_SECRET_KEY:?Run configure}"
+      SUPERSET_LOAD_EXAMPLES: "false"
+    volumes: ["superset-home:/app/superset_home", "./devops/superset:/app/pythonpath:ro"]
+    mem_limit: 1536m
+    cpus: 1.5
+    depends_on:
+      trino: {condition: service_started}
+    restart: unless-stopped
+    command: ["/bin/bash", "-ec", "superset db upgrade; if [ ! -f /app/superset_home/.admin-ready ]; then superset fab create-admin --username admin --firstname Super --lastname Sports --email admin@localhost --password admin; touch /app/superset_home/.admin-ready; fi; superset init; exec /usr/bin/run-server.sh"]
+  relationship-graph:
+    profiles: ["graph"]
+    build:
+      context: .
+      dockerfile: devops/docker/relationship-graph.Dockerfile
+    image: supersports/relationship-graph:local
+    environment:
+      GRAPH_DB_PASSWORD: "${GRAPH_DB_PASSWORD:?Run configure}"
+      NEO4J_URI: bolt://neo4j:7687
+      KAFKA_BOOTSTRAP: kafka:9092
+      ORDER_EVENT_TOPIC: supersports.public.order_outbox
+    ports: ["127.0.0.1:8094:8080"]
+    depends_on:
+      neo4j: {condition: service_healthy}
+      kafka: {condition: service_healthy}
+    mem_limit: 384m
+    cpus: 1.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health/ready', timeout=2)"]
+      interval: 10s
+      timeout: 4s
+      retries: 12
+  spark-ingest:
+    image: "${SPARK_IMAGE:?Use devops/scripts/supersports configure}"
+    profiles: ["analytics-job"]
+    entrypoint: ["/opt/spark/bin/spark-submit"]
+    command: ["--master", "local[2]", "--packages", "org.apache.iceberg:iceberg-spark-runtime-4.1_2.13:1.12.0,org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.3,org.postgresql:postgresql:42.7.8", "/workspace/job.py"]
+    environment:
+      LAKEHOUSE_DB_PASSWORD: "${LAKEHOUSE_DB_PASSWORD:?Run configure}"
+      SPARK_DRIVER_MEMORY: 1g
+      KAFKA_BOOTSTRAP: kafka:9092
+    volumes:
+      - ./data/pipelines/lakehouse:/workspace:ro
+      - lakehouse-data:/warehouse
+    mem_limit: 1536m
+    cpus: 2.0
+    depends_on:
+      kafka: {condition: service_healthy}
+    restart: "no"
+volumes:
+  graph-data:
+  lakehouse-data:
+  superset-home:

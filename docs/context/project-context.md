@@ -1,6 +1,6 @@
 # SuperSports and Nova — project context
 
-Revision 2 · 2026-10-23 · Source of truth for continuing work.
+Revision 3 · 2026-10-24 · Source of truth for continuing work.
 
 ## Read order
 Read this file, repository AGENTS.md when present, the current milestone, its design review, and the decision log before changing the project. Read requirements/accepted-requirements.md for product constraints. Update context, milestone evidence, and revision history at every meaningful checkpoint.
@@ -59,5 +59,7 @@ Kafbat UI is available at `http://localhost:8091` when the streaming profile is 
 M07 Unit 1 payment-ledger bounds was implemented and verified before the development-first sequencing change. Units 2–4 and the v2 event compatibility foundation are implemented in source, unverified. Cancellation emits `OrderCancelled` v2 only after shipment claim, simulated refund and inventory reversal complete. Returns verify delivery/window in Fulfillment/Configuration, reserve immutable unit refund allocations in Orders, and emit v2 request/refund events around idempotent Payment work; Inventory stays unchanged pending Unit 5 inspection. M06 acceptance remains open; no scoped M07 work implies Stage 1 completion.
 
 User sequencing update: complete Stage 1 development across M07–M09 before resuming the consolidated testing pass. New implementation checkpoints still include test source and dated documentation, but do not run tests/builds until the user-defined development phase is complete. Units 2 and 3 are expressly unverified.
+
+Current development pass (2026-10-24): M07 Units 2–8 are authored and pushed, unverified. M08 design and implementation are authored on `stage1`, also unverified. It adds a bounded Neo4j graph API; Spark/Iceberg Kafka projections; Trino; a read-only reports API; Admin → Analytics reports/dashboard; and optional Superset at localhost:8095. Keep resource-heavy graph, reporting and batch work opt-in. Detailed metrics and limits are in `docs/milestones/S1-M08/dashboard-and-metrics.md`; manual runtime/service/UI/database/reconciliation steps are in the milestone guide. M09 remains before consolidated testing resumes at M06.
 
 Native host Ollama setup/server/model/connectivity is a Nova prerequisite, documented in docs/setup/prerequisites.md. Commerce bootstrap must not require Ollama to be running.

@@ -45,6 +45,7 @@ services:
       ORDER_HISTORY_DB_PASSWORD: "${ORDER_HISTORY_DB_PASSWORD:?Run configure}"
       REVIEWS_DB_PASSWORD: "${REVIEWS_DB_PASSWORD:?Run configure}"
       SUPPORT_DB_PASSWORD: "${SUPPORT_DB_PASSWORD:?Run configure}"
+      LAKEHOUSE_DB_PASSWORD: "${LAKEHOUSE_DB_PASSWORD:?Run configure}"
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./devops/postgres/init.sh:/docker-entrypoint-initdb.d/10-supersports.sh:ro

@@ -24,7 +24,7 @@ SECRET_KEYS = (
     "IDENTITY_DB_PASSWORD", "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD", "CUSTOMER_DB_PASSWORD", "ORDERS_DB_PASSWORD", "PAYMENT_DB_PASSWORD", "FULFILLMENT_DB_PASSWORD",
     "KEYCLOAK_ADMIN_PASSWORD", "CHECKOUT_WORKER_CLIENT_SECRET", "DEMO_CUSTOMER_PASSWORD",
     "DEMO_PLATFORM_ADMIN_PASSWORD", "DEMO_CATALOG_ADMIN_PASSWORD", "DEMO_INVENTORY_OPERATOR_PASSWORD",
-    "CDC_DB_PASSWORD", "ORDER_HISTORY_DB_PASSWORD", "REVIEWS_DB_PASSWORD", "SUPPORT_DB_PASSWORD", "ORDER_HISTORY_OWNER_KEY",
+    "CDC_DB_PASSWORD", "ORDER_HISTORY_DB_PASSWORD", "REVIEWS_DB_PASSWORD", "SUPPORT_DB_PASSWORD", "ORDER_HISTORY_OWNER_KEY", "LAKEHOUSE_DB_PASSWORD", "GRAPH_DB_PASSWORD", "SUPERSET_SECRET_KEY",
 )
 M02_SECRET_KEYS = (
     "POSTGRES_PASSWORD", "CATALOG_DB_PASSWORD", "CONFIGURATION_DB_PASSWORD",
@@ -35,6 +35,7 @@ PRE_M05_SECRET_KEYS = (*M02_SECRET_KEYS, "PRICING_DB_PASSWORD", "INVENTORY_DB_PA
                        "DEMO_INVENTORY_OPERATOR_PASSWORD", "CUSTOMER_DB_PASSWORD", "ORDERS_DB_PASSWORD", "CHECKOUT_WORKER_CLIENT_SECRET")
 LEGACY_SECRET_KEYS = (*PRE_M05_SECRET_KEYS, "PAYMENT_DB_PASSWORD", "FULFILLMENT_DB_PASSWORD")
 PRE_M07_SECRET_KEYS = (*LEGACY_SECRET_KEYS, "CDC_DB_PASSWORD", "ORDER_HISTORY_DB_PASSWORD", "ORDER_HISTORY_OWNER_KEY")
+PRE_M08_SECRET_KEYS = (*PRE_M07_SECRET_KEYS, "REVIEWS_DB_PASSWORD", "SUPPORT_DB_PASSWORD")
 SERVICES = ("catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator", "reviews", "support")
 STREAMING_SERVICES = ("order-history",)
 DEPLOYABLES = (*SERVICES, *STREAMING_SERVICES, "storefront")
@@ -149,10 +150,10 @@ def configure(root: Path = ROOT) -> Path:
                 if not line or line.startswith("#"):
                     continue
                 key, separator, value = line.partition("=")
-                if not separator or key not in LEGACY_SECRET_KEYS or key in existing or not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", value):
+                if not separator or key not in (*LEGACY_SECRET_KEYS, "REVIEWS_DB_PASSWORD", "SUPPORT_DB_PASSWORD", "LAKEHOUSE_DB_PASSWORD", "GRAPH_DB_PASSWORD", "SUPERSET_SECRET_KEY") or key in existing or not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", value):
                     raise
                 existing[key] = value
-            if set(existing) not in (set(M02_SECRET_KEYS), set(PRE_M05_SECRET_KEYS), set(LEGACY_SECRET_KEYS), set(PRE_M07_SECRET_KEYS)):
+            if set(existing) not in (set(M02_SECRET_KEYS), set(PRE_M05_SECRET_KEYS), set(LEGACY_SECRET_KEYS), set(PRE_M07_SECRET_KEYS), set(PRE_M08_SECRET_KEYS)):
                 raise
             with path.open("a") as handle:
                 for key in sorted(set(SECRET_KEYS) - set(existing)):
@@ -177,6 +178,7 @@ def compose_command(root: Path, project: str, arguments: list[str]) -> list[str]
         "--project-name", validated_project_name(project),
         "--env-file", str(root / "devops/.local/bootstrap.env"),
         "-f", str(root / "devops/compose/core.yaml"),
+        "-f", str(root / "devops/compose/analytics.yaml"),
     ]
     if configuration(root,project)["enabled"]:
         command += ["-f",str(root / "devops/compose/host-access.yaml")]
@@ -228,7 +230,7 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
     environment = os.environ.copy()
     environment.update(load_credentials(root / "devops/.local/bootstrap.env"))
     lock = json.loads((root / "devops/images.lock.json").read_text())
-    for key in ("BUILD_IMAGE", "JAVA_IMAGE", "POSTGRES_IMAGE", "KEYCLOAK_IMAGE", "KAFKA_IMAGE", "KAFKA_UI_IMAGE", "DEBEZIUM_CONNECT_IMAGE"):
+    for key in ("BUILD_IMAGE", "JAVA_IMAGE", "POSTGRES_IMAGE", "KEYCLOAK_IMAGE", "KAFKA_IMAGE", "KAFKA_UI_IMAGE", "DEBEZIUM_CONNECT_IMAGE", "NEO4J_IMAGE", "TRINO_IMAGE", "SPARK_IMAGE"):
         environment[key] = lock[key]
     for key in ("STOREFRONT_NODE_IMAGE", "STOREFRONT_NGINX_IMAGE"):
         environment[key] = lock[key]
@@ -770,7 +772,7 @@ def main(argv=None):
     parser.add_argument("action", choices=[
         "doctor", "configure", "validate", "build", "up", "down", "status",
         "unit", "test", "reset", "release", "rollback",
-        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "stream-dlq-fault", "restart", "stream-demo-poison", "stream-replay", "stream-reconcile", "stream-rebuild",
+        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "stream-dlq-fault", "restart", "stream-demo-poison", "stream-replay", "stream-reconcile", "stream-rebuild", "analytics-up", "analytics-run", "analytics-down", "graph-up", "graph-down", "dashboard-studio-up", "dashboard-studio-down",
     ])
     parser.add_argument("release_version", nargs="?")
     parser.add_argument("--project", default="supersports")
@@ -824,6 +826,20 @@ def main(argv=None):
             ui_test()
         elif action == "streaming-up":
             streaming_up(project=project, version=version)
+        elif action == "analytics-up":
+            compose(["--profile", "analytics", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "trino", "analytics-api"], project=project, version=version)
+        elif action == "analytics-run":
+            compose(["--profile", "streaming", "--profile", "analytics-job", "run", "--rm", "spark-ingest"], project=project, version=version)
+        elif action == "analytics-down":
+            compose(["--profile", "analytics", "stop", "trino", "analytics-api"], project=project, version=version)
+        elif action == "graph-up":
+            compose(["--profile", "graph", "--profile", "streaming", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "neo4j", "relationship-graph"], project=project, version=version)
+        elif action == "graph-down":
+            compose(["--profile", "graph", "stop", "neo4j", "relationship-graph"], project=project, version=version)
+        elif action == "dashboard-studio-up":
+            compose(["--profile", "analytics", "--profile", "dashboards", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "trino", "superset"], project=project, version=version)
+        elif action == "dashboard-studio-down":
+            compose(["--profile", "dashboards", "stop", "superset"], project=project, version=version)
         elif action == "streaming-down":
             compose(["--profile", "streaming", "stop", *STREAMING_SERVICES, "kafka-ui", "kafka-connect", "kafka"], project=project, version=version)
         elif action == "stream-status":

@@ -1,0 +1,12 @@
+flowchart LR
+  K[Kafka lifecycle events] --> G[Allowlisted graph projector]
+  K --> R[Raw Iceberg event table]
+  G --> N[(Neo4j Community graph)]
+  N --> Q[Bounded relationship query API]
+  R --> S[Spark batch dedupe + curation]
+  S --> C[(Iceberg curated facts / local warehouse)]
+  C --> T[Trino SQL]
+  T --> A[Read-only analytics API]
+  A --> U[Admin Analytics dashboard]
+  T --> D[Optional Superset dashboard studio]
+  O[Orders + Payment owner facts] -. reconciliation only .-> S

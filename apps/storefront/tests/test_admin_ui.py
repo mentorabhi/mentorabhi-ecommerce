@@ -483,5 +483,17 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.assert_no_react_hook_order_error()
 
 
+    def test_analytics_dashboard_currency_and_report_widgets(self):
+        self.login("catalog-admin", "DEMO_CATALOG_ADMIN_PASSWORD")
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, "//nav[@aria-label='Workspace sections']//button[contains(., 'Analytics')]"))).click()
+        self.wait.until(EC.visibility_of_element_located((By.XPATH, "//h1[normalize-space()='Analytics']")))
+        self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".metric-grid")))
+        self.assertIn("Confirmed sales by day", self.driver.find_element(By.CSS_SELECTOR, ".analytics-dashboard").text)
+        self.assertIn("Top products", self.driver.find_element(By.CSS_SELECTOR, ".analytics-dashboard").text)
+        self.assertIn("Completed refund report", self.driver.find_element(By.CSS_SELECTOR, ".analytics-dashboard").text)
+        self.driver.find_element(By.XPATH, "//button[normalize-space()='USD']").click()
+        self.wait.until(lambda driver: "USD" in driver.find_element(By.CSS_SELECTOR, ".analytics-dashboard").text)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
