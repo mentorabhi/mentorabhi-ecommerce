@@ -71,6 +71,10 @@ class CheckoutSagaWorker {
         String operation=switch(step){case "AUTHORIZE"->"authorize";case "CAPTURE"->"capture";default->step.toLowerCase(java.util.Locale.ROOT);};
         return Map.of("orderId",id.toString(),"operationKey",id+":"+operation,"fence",fence,"amountMinor",((Number)order.get("totalMinor")).longValue(),"currency",order.get("currency").toString(),"authorizationMode",settings.get("authorizationMode").toString());
     }
+    Map<String,Object> fulfillmentStatus(UUID orderId){
+        return fulfillment.get().uri("/api/v1/internal/checkout/fulfillment/{orderId}",orderId)
+            .header("Authorization","Bearer "+workerToken()).retrieve().body(Map.class);
+    }
     private void compensateDeclined(UUID id,long fence){
         try{String bearer="Bearer "+workerToken();inventory.post().uri("/api/v1/internal/checkout/inventory/reservations/{id}/release",id).header("Authorization",bearer).header("X-Checkout-Fence",Long.toString(fence)).retrieve().body(Map.class);Map<String,Object> o=orders.sagaOrder(id);Map<String,Object> q=(Map<String,Object>)o.get("quoteSnapshot");if(hasCoupon(q))pricing.post().uri("/api/v1/internal/checkout/pricing/coupon-holds/{id}/release",id).header("Authorization",bearer).header("X-Checkout-Fence",Long.toString(fence)).retrieve().body(Map.class);orders.failDeclined(id,fence);}catch(RuntimeException e){orders.sagaRetry(id,fence,"PAYMENT_DECLINE_COMPENSATION_RETRY");}
     }

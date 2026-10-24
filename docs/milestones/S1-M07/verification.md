@@ -2,6 +2,18 @@
 
 2026-10-24 · Implementation units are recorded independently; M07 remains incomplete until all post-purchase journeys are delivered.
 
+## Unit 2 development checkpoint — tracking and handoff
+
+Implemented in source, with execution intentionally deferred by the user until Stage 1 development is complete:
+
+- Fulfillment migration adds shipment revision, deterministic estimated-delivery timestamp, state/revision constraints and append-only transition audit keyed by globally unique operation UUID.
+- Fulfillment operator API accepts a verified `supersports-api` token and requires expected revision, operation UUID, sequential target and bounded reason. It serializes concurrent operation reuse with a PostgreSQL advisory transaction lock and row lock; exact replay returns the recorded receipt, changed payload/order conflicts, stale revision and invalid transition return conflict.
+- Fulfillment's existing checkout-only schedule/status API remains scoped to the exact checkout worker audience/client and schedule/status scopes.
+- Orders now offers `GET /api/v1/orders/{orderId}/tracking`; it first checks order ownership using only its own database, then reads the narrow simulator API with the worker identity. A dependency outage is represented as `UNAVAILABLE`.
+- Added the local transition-state unit test and updated both OpenAPI contracts. UI controls and lifecycle event mirroring remain Unit 8 work, after the post-purchase event version and dual-version History changes.
+
+No build, unit test, integration test or UI test was run for this checkpoint, per the current development-first instruction. Review and manual steps are in [`tracking-handoff-review.md`](tracking-handoff-review.md) and [`manual-acceptance.md`](manual-acceptance.md). Do not treat the implementation as verified yet.
+
 ## Unit 1 — Payment ledger bounds
 
 Design/review before code: [`payment-ledger-design.md`](payment-ledger-design.md), [`payment-ledger-flow.mmd`](payment-ledger-flow.mmd). Migration preflight on the existing local Payment DB found 67 authorization rows and 54 capture rows, with no order having duplicate authorization/capture/void. Migration V2 applied successfully.

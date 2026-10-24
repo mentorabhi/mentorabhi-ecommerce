@@ -1,6 +1,6 @@
 # S1-M07 manual acceptance — post-purchase lifecycle
 
-Status: In progress. The Payment-ledger section below is executable now; remaining post-purchase sections await their service/API implementation.
+Status: Development in progress. Payment ledger and Fulfillment/Orders tracking APIs are implemented in source. UI advancement, lifecycle mirror events, cancellation, returns, reviews and support await their implementation units. Per user direction, new automated execution resumes after all Stage 1 development is complete.
 
 ## Start and health
 
@@ -11,7 +11,7 @@ Status: In progress. The Payment-ledger section below is executable now; remaini
 ## Customer UI
 
 1. Sign in as a self-registered customer, complete a simulated purchase, and open Account → Orders.
-2. Advance the shipment simulator through transit and delivery; refresh the owned order and confirm tracking state changes.
+2. Open the owned order's tracking view and confirm the simulator state, stable tracking ID, revision, estimated delivery and transition history. In the operator workspace, advance one milestone at a time using the displayed revision; verify the reason/actor audit and retry the same operation ID. UI controls are part of Unit 8 development.
 3. Before handoff, request cancellation and confirm its final state and simulated refund/void summary. Repeat the request and verify effects are not duplicated.
 4. For a delivered order, request a partial line return. Confirm a second request cannot exceed the purchased quantity.
 5. Submit a review for the delivered line; confirm it remains pending and unpublished before moderation.
@@ -34,6 +34,13 @@ Use owner-scoped database accounts from ignored `devops/.local/bootstrap.env`; n
 2. Use the local payment status API from the integration suite or inspect the Payment database. Verify there is at most one authorization/capture per order, capture amount/currency equal authorization, and cumulative refunds stay at or below capture.
 3. With the synthetic API scenarios in the integration test, verify a repeated capture, over-refund, cross-order operation-key reuse and capture-after-void receive conflict; two concurrent refunds cannot exceed the capture.
 4. Query only the Payment database with its own read-only admin connection. Example: `SELECT operation, state, currency, amount_minor FROM payment_operation WHERE order_id = '<synthetic-order-uuid>' ORDER BY id;`
+
+### Tracking and handoff unit (API source implemented; UI awaits Unit 8)
+
+1. Use a customer token to call `GET /api/v1/orders/{owned-order-id}/tracking`; confirm it returns only the owned order's simulator state and that a different customer receives 404.
+2. With the operator account, call `POST /api/v1/operator/shipments/{order-id}/transitions` using `{expectedRevision, operationId, targetState, reason}`. Advance `HANDED_OFF`, `IN_TRANSIT`, then `DELIVERED`, increasing the expected revision each time.
+3. Retry an identical operation ID/request and confirm its original receipt. Reuse that ID with a changed reason or target and expect 409; use a stale revision and expect 409; try to skip a milestone and expect 409.
+4. If Fulfillment is unavailable, the owned Orders tracking response reports `UNAVAILABLE` without disclosing another service's data. Read the transition audit only from the Fulfillment database owner connection.
 
 The checks above have automated evidence; human execution is still pending. Never use real payment data.
 

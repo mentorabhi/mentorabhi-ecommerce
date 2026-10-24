@@ -1,15 +1,37 @@
 openapi: 3.1.0
 info: {title: SuperSports local Fulfillment Simulator API, version: 1.0.0}
-servers: [{url: /api/v1/internal/checkout/fulfillment}]
-security: [{checkoutWorker: []}]
+servers: [{url: /api/v1}]
 paths:
-  /:
+  /internal/checkout/fulfillment:
     post:
       summary: Idempotently schedule one local shipment after order confirmation
+      security: [{checkoutWorker: []}]
       requestBody: {required: true, content: {application/json: {schema: {type: object, required: [orderId, fence, operationKey], properties: {orderId: {type: string, format: uuid}, fence: {type: integer, minimum: 1}, operationKey: {type: string, maxLength: 200}}}}}}
       responses: {'200': {description: Scheduled shipment and synthetic tracking ID}, '409': {description: Stale fence or operation conflict}}
-  /{orderId}:
-    get: {summary: Read shipment scheduling state, responses: {'200': {description: Local shipment state}}}
+  /internal/checkout/fulfillment/{orderId}:
+    get:
+      summary: Read shipment state through the checkout worker service identity
+      security: [{checkoutWorker: []}]
+      responses: {'200': {description: Shipment state, revision, synthetic ETA and transition history}}
+  /operator/shipments/{orderId}/transitions:
+    post:
+      summary: Advance one deterministic simulated shipment milestone
+      security: [{operatorBearer: []}]
+      parameters: [{in: path, name: orderId, required: true, schema: {type: string, format: uuid}}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedRevision, operationId, targetState, reason]
+              properties:
+                expectedRevision: {type: integer, minimum: 0}
+                operationId: {type: string, format: uuid}
+                targetState: {type: string, enum: [HANDED_OFF, IN_TRANSIT, DELIVERED]}
+                reason: {type: string, minLength: 1, maxLength: 500}
+      responses: {'200': {description: Idempotent transition receipt}, '404': {description: Shipment not found}, '409': {description: Stale revision, operation conflict or invalid state transition}, '422': {description: Invalid transition request}}
 components:
   securitySchemes:
     checkoutWorker: {type: http, scheme: bearer, bearerFormat: JWT, description: Exact checkout client, internal audience and fulfillment scope}
+    operatorBearer: {type: http, scheme: bearer, bearerFormat: JWT, description: Local operator token with supersports-api audience}

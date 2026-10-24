@@ -1,0 +1,19 @@
+sequenceDiagram
+    actor Operator
+    participant UI as Operator workspace (Unit 8)
+    participant F as Fulfillment Simulator
+    participant FDB as Fulfillment database
+    participant O as Orders API
+    participant ODB as Orders database
+    participant C as Customer
+    Operator->>UI: Advance expected revision with operation ID and reason
+    UI->>F: Authenticated transition request
+    F->>FDB: Lock shipment, verify revision and allowed state
+    FDB->>FDB: Update state/revision and append transition audit
+    F-->>UI: Original or newly committed receipt
+    O->>F: Read simulator-owned tracking state
+    O->>ODB: Persist owner-scoped mirror and versioned event (Unit 8)
+    C->>O: Read own order tracking
+    O->>O: Verify subject owns order
+    O->>F: Read narrow shipment status with service credential
+    O-->>C: Tracking state, deterministic ETA, unavailable flag if needed

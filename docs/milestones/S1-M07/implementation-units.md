@@ -1,6 +1,6 @@
 # M07 implementation units and repository intake
 
-2026-10-24 · Supplements the reviewed design with current source evidence. No implementation is claimed here.
+2026-10-24 · Supplements the reviewed design with current source evidence and unit checkpoints.
 
 ## Intake findings
 
@@ -10,12 +10,12 @@
 - Inventory owns checkout allocations; physical return inspection/restock needs a separate return operation identity and audit rather than reusing checkout reservation transitions.
 - Reviews and Support are new independent service projects. Both require customer ownership and operator/customer audience isolation, plus narrow authoritative Orders lookups.
 
-M07 Unit 1's reviewed design and state diagram are in `payment-ledger-design.md` and `payment-ledger-flow.mmd`; its scope is limited to the Payment-owned ledger and preserves the existing checkout worker contract.
+M07 Unit 1's reviewed design and state diagram are in `payment-ledger-design.md` and `payment-ledger-flow.mmd`; Payment-owned ledger bounds are implemented and had a focused verification pass before the user requested a development-first sequence. Unit 2's reviewed design and state diagram are in `tracking-handoff-design.md` and `tracking-handoff-flow.mmd`.
 
 ## Units in dependency order
 
 1. **Payment ledger correctness.** Serialize operations per order using its existing payment fence lock. Verify same-key order ownership as well as payload. Enforce one authorization decision and one full capture, valid void eligibility, immutable currency, and cumulative refunds at most captured funds. Keep zero-value orders valid. Derive existing balances from the service-owned ledger; do not infer money from Orders or Catalog. Add direct API integration/concurrency checks, including last refundable capacity, same-key replay/conflict and capture after void.
-2. **Tracking and handoff.** Add shipment revision, deterministic local milestones and append-only transition audit. Operator advancement uses expected revision, operation ID and reason. Scheduling, handoff/cancel claims and progression share the owning shipment lock. Orders exposes customer-owned tracking and mirrors versioned lifecycle events only after authoritative simulator outcomes.
+2. **Tracking and handoff.** Implemented, verification deferred: Fulfillment has additive revision/ETA/audit schema, strict sequential milestones, idempotent operation IDs, revision preconditions and local operator audience. Orders adds owner-checked tracking through the checkout worker identity and returns explicit UNAVAILABLE when the simulator cannot be read. UI advancement and lifecycle event mirroring are deferred to Unit 8 so the current v1 History consumer is not sent unsupported events. Scheduling, handoff/cancel claims and progression share the shipment row lock.
 3. **Cancellation workflow.** Expose eligibility with a reason. Default customer cancellation becomes available once checkout settles and before simulator handoff; processing checkout returns `CHECKOUT_IN_PROGRESS` and can be retried after confirmation. Orders claims an idempotent request and coordinates shipment cancellation, payment void/refund and stock release with persisted steps. Unknown outcomes stay visible for audited manual resolution. Shared order mutation fencing prevents stale checkout/post-purchase work from making conflicting effects.
 4. **Partial returns and refunds.** Persist claimed return quantities under the owned order/line lock. Use the delivered fact and a configurable local return window. Snapshot per-unit refundable merchandise/tax allocations from original amounts using largest remainder with deterministic SKU/unit ordering. Default returned-order shipping is nonrefundable; eligible pre-handoff cancellation refunds the full capture. Payment independently enforces the captured-funds cap. Multiple partial returns cannot over-return or over-refund.
 5. **Inspection and stock.** Inventory receives a stable return/line/unit identity. An explicit inspection decision distinguishes sellable/damaged units and retains actor/reason. Restock accepted units at most once. Return authorization/refund and physical restock remain separate facts; a damaged unit can be refunded under policy while remaining unavailable for resale.

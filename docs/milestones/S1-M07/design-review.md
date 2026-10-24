@@ -18,3 +18,7 @@ Design is implementation-ready. Before coding each workflow, inspect existing Or
 ## Unit review — Payment ledger bounds (2026-10-24)
 
 Before code, traced `PaymentSimulator.execute` and `payment_operation`: confirmed that fence locking exists but capture/refund arithmetic, post-void rejection and cross-order key ownership are not enforced. The separate [unit design](payment-ledger-design.md) and [state diagram](payment-ledger-flow.mmd) define ledger rules, migration backstops, race handling and live tests. Owner review resolved identified edge cases; implementation may proceed.
+
+## Unit review — tracking and handoff (2026-10-24)
+
+Reviewed Fulfillment's existing fenced scheduling table and checkout-only scope before implementation. The [unit design](tracking-handoff-design.md) and editable [flow](tracking-handoff-flow.mmd) add sequential local milestones, expected-revision transitions, operation-ID replay/conflict, actor/reason audit and an Orders tracking route that verifies ownership before calling Fulfillment with its service identity. New lifecycle events and operator UI are explicitly held for Unit 8, after the v2 contract and dual-version History consumer exist. Tests are authored for this unit but not executed under the requested development-first sequence. The review identified no blocking design issue.

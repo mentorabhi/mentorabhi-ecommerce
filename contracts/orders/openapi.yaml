@@ -35,6 +35,11 @@ paths:
       summary: Read an order owned by the authenticated customer
       parameters: [{in: path, name: orderId, required: true, schema: {type: string, format: uuid}}]
       responses: {'200': {description: Immutable order snapshot}, '404': {description: Missing or not owned by caller}}
+  /{orderId}/tracking:
+    get:
+      summary: Read owner-verified order and local simulator tracking state
+      parameters: [{in: path, name: orderId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Owned order state and synthetic shipment details; unavailable simulator is represented explicitly}, '404': {description: Missing or not owned by caller}}
 components:
   securitySchemes:
     customerBearer: {type: http, scheme: bearer, bearerFormat: JWT, description: Customer realm token with supersports-customer-api audience}
