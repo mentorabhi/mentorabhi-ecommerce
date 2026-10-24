@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import json
+from http.client import RemoteDisconnected
 from pathlib import Path
 import sys
 import time
@@ -82,53 +83,6 @@ class StreamingIntegrationTests(unittest.TestCase):
         self.assertEqual(manage.request_json("http://127.0.0.1:8089/api/v1/order-history?customerKey=forged", token=self.customer)[0], 400)
         self.assertEqual(manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{order['id']}", token=self.other)[0], 404)
 
-    def test_cdc_resumes_outbox_after_connect_and_broker_restart(self):
-        self.wait_for_zero_lag()
-        status,products=manage.request_json("http://127.0.0.1:8081/api/v1/catalog/products?q=football")
-        self.assertEqual(status,200)
-        sku=products[0]["skus"][0]["id"]
-        order=None
-        try:
-            manage.compose(["--profile","streaming","stop","kafka-connect","kafka"],project=self.project)
-            status,order=manage.request_json("http://127.0.0.1:8086/api/v1/orders/checkout",token=self.customer,method="POST",
-                data=json.dumps({"lines":[{"skuId":sku,"quantity":1}],"couponCode":None}).encode(),
-                headers={"Idempotency-Key":"cdc-restart-"+uuid.uuid4().hex})
-            self.assertEqual(status,202)
-            pending=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","orders","-tA","-c",
-                f"SELECT count(*) FROM order_outbox WHERE aggregate_id='{order['orderId']}'"],project=self.project,capture=True)
-            self.assertGreater(int(pending.stdout.strip()),0,"outbox must commit while broker/Connect are stopped")
-
-            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka"],project=self.project)
-            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka-connect"],project=self.project)
-            deadline=time.monotonic()+120
-            while time.monotonic()<deadline:
-                try:
-                    with urlopen("http://127.0.0.1:8090/connectors/supersports-orders-outbox/status",timeout=3) as response:
-                        connector=json.loads(response.read())
-                    if connector["connector"]["state"]=="RUNNING" and connector["tasks"] and connector["tasks"][0]["state"]=="RUNNING":break
-                except (HTTPError,URLError,TimeoutError):pass
-                time.sleep(1)
-            else:self.fail("Debezium connector/task did not recover after broker restart")
-            deadline=time.monotonic()+90
-            while time.monotonic()<deadline:
-                projected_status,projected=manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{order['orderId']}",token=self.customer)
-                if projected_status==200 and projected["state"]=="FULFILLMENT_SCHEDULED":break
-                time.sleep(.5)
-            self.assertEqual(projected_status,200)
-            self.assertEqual(projected["state"],"FULFILLMENT_SCHEDULED")
-            source=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","orders","-tA","-c",
-                f"SELECT json_agg(json_build_object('eventId',payload->>'eventId','sequence',aggregate_sequence) ORDER BY aggregate_sequence) FROM order_outbox WHERE aggregate_id='{order['orderId']}'"],project=self.project,capture=True)
-            events=json.loads(source.stdout.strip())
-            history_target=manage.history_target(project=self.project)
-            inbox=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d",history_target["database"],"-tA","-c",
-                f"SELECT json_agg(json_build_object('eventId',event_id::text,'sequence',aggregate_sequence) ORDER BY aggregate_sequence) FROM event_inbox WHERE aggregate_id='{order['orderId']}'"],project=self.project,capture=True)
-            self.assertEqual(json.loads(inbox.stdout.strip()),events)
-            self.assertEqual([row["sequence"] for row in events],list(range(1,len(events)+1)))
-            self.wait_for_zero_lag()
-        finally:
-            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka"],project=self.project)
-            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka-connect"],project=self.project)
-
         _, products = manage.request_json("http://127.0.0.1:8081/api/v1/catalog/products?q=football")
         sku_id = products[0]["skus"][0]["id"]
         _, profile = manage.request_json("http://127.0.0.1:8085/api/v1/customer/profile", token=self.customer)
@@ -184,6 +138,202 @@ class StreamingIntegrationTests(unittest.TestCase):
         self.assertIn("permission denied for database", private_read.stderr.lower())
         self.assertIn("does not have connect privilege", private_read.stderr.lower())
 
+    def test_cdc_resumes_outbox_after_connect_and_broker_restart(self):
+        self.wait_for_zero_lag()
+        status,products=manage.request_json("http://127.0.0.1:8081/api/v1/catalog/products?q=football")
+        self.assertEqual(status,200)
+        sku=products[0]["skus"][0]["id"]
+        order=None
+        try:
+            manage.compose(["--profile","streaming","stop","kafka-connect","kafka"],project=self.project)
+            status,order=manage.request_json("http://127.0.0.1:8086/api/v1/orders/checkout",token=self.customer,method="POST",
+                data=json.dumps({"lines":[{"skuId":sku,"quantity":1}],"couponCode":None}).encode(),
+                headers={"Idempotency-Key":"cdc-restart-"+uuid.uuid4().hex})
+            self.assertEqual(status,202)
+            pending=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","orders","-tA","-c",
+                f"SELECT count(*) FROM order_outbox WHERE aggregate_id='{order['orderId']}'"],project=self.project,capture=True)
+            self.assertGreater(int(pending.stdout.strip()),0,"outbox must commit while broker/Connect are stopped")
+
+            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka"],project=self.project)
+            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka-connect"],project=self.project)
+
+            deadline=time.monotonic()+120
+            while time.monotonic()<deadline:
+                try:
+                    with urlopen("http://127.0.0.1:8090/connectors/supersports-orders-outbox/status",timeout=3) as response:
+                        connector=json.loads(response.read())
+                    if connector["connector"]["state"]=="RUNNING" and connector["tasks"] and connector["tasks"][0]["state"]=="RUNNING":break
+                except (HTTPError,URLError,TimeoutError):pass
+                time.sleep(1)
+            else:self.fail("Debezium connector/task did not recover after broker restart")
+            deadline=time.monotonic()+90
+            while time.monotonic()<deadline:
+                projected_status,projected=manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{order['orderId']}",token=self.customer)
+                if projected_status==200 and projected["state"]=="FULFILLMENT_SCHEDULED":break
+                time.sleep(.5)
+            self.assertEqual(projected_status,200)
+            self.assertEqual(projected["state"],"FULFILLMENT_SCHEDULED")
+            source=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","orders","-tA","-c",
+                f"SELECT json_agg(json_build_object('eventId',payload->>'eventId','sequence',aggregate_sequence) ORDER BY aggregate_sequence) FROM order_outbox WHERE aggregate_id='{order['orderId']}'"],project=self.project,capture=True)
+            events=json.loads(source.stdout.strip())
+            history_target=manage.history_target(project=self.project)
+            inbox=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d",history_target["database"],"-tA","-c",
+                f"SELECT json_agg(json_build_object('eventId',event_id::text,'sequence',aggregate_sequence) ORDER BY aggregate_sequence) FROM event_inbox WHERE aggregate_id='{order['orderId']}'"],project=self.project,capture=True)
+            self.assertEqual(json.loads(inbox.stdout.strip()),events)
+            self.assertEqual([row["sequence"] for row in events],list(range(1,len(events)+1)))
+            self.wait_for_zero_lag()
+        finally:
+            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka"],project=self.project)
+            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","kafka-connect"],project=self.project)
+
+    def test_isolated_gap_parking_owner_freshness_and_browser_fallback(self):
+        """Exercise real History/HTTP/UI behavior using disposable topic, DB and consumer."""
+        def pick_order(token,minimum_sequence):
+            status,body=manage.request_json("http://127.0.0.1:8089/api/v1/order-history",token=token)
+            self.assertEqual(status,200)
+            return next(order for order in body["orders"] if order["lastSequence"]>=minimum_sequence)
+
+        owner_a=pick_order(self.customer,3)
+        _,profile=manage.request_json("http://127.0.0.1:8085/api/v1/customer/profile",token=self.other)
+        address={"fullName":"Gap Probe","phone":"9876543210","line1":"12 Test Road","line2":"","city":"Pune",
+            "state":"Maharashtra","postalCode":"411001","country":"IN","expectedRevision":profile["revision"]}
+        self.assertEqual(manage.request_json("http://127.0.0.1:8085/api/v1/customer/profile",token=self.other,method="PUT",
+            data=json.dumps(address).encode())[0],200)
+        _,products=manage.request_json("http://127.0.0.1:8081/api/v1/catalog/products?q=football")
+        checkout_status,checkout=manage.request_json("http://127.0.0.1:8086/api/v1/orders/checkout",token=self.other,method="POST",
+            data=json.dumps({"lines":[{"skuId":products[0]["skus"][0]["id"],"quantity":1}],"couponCode":None}).encode(),
+            headers={"Idempotency-Key":"m06-gap-owner-"+uuid.uuid4().hex})
+        self.assertEqual(checkout_status,202)
+        deadline=time.monotonic()+60
+        while time.monotonic()<deadline:
+            projection_status,projection=manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{checkout['orderId']}",token=self.other)
+            if projection_status==200 and projection["lastSequence"]>=3:break
+            time.sleep(.5)
+        self.assertEqual(projection_status,200)
+        self.wait_for_zero_lag()
+        owner_b=pick_order(self.other,1)
+        self.assertNotEqual(owner_a["id"],owner_b["id"])
+        suffix=uuid.uuid4().hex[:12]
+        database=f"m06gap_{suffix}"
+        topic=f"m06gap.{suffix}.events"
+        dlq=f"m06gap.{suffix}.dlq"
+        group=f"m06gap-{suffix}"
+        container=f"supersports-m06-gap-probe-{suffix}"
+        def events(order_id):
+            result=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","orders","-tA","-c",
+                f"SELECT json_agg(payload ORDER BY aggregate_sequence) FROM order_outbox WHERE aggregate_id='{order_id}'"],project=self.project,capture=True)
+            parsed=json.loads(result.stdout.strip())
+            self.assertGreaterEqual(len(parsed),1)
+            return parsed
+        events_a=events(owner_a["id"]);events_b=events(owner_b["id"])
+        db_created=topic_created=dlq_created=probe_started=False
+        try:
+            manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","postgres","-v","ON_ERROR_STOP=1","-c",
+                f'CREATE DATABASE "{database}" OWNER supersports_order_history'],project=self.project,capture=True)
+            db_created=True
+            for name in (topic,dlq):
+                manage.compose(["--profile","streaming","exec","-T","kafka","/opt/kafka/bin/kafka-topics.sh","--create","--if-not-exists",
+                    "--bootstrap-server","localhost:9092","--topic",name,"--partitions","1","--replication-factor","1"],project=self.project,capture=True)
+                if name==topic:topic_created=True
+                else:dlq_created=True
+            manage.compose(["--profile","streaming","stop","order-history"],project=self.project)
+            run=manage.compose(["--profile","streaming","run","-d","--no-deps","--use-aliases","--name",container,
+                "-p","127.0.0.1:8089:8080","-e",f"SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/{database}",
+                "-e",f"ORDER_HISTORY_CONSUMER_GROUP={group}","-e",f"ORDER_HISTORY_TOPIC={topic}","-e",f"ORDER_HISTORY_DLQ_TOPIC={dlq}",
+                "-e","ORDER_HISTORY_GAP_TIMEOUT_SECONDS=8","order-history"],project=self.project,capture=True)
+            probe_started=True
+            self.assertTrue(run.stdout.strip())
+            deadline=time.monotonic()+90
+            while time.monotonic()<deadline:
+                try:
+                    with urlopen("http://127.0.0.1:8089/actuator/health/readiness",timeout=2) as response:
+                        if response.status==200:break
+                except (HTTPError,URLError,TimeoutError,RemoteDisconnected,ConnectionResetError):pass
+                time.sleep(.5)
+            else:
+                logs=manage.run(["docker","logs","--tail","60",container],capture=True,check=False)
+                self.fail("isolated Order History probe did not become ready: "+logs.stdout[-3000:]+logs.stderr[-3000:])
+
+            def publish(records):
+                lines="".join(f"{record['aggregateId']}|{json.dumps(record,separators=(',',':'))}\n" for record in records)
+                manage.compose(["--profile","streaming","exec","-T","kafka","/opt/kafka/bin/kafka-console-producer.sh",
+                    "--bootstrap-server","localhost:9092","--topic",topic,"--property","parse.key=true","--property","key.separator=|"],
+                    project=self.project,input_text=lines)
+            # Same partition: A's future sequence parks while B's full stream proceeds.
+            publish([events_a[2],*events_b])
+            deadline=time.monotonic()+20
+            while time.monotonic()<deadline:
+                code_a,history_a=manage.request_json("http://127.0.0.1:8089/api/v1/order-history",token=self.customer)
+                code_b,history_b=manage.request_json("http://127.0.0.1:8089/api/v1/order-history",token=self.other)
+                if code_a==200 and code_b==200 and history_b["orders"]:break
+                time.sleep(.5)
+            self.assertEqual(code_a,200);self.assertEqual(code_b,200)
+            self.assertEqual(history_a["orders"],[])
+            self.assertEqual(history_a["freshness"]["pendingOwnEvents"],1)
+            self.assertEqual(history_a["freshness"]["state"],"DELAYED")
+            self.assertEqual(history_b["freshness"]["state"],"CURRENT")
+            self.assertEqual(history_b["freshness"]["pendingOwnEvents"],0)
+            deadline=time.monotonic()+15
+            while time.monotonic()<deadline:
+                _,history_a=manage.request_json("http://127.0.0.1:8089/api/v1/order-history",token=self.customer)
+                if history_a["freshness"]["state"]=="BLOCKED":break
+                time.sleep(.5)
+            self.assertEqual(history_a["freshness"]["state"],"BLOCKED")
+            proxy_status,proxy_history=manage.request_json("http://127.0.0.1:3000/api/order-history",token=self.customer)
+            self.assertEqual(proxy_status,200,proxy_history)
+            self.assertEqual(proxy_history["freshness"]["state"],"BLOCKED",proxy_history)
+            browser_env=os.environ.copy()
+            browser_env.update({"SUPERSPORTS_FRESHNESS_PROBE_ORDER_ID":owner_a["id"],"SUPERSPORTS_UI_URL":"http://localhost:3000"})
+            manage.run([str(manage.ROOT/".venv/bin/python"),"-m","unittest","discover","-s","apps/storefront/tests",
+                "-p","test_customer_history_ui.py","-k","customer_sees_blocked_gap","-v"],environment=browser_env,cwd=manage.ROOT)
+
+            source=events_a
+            publish(source[:2])
+            deadline=time.monotonic()+20
+            while time.monotonic()<deadline:
+                detail_status,detail=manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{owner_a['id']}",token=self.customer)
+                if detail_status==200 and detail["lastSequence"]==3:break
+                time.sleep(.5)
+            self.assertEqual(detail_status,200)
+            self.assertEqual(detail["lastSequence"],3)
+            publish([source[0]]) # Duplicate delivery must not add an inbox event.
+            self.wait_for_zero_lag_for_group(group,topic)
+            conflicted={**source[0],"occurredAt":"2099-01-01T00:00:00Z"}
+            publish([conflicted]) # Same ID with changed content is quarantined, never applied.
+            self.wait_for_zero_lag_for_group(group,topic)
+            inbox=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d",database,"-tA","-c",
+                f"SELECT count(*) FROM event_inbox WHERE aggregate_id='{owner_a['id']}'"],project=self.project,capture=True)
+            self.assertEqual(int(inbox.stdout.strip()),3)
+            final_status,final_detail=manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{owner_a['id']}",token=self.customer)
+            self.assertEqual(final_status,200)
+            self.assertEqual(final_detail["lastSequence"],3)
+
+            manage.run(["docker","stop",container],cwd=manage.ROOT)
+            probe_started=False
+            manage.run(["docker","rm",container],cwd=manage.ROOT)
+            browser_env["SUPERSPORTS_FRESHNESS_PROBE_ORDER_ID"]=owner_a["id"]
+            manage.run([str(manage.ROOT/".venv/bin/python"),"-m","unittest","discover","-s","apps/storefront/tests",
+                "-p","test_customer_history_ui.py","-k","customer_sees_unavailable_stream","-v"],environment=browser_env,cwd=manage.ROOT)
+        finally:
+            if probe_started:
+                manage.run(["docker","rm","-f",container],cwd=manage.ROOT,check=False)
+            if db_created:
+                manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","postgres","-v","ON_ERROR_STOP=1","-c",
+                    f'DROP DATABASE IF EXISTS "{database}" WITH (FORCE)'],project=self.project,capture=True,check=False)
+            for name,created in ((topic,topic_created),(dlq,dlq_created)):
+                if created:manage.compose(["--profile","streaming","exec","-T","kafka","/opt/kafka/bin/kafka-topics.sh","--delete",
+                    "--bootstrap-server","localhost:9092","--topic",name],project=self.project,capture=True,check=False)
+            manage.compose(["--profile","streaming","up","-d","--wait","--wait-timeout","120","order-history"],project=self.project)
+
+    def wait_for_zero_lag_for_group(self,group,topic):
+        deadline=time.monotonic()+30
+        while time.monotonic()<deadline:
+            result=manage.compose(["--profile","streaming","exec","-T","kafka","/opt/kafka/bin/kafka-consumer-groups.sh",
+                "--bootstrap-server","localhost:9092","--describe","--group",group],project=self.project,capture=True,check=False)
+            rows=[line.split() for line in result.stdout.splitlines() if line.strip().startswith(group+" "+topic)]
+            if rows and all(row[5]=="0" for row in rows):return
+            time.sleep(.5)
+        self.fail(f"probe consumer group {group} did not reach zero lag")
     def test_operator_poison_replay_is_audited_idempotent_and_restartable(self):
         self.wait_for_zero_lag()
         demo=stream_operations.demo(manage,project=self.project)

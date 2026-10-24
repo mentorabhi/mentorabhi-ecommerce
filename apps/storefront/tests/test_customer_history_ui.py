@@ -36,6 +36,15 @@ class CustomerOrderHistoryUiTests(unittest.TestCase):
         self.addCleanup(self.driver.quit)
         self.wait = WebDriverWait(self.driver, 25)
 
+    def _login_orders(self):
+        self.driver.get(BASE_URL + "/orders")
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Sign in')]"))).click()
+        self.wait.until(EC.visibility_of_element_located((By.ID,"username"))).send_keys("checkout-test-customer")
+        self.driver.find_element(By.ID,"password").send_keys(self.password)
+        self.driver.find_element(By.ID,"kc-login").click()
+        self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,'nav[aria-label="Shopping"] a[href="/orders"]')))
+        self.driver.find_element(By.CSS_SELECTOR,'nav[aria-label="Shopping"] a[href="/orders"]').click()
+
     def test_customer_can_read_and_open_projected_order(self):
         self.driver.get(BASE_URL + "/orders")
         self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Sign in')]"))).click()
@@ -57,6 +66,29 @@ class CustomerOrderHistoryUiTests(unittest.TestCase):
         detail = self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".order-detail")))
         self.assertTrue(detail.find_elements(By.CSS_SELECTOR, ".order-line"))
         self.assertTrue(detail.find_elements(By.TAG_NAME, "address"))
+
+    def test_customer_sees_blocked_gap_and_authoritative_order_fallback(self):
+        expected_order=os.environ.get("SUPERSPORTS_FRESHNESS_PROBE_ORDER_ID")
+        if not expected_order:self.skipTest("This Selenium journey runs only while the isolated M06 gap probe is active.")
+        self._login_orders()
+        try:
+            status=self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'[data-freshness-state="BLOCKED"]')))
+        except Exception as error:
+            raise AssertionError(f"blocked freshness banner missing at {self.driver.current_url}: {self.driver.find_element(By.TAG_NAME,'body').text[:1200]}") from error
+        self.assertIn("need attention",status.text.lower())
+        expected_prefix=expected_order[:8].upper()
+        rows=self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,".order-row")))
+        self.assertTrue(any(expected_prefix in row.text for row in rows),"blocked projection must fall back to current owned Orders records")
+
+    def test_customer_sees_unavailable_stream_and_owned_order_fallback(self):
+        expected_order=os.environ.get("SUPERSPORTS_FRESHNESS_PROBE_ORDER_ID")
+        if not expected_order:self.skipTest("This Selenium journey runs only while the isolated M06 outage probe is active.")
+        self._login_orders()
+        status=self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'[data-freshness-state="UNAVAILABLE"]')))
+        self.assertIn("temporarily unavailable",status.text.lower())
+        expected_prefix=expected_order[:8].upper()
+        rows=self.wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,".order-row")))
+        self.assertTrue(any(expected_prefix in row.text for row in rows),"unavailable history must fall back to current owned Orders records")
 
 
 if __name__ == "__main__":

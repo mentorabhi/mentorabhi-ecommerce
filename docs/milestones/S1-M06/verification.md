@@ -1,5 +1,12 @@
 # S1-M06 verification record
 
+## Isolated ordering, timed-gap, ownership and UI fallback probe · 2026-10-24
+
+- The existing reviewed [`freshness-and-ordering.md`](freshness-and-ordering.md) design was implemented as one serialized live integration scenario. It creates an owner B synthetic checkout if necessary, copies retained synthetic event envelopes into a disposable one-partition topic, starts an isolated Order History consumer/database with an 8-second gap threshold, and restores the normal service in `finally` while deleting only UUID-scoped probe resources.
+- `SUPERSPORTS_INTEGRATION=1 SUPERSPORTS_PROJECT=supersports .venv/bin/python -m unittest discover -s devops/tests -p test_streaming_integration.py -k isolated_gap -v`: 1 integration test passed in 73.098 seconds. A sequence 3 was parked while B's event stream projected; A reported `DELAYED`, then `BLOCKED`; B reported `CURRENT` with zero owned gaps. Publishing A sequences 1 and 2 drained to 3. A duplicate left the inbox count at three; changed content under the same event ID was quarantined and left `lastSequence=3`.
+- Both real storefront Selenium journeys passed while the isolated probe was active: `BLOCKED` warning with A's current Orders fallback, and `UNAVAILABLE` warning/fallback while the probe service was stopped. The direct nginx proxy also returned the expected `BLOCKED` state before browser execution.
+- `SE_OFFLINE=true .venv/bin/python -m unittest discover -s apps/storefront/tests -p test_customer_history_ui.py -v`: the routine customer-history journey passed in 6.380 seconds; the two probe-only Selenium methods were correctly skipped outside their isolated integration context. Owner visual/manual acceptance remains separate. This controlled single-partition demonstration does not measure general throughput.
+
 ## CDC and broker restart probe · 2026-10-24
 
 - Reviewed design, flow and owner review: [`cdc-restart-design.md`](cdc-restart-design.md), [`cdc-restart-flow.mmd`](cdc-restart-flow.mmd), [`cdc-restart-review.md`](cdc-restart-review.md).
