@@ -1,6 +1,6 @@
 # S1-M06 — Outbox, Kafka and CQRS projections
 
-Revision 5 · 2026-10-24 · CDC, owner-scoped projection and deterministic consumer crash injection implemented; automated/runtime evidence is in [verification](verification.md). Manual acceptance remains open.
+Revision 6 · 2026-10-24 · CDC, owner-scoped projection and deterministic consumer crash injection implemented; full CI rerun passed. Automated/runtime evidence is in [verification](verification.md). Manual acceptance remains open.
 
 Design: [outbox and projection design](design.md). Review: [design review](design-review.md). Decision: [ADR 0006](../../decisions/0006-orders-outbox-cdc-and-history-projection.md). Editable flow: [event-flow.mmd](event-flow.mmd). Manual checks: [manual acceptance](manual-acceptance.md). Source architecture: [S1-M06 diagram](../../../architecture/stage-1/S1-M06.excalidraw).
 

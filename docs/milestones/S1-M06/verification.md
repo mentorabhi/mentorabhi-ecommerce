@@ -1,6 +1,6 @@
 # S1-M06 verification record
 
-Revision 1 · 2026-10-24 · Automated and local runtime evidence. Human acceptance remains open.
+Revision 2 · 2026-10-24 · Full CI rerun passed after deterministic crash injection; human acceptance remains open.
 
 ## Environment
 
@@ -15,11 +15,12 @@ Command: `SE_OFFLINE=true ./devops/scripts/ci`
 
 - Compose configuration validation passed.
 - Python operations and JSON Schema contract unit suite passed; JSON Schema validates all five supported event types, rejects incomplete sequence/privacy payloads, and validates the live outbox rows.
-- Java unit suite passed: 84 tests, 0 failures/errors.
+- Java unit suite passed: 84 tests, 0 failures/errors, including the six Order History tests after crash-injector changes.
+- Python unit suite passed: 49 tests, 0 failures/errors (23 live integration tests are intentionally skipped in the unit-only discovery invocation and run separately below).
 - Helm lint/render and intended negative cases passed. Terraform format/init/validate/test passed (3 tests); no cloud provisioning occurred.
 - Core integration suite passed twice (22 tests per pass), before and after recovery checks.
 - Recovery checks passed: application/migration state across service restart; readiness/liveness behavior and reconnection through PostgreSQL outage; identity token issuance recovered.
-- Streaming integration passed twice in the original full CI; follow-up targeted reruns passed after adding the explicit database-private-table assertion and deterministic consumer crash test. The crash test waits for zero lag, arms the one-shot fault, checks out an order, observes the container restart, and verifies the projected sequence count equals `lastSequence` after redelivery. The earlier schema and owner-isolation assertions continue to run in that same integration journey.
+- Streaming integration passed twice in this full CI run after adding the explicit database-private-table assertion and deterministic consumer crash test. The crash test waits for zero lag, arms the one-shot fault, checks out an order, observes the container restart, and verifies the projected sequence count equals `lastSequence` after redelivery. Schema and owner-isolation assertions run in the same integration journey.
 - Selenium suite passed: 7 journeys, including customer login, asynchronous projected order list, opening an order, and order detail. The configuration test restores tax to 1800 even when an assertion fails.
 
 ## Database evidence
@@ -35,5 +36,5 @@ After the latest streaming integration/recovery run and test-created synthetic o
 - The owner must perform and record the separate [manual acceptance checklist](manual-acceptance.md).
 - Peak memory, throughput and sustained lag under load have not been measured.
 - Operator-audited poison correction/replay and isolated candidate projection rebuild/reconciliation/cutover remain unimplemented. Full M06 design completion is therefore open; do not represent those behaviors as tested.
-- Follow-up after the initial full CI: `.venv/bin/python -m unittest discover -s devops/tests -p test_manage.py -v` passed (25 tests); the order-history Maven module passed six unit tests; the full streaming integration journey passed, including injected exit after database commit, container restart, replay deduplication and owner isolation. Full CI has not been rerun after this follow-up change.
+- Full CI was rerun after the crash recovery change and passed end to end: `SE_OFFLINE=true ./devops/scripts/ci`. It rebuilt the ARM64 application images, validated Compose/Helm/Terraform, ran all Java and Python unit checks, two core integration passes, two streaming integration passes with injected crash recovery, recovery checks, and seven Selenium journeys. This still does not implement pending replay and candidate rebuild commands.
 - Review evidence is in [design-review.md](design-review.md). This report contains measured runtime facts separately from the deferred design proposal.

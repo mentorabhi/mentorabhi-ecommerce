@@ -118,3 +118,7 @@ Added local one-shot fault injection after the Order History inbox/projection tr
 ## 2026-10-24 — S1-M07 post-purchase design reviewed
 
 Created the post-purchase design, review record, editable flow and separate manual acceptance guide before implementation. The review resolves immutable captured-amount refund arithmetic, distinct return-request and inspection ownership, cancellation/fulfillment handoff races, customer content privacy, prohibition on support impersonation, and clear simulator labeling. M07 is implementation-ready; no service capability is claimed yet. M06 replay and candidate projection rebuild remain ahead in the dependency sequence.
+
+## 2026-10-24 — S1-M06 full CI after crash recovery
+
+Reran `SE_OFFLINE=true ./devops/scripts/ci` after adding deterministic consumer crash injection. Compose/image builds, 84 Java tests, 49 Python unit tests, Helm/Terraform checks, two 22-test core integration passes, two streaming passes including fault/restart/deduplication, database/identity recovery checks, and seven Selenium journeys passed. This closes the verification gap for the implemented recovery slice, not the M06 feature gate: audited poison replay and isolated candidate rebuild/reconciliation/cutover are still absent. Updated `docs/milestones/S1-M06/verification.md` accordingly.
