@@ -1,6 +1,6 @@
 # S1-M04 manual end-user acceptance
 
-Revision 1 · 2026-10-24 · Draft checklist; refresh URLs and account setup after implementation.
+Revision 2 · 2026-10-24 · Draft checklist; customer account flow uses the `supersports-customers` realm.
 
 These checks are manual and separate from automated tests. Record results after M04 runtime is available.
 
@@ -23,13 +23,14 @@ These checks are manual and separate from automated tests. Record results after 
 
 ## Account, wishlist, cart and address
 
-- [ ] Sign in with the customer account flow documented for the selected local identity policy; never copy a password into this guide.
+- [ ] Register a new customer using the storefront's local Keycloak registration flow and sign in; never copy a password into this guide.
 - [ ] Add/remove a wishlist item; refresh and confirm persistence.
 - [ ] Add multiple variants to cart, change quantities, remove a line, refresh and confirm persistence.
 - [ ] Confirm displayed cart values are informational and the UI does not claim stock reservation or checkout completion.
 - [ ] Enter an Indian address with a valid state and PIN; save and edit it.
 - [ ] Submit invalid/missing state and PIN values; confirm accessible field-level validation.
 - [ ] With a second test customer, repeat cart/wishlist/profile flows. Confirm the second account cannot view or alter the first account’s records by editing paths or request data.
+- [ ] Using the browser's customer token, call M03 Catalog, Pricing, Inventory and Configuration APIs; confirm each rejects the token. Confirm the Customer API rejects an operator token.
 - [ ] Sign out and confirm personal pages require a customer session; public browsing remains available.
 - [ ] Visit the M03 admin workspace and confirm the configured admin account still performs expected catalog operations. Confirm customer credentials cannot administer Catalog, Pricing or Inventory.
 

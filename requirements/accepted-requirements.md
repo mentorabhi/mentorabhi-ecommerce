@@ -7,7 +7,7 @@ Revision 2 · 2026-10-23. User decisions override the original planning baseline
 | R02 | Realistic synthetic products, variants, descriptions, images, prices, customers and reconciled stock. Deterministic seed/reset. | S1-M03; AE01 |
 | R03 | English; default country IN and Indian address validation; configurable supported countries later. | S1-M04; AE02 |
 | R04 | INR default; configurable currencies including USD, explicit supported precision, currency-consistent totals and immutable historical amounts. | S1-M03/M05; AE03 |
-| R05 | Browse, product pages, filters, search, wishlist, isolated customer carts/profile. | S1-M04; AE04 |
+| R05 | Browse, product pages, filters, search, wishlist, isolated customer carts/profile with customer self-registration. | S1-M04; AE04, AE21 |
 | R06 | Idempotent checkout; stock reservation; simulated authorization, capture, fulfillment, tax and shipping. | S1-M05; AE05–AE08 |
 | R07 | Coupons with product/category eligibility, dates, minimum spend, currency rules, usage limits and deterministic rounding. | S1-M03/M05; AE09 |
 | R08 | Tracking, cancellation, return/refund simulations, verified-purchase reviews, moderation and support. | S1-M07; AE10 |
@@ -23,6 +23,7 @@ Revision 2 · 2026-10-23. User decisions override the original planning baseline
 | R18 | Logo, modern responsive pages and original product imagery; realistic synthetic prices/descriptions, accessibility and mobile verification. | S1-M03 assets; S1-M04 UI; AE20 |
 | R19 | Latest stable compatible technology versions verified when implemented; exact pins and license/ARM64/resource checks recorded. | S1-M02 and each dependency addition |
 | R20 | Progress through commerce, Nova design, and gap-led integration in that order. | Stage gates |
+| R21 | Customer self-registration uses a local customer identity realm/API audience isolated from unrestricted merchandising administration. | S1-M04; AE21 |
 
 ## Actors and initial journeys
 Customer: browse → compare → cart → quote → approve purchase → track → review/return.
@@ -53,6 +54,7 @@ Nova: delegated caller scoped to a signed-in actor, never a privileged bypass.
 - AE18: Checkout requires approval bound to user, line items, price/currency, address, quote revision and expiry. Changed terms require new approval; replay cannot duplicate purchase.
 - AE19: Preference correction/deletion applies across memory and applicable caches; another user's data cannot be retrieved.
 - AE20: Keyboard and mobile navigation work across home, category/search, product, cart, checkout, account/order and admin screens. Assets have alt text and provenance.
+- AE21: A self-registered customer can sign in and access only their profile/cart/wishlist; their token cannot read or mutate Catalog, Pricing, Inventory or Configuration. The operator token cannot read customer-owned data. Both isolation directions hold after restart and direct API calls; the owner is always taken from the verified token subject.
 
 ## Non-goals and deferred choices
 No real money, carrier integration, live exchange-rate feeds, marketplace sellers or cloud deployment. Multi-tenancy and multi-agent delegation are later design topics, not baseline runtime requirements. Nova's detailed autonomy, memory retention, models and numeric quality gates belong to S2.

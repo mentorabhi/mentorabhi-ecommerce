@@ -59,13 +59,17 @@ Recorded the user's Git policy: commit each milestone on the active branch; crea
 The user set the demo username/password to `admin`/`admin` and supplied the final icon and banner. Added the local account via Keycloak provisioning using an ignored mode-0600 password file, and used the two source JPEGs directly for branding and sign-in. Selenium exposed that mobile CSS hid the only sign-out control; moved it into the top bar and added mobile navigation/logout coverage. Mobile table labels now come from each cell's data, so inventory cards identify warehouse, on-hand, revision and health correctly. The independent review agent stopped at its session usage limit; code review status remains incomplete until fallback review is recorded.
 
 The final full-stack run found that `docker compose up --build` rebuilt the same image tags but left existing containers on their previous image IDs. `supersports up` now requests `--force-recreate`, and its operations unit suite asserts this behavior. A fresh token then received HTTP 200 from direct and proxied Pricing endpoints. The final `devops/scripts/ci` run passed: 20 Python operations tests, 29 Java tests, 15 live integration tests, Helm/Terraform checks, service/DB outage recovery and four Selenium journeys. Playwright login passed separately. The full banner was visually checked in Chromium at desktop size. The independent review agent stopped at the session usage limit; recorded code review state: `Code review: skipped (ce-code-review unavailable)`. Owner manual acceptance and peak/load memory checks remain pending.
-# 2026-10-24 — S1-M04 design checkpoint
+## 2026-10-24 — S1-M04 initial design checkpoint
 
 - Created customer storefront design and editable Mermaid architecture; separated browse/cart informational values from M05 checkout authority.
 - Added M04 manual acceptance draft, including service health, UI flows, cross-customer isolation and read-only database checks.
 - Branch `feat/s1-m04-customer-storefront` starts from the committed M03 checkpoint.
-- Implementation is intentionally blocked pending customer identity policy because ADR 0003 currently allows all authenticated local accounts to administer M03 APIs.
+- Implementation was intentionally held pending customer identity policy because ADR 0003 allows all authenticated local accounts to administer M03 APIs.
 
 ## 2026-10-24 — S1-M04 design checkpoint
 
-Created the customer storefront design and editable Mermaid architecture; separated browse/cart informational values from M05 checkout authority. Added the M04 manual acceptance draft and updated requirement traceability and current project context. Branch `feat/s1-m04-customer-storefront` starts from the committed M03 checkpoint. Implementation awaits the customer identity policy decision because ADR 0003 currently allows every authenticated local account to administer M03 APIs.
+Created the customer storefront design and editable Mermaid architecture; separated browse/cart informational values from M05 checkout authority. Added the M04 manual acceptance draft and updated requirement traceability and current project context. Branch `feat/s1-m04-customer-storefront` starts from the committed M03 checkpoint. Implementation was held for customer identity policy.
+
+## 2026-10-24 — S1-M04 self-registration decision
+
+The user selected customer self-registration. Design review found that same-realm audience mapping could expose M03 administration; tightened the design to a dedicated `supersports-customers` realm, exact issuer and customer-only API audience. Added ADR 0004, R21/AE21, bidirectional token-isolation checks and the manual acceptance path. Design revision 2 is ready for implementation.

@@ -1,6 +1,6 @@
 # S1-M04 — Customer storefront and browsing
 
-Revision 1 · 2026-10-24 · Status: proposed design; customer identity boundary needs a user decision before implementation.
+Revision 2 · 2026-10-24 · Status: design reviewed; customer self-registration approved; ready for implementation.
 
 ## Objective and scope
 
@@ -29,13 +29,13 @@ Acceptance scenarios:
 - The storefront is a customer route group alongside the existing admin workspace. Customer browsing is public; personal endpoints require customer identity. Existing admin routes remain usable with the configured local admin account.
 - Search starts with Catalog's existing local relational read API and indexed PostgreSQL text search for the bounded synthetic catalog. Do not introduce Redis/OpenSearch before a measured need or dedicated workload profile. Preserve a versioned search contract so a future projection can replace the implementation without changing the UI.
 
-## Identity boundary — unresolved decision
+## Identity boundary — resolved decision
 
 ADR 0003 intentionally lets every authenticated local account administer merchandising. Enabling open customer registration in that same unrestricted API audience would expose catalog, pricing and inventory writes. That conflicts with customer self-service and AE04 ownership.
 
-Recommended design: retain the local operator login for admin; add a customer-facing local identity client/flow and make service tokens distinguish the customer API audience from merchandising APIs without realm-role policy. The Customer service accepts only customer-capability tokens and derives ownership from `sub`; merchandising services continue accepting the trusted local admin audience. This is a capability boundary, not a role taxonomy. It must be proven with a negative cross-audience contract test before exposing registration. Public browsing remains anonymous.
+The user selected self-registration on 2026-10-24. Keep the operator account and its existing `supersports` realm unchanged. Add a dedicated `supersports-customers` local Keycloak realm with a customer-facing public PKCE client and registration enabled. Customer tokens use the customer realm issuer and `supersports-customer-api` audience. The Customer service validates signature, exact issuer, expiry and audience and derives ownership from `sub`. It does not accept the operator realm or `supersports-api` tokens. M03 merchandising APIs continue accepting the operator realm/audience only. Public browsing remains anonymous. This avoids role taxonomies while proving a hard issuer/audience boundary before enabling registration.
 
-Before implementation, decide whether (A) customer self-registration is allowed with this separate token audience (recommended), (B) customer accounts are provisioned locally by an operator, or (C) M04 is browse-only and profile/cart/wishlist remain deferred until account policy is settled. A customer token must never administer the M03 services. No implementation begins until this question is resolved.
+The new realm is imported alongside the existing realm and remains inside the local identity container; it creates no external identity dependency. The customer browser client has no client secret. Never put an owner ID in customer API input. Integration tests must prove self-registration/token issuance, customer API access, and that the resulting customer token cannot administer Catalog, Pricing, Inventory or Configuration. Also prove the operator token cannot access Customer data.
 
 ## Interaction and failure behavior
 
@@ -96,9 +96,10 @@ All added service code remains independently deployable, with Dockerfiles/Compos
 - [x] Catalog/Pricing/Inventory remain authorities; search/cart/availability are not checkout authority.
 - [x] Customer-owned data has a single service and token-subject owner key.
 - [x] Failure, stale data, responsive accessibility and manual database checks are called out.
-- [ ] Resolve customer account provisioning/registration and validate the capability-token boundary before implementation.
-- [ ] Independent design-review receipt after user decision and diagram update.
+- [x] Resolve self-registration: dedicated customer realm/client, exact issuer and audience boundary.
+- [x] Internal review after the decision: identified same-realm `supersports-api` mapper as an escalation path; replaced it with a separate realm and exact issuer/audience checks. Acceptance tests now cover customer-to-admin and admin-to-customer rejection.
 
 ## Change history
 
 - Rev 1 — 2026-10-24: initial scope and design; raised the identity-collision decision before implementation.
+- Rev 2 — 2026-10-24: user chose self-registration. Design review strengthened the boundary from a same-realm audience to a dedicated customer realm to prevent inherited operator API access.

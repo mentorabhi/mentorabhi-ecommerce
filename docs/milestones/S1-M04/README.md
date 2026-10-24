@@ -1,6 +1,6 @@
 # S1-M04 — Customer storefront and browsing
 
-Revision 1 · 2026-10-24 · Status: design in progress; implementation not started.
+Revision 2 · 2026-10-24 · Status: design reviewed; customer self-registration policy approved; implementation in progress.
 
 Design: [storefront and customer boundary](../../../design/S1-M04/storefront.md). Editable architecture diagram: [storefront.mmd](../../../design/S1-M04/storefront.mmd).
 Manual end-user checks: [manual acceptance](manual-acceptance.md).
@@ -9,13 +9,13 @@ Manual end-user checks: [manual acceptance](manual-acceptance.md).
 
 Customer product discovery, search, filters, sorting, product details, wishlist, cart and profile/address. Catalog, Pricing and Inventory remain authoritative. Customer-owned records belong to a separate service and are isolated by authenticated subject. Checkout, stock reservation, payment and order fulfillment are deferred to S1-M05.
 
-## Decision needed before implementation
+## Identity decision
 
-ADR 0003 permits any authenticated local account to administer M03. Publicly registering customers in that same API audience would give customers operator access. The design recommends a customer-scoped local identity client/token audience with ownership derived from `sub`, while preserving simple admin sign-in. The user is asked to choose self-registration, operator-provisioned customer accounts, or deferring customer accounts. No M04 implementation begins before this is resolved.
+The user chose self-registration. ADR 0004 defines a dedicated `supersports-customers` realm and `supersports-customer-api` audience; the Customer service validates its exact issuer and audience. M03 endpoints retain the operator realm and `supersports-api`. Cross-audience tests are release gates.
 
 ## Design review
 
-Initial internal consistency review completed 2026-10-24: domain ownership, M05 boundary, stale price/stock behavior, cart idempotency/revision, no owner ID in APIs, personal-data handling, failure UI and manual database verification are explicit. Review surfaced the identity/audience conflict above; it remains an implementation blocker pending the user’s policy choice. This is not an independent peer-review receipt. Re-review the resolved design and token boundary before coding.
+Internal review completed after the user’s decision: detected that a same-realm token mapper could grant customer registrations the broad M03 audience. Replaced that recommendation with a separate realm, exact issuer and audience validation. Added AE21 and bidirectional negative integration checks. Domain ownership, M05 boundary, stale price/stock behavior, idempotency/revisions, personal data, failure UI and manual DB verification are explicit. No unresolved design blocker remains.
 
 ## Verification record
 

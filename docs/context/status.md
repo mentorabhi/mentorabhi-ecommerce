@@ -7,4 +7,4 @@ S1-M03: implementation verification passed and committed as `6617e40` (`feat(sup
 Current branch: feat/s1-m04-customer-storefront (created after the S1-M03 checkpoint). No remote or external publication.
 Runtime: S1-M03 profile is running. Admin UI: http://localhost:3000. Seven-container RSS snapshot: 1,816.4 MiB; Docker allocation 7.75 GiB. Snapshot is not a peak measurement.
 Ollama: existing host installation only; setup is a Nova prerequisite in docs/setup/prerequisites.md.
-S1-M04: design-only work started on 2026-10-24. Customer browsing and cart/profile ownership boundaries are documented; implementation waits on the user decision about customer self-registration vs operator provisioning vs deferring accounts. Recommended: self-registration with a customer-specific local token audience, isolated from M03 administration. No M04 runtime behavior is claimed.
+S1-M04: user selected customer self-registration. Design revision 2 and ADR 0004 use a dedicated customer realm/issuer and audience, isolated from M03 operator APIs. Implementation is in progress on `feat/s1-m04-customer-storefront`; no M04 runtime behavior is claimed until verified.

@@ -1,6 +1,8 @@
 flowchart LR
   C[Customer browser]
-  ID[Local identity provider]
+  ID[Local Keycloak]
+  OPID[Operator realm]
+  CUSTID[Customer realm]
   UI[Storefront customer routes]
   ADMIN[Storefront admin routes]
   CAT[Catalog service]
@@ -13,14 +15,17 @@ flowchart LR
   UI -->|public search and product reads| CAT
   UI -->|active currency and prices| PRICE
   UI -->|availability snapshot| INV
-  UI -->|customer login| ID
+  UI -->|customer PKCE login/registration| CUSTID
   UI -->|customer audience token| CS
   CS -->|derive owner from verified subject| DB
-  ADMIN -->|trusted local operator session| ID
+  ADMIN -->|operator PKCE login| OPID
   ADMIN -->|merchandising APIs| CAT
   ADMIN --> PRICE
   ADMIN --> INV
   UI -. no cross-service table access .-> DB
+
+  ID --- OPID
+  ID --- CUSTID
 
   classDef authority fill:#e8f3ff,stroke:#174a7e,color:#102b46;
   class CAT,PRICE,INV,CS authority;
