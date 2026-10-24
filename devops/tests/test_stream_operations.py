@@ -14,12 +14,27 @@ spec.loader.exec_module(stream)
 
 
 class OperatorCommandTests(unittest.TestCase):
+    def test_rebuild_refuses_the_active_target_before_launching_a_container(self):
+        active={"database":"order_history","group":"order-history-v1"}
+        fake=SimpleNamespace(history_target=lambda **kwargs:active)
+        for target in (None,active):
+            with self.subTest(target=target),self.assertRaisesRegex(ValueError,"different from the active"):
+                stream.operator(fake,{"action":"rebuild"},target=target,token="operator")
+
+    def test_operator_lock_excludes_overlapping_mutations_and_releases_after_exit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fake=SimpleNamespace(ROOT=Path(directory),validated_project_name=lambda value:value)
+            with stream.exclusive(fake):
+                with self.assertRaisesRegex(RuntimeError,"Another streaming operator"):
+                    with stream.exclusive(fake):pass
+            with stream.exclusive(fake):pass
+
     def test_operator_token_only_travels_on_stdin(self):
         fake = SimpleNamespace(ROOT=ROOT)
         fake.configure_admin_login=lambda root: "private-password"
         fake.token_for=lambda username, password: "private-token"
         fake.compose_command=lambda root,project,args: ["docker", "compose", *args]
-        fake.deployment_env=lambda root,version: {}
+        fake.deployment_env=lambda root,version,**kwargs: {}
         calls=[]
         def run(command, **kwargs):
             calls.append((command,kwargs))
@@ -34,7 +49,7 @@ class OperatorCommandTests(unittest.TestCase):
 
     def test_missing_receipt_does_not_echo_process_output(self):
         fake=SimpleNamespace(ROOT=ROOT,configure_admin_login=lambda root:"password",token_for=lambda *args:"token",
-                             compose_command=lambda *args:[],deployment_env=lambda *args:{},
+                             compose_command=lambda *args:[],deployment_env=lambda *args,**kwargs:{},
                              run=lambda *args,**kwargs:SimpleNamespace(returncode=2,stdout="sensitive process output",stderr="token"))
         with self.assertRaisesRegex(RuntimeError,"receipt") as raised:
             stream.operator(fake,{"action":"replay"})

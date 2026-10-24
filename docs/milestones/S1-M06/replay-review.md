@@ -2,6 +2,8 @@
 
 2026-10-24 · Scope: audited replay, canonical event hashes, operator CLI, additive migration, and consumer validation.
 
+Historical checkpoint: `b40c4fe`. Later rebuild/full-CI evidence and current open gates are in `verification.md` and `acceptance-matrix.md`.
+
 Code review: skipped (ce-code-review unavailable). The portable full review requires subagent dispatch; no dispatch capability is exposed in this turn. The project prohibits launching external model CLIs for automatic review. An explicit implementation-owner diff scan was performed instead; this is not an independent review receipt.
 
 ## Manual diff findings and resolutions

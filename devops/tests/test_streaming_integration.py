@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "devops/scripts"))
 import manage
 import stream_operations
+import projection_operations
 
 
 class StreamingIntegrationTests(unittest.TestCase):
@@ -44,11 +45,12 @@ class StreamingIntegrationTests(unittest.TestCase):
     def wait_for_zero_lag(self):
         deadline = time.monotonic() + 45
         while time.monotonic() < deadline:
+            group=manage.history_target(project=self.project)["group"]
             result = manage.compose(["--profile", "streaming", "exec", "-T", "kafka",
                 "/opt/kafka/bin/kafka-consumer-groups.sh", "--bootstrap-server", "localhost:9092",
-                "--describe", "--group", "order-history-v1"], project=self.project, capture=True, check=False)
+                "--describe", "--group", group], project=self.project, capture=True, check=False)
             rows = [line.split() for line in result.stdout.splitlines()
-                    if line.strip().startswith("order-history-v1 commerce.order.events.v1")]
+                    if line.strip().startswith(group+" commerce.order.events.v1")]
             if len(rows) == 3 and all(row[5] == "0" for row in rows):
                 return
             time.sleep(1)
@@ -100,7 +102,7 @@ class StreamingIntegrationTests(unittest.TestCase):
         self.assertEqual(projected_status, 200, "CDC event did not reach the owner-scoped projection")
         self.assertEqual(projected["totalMinor"], accepted["totalMinor"])
         self.assertEqual(len(projected["lines"]), 1)
-        inbox = manage.compose(["exec", "-T", "postgres", "psql", "-U", "postgres", "-d", "order_history",
+        inbox = manage.compose(["exec", "-T", "postgres", "psql", "-U", "postgres", "-d", manage.history_target(project=self.project)["database"],
             "-tA", "-c", f"SELECT count(*),count(DISTINCT aggregate_sequence) FROM order_history_state_event WHERE order_id='{accepted['orderId']}'"],
             project=self.project, capture=True).stdout.strip().split("|")
         self.assertEqual(int(inbox[0]), int(inbox[1]))
@@ -135,7 +137,7 @@ class StreamingIntegrationTests(unittest.TestCase):
             request={"action":"replay","sourceCoordinate":demo["sourceCoordinate"],"correctedPayload":corrected,
                      "operationId":operation,"reason":"integration poison version correction"}
             def sql(query,check=True):
-                return manage.compose(["exec","-T","postgres","psql","-U","postgres","-d","order_history","-tA","-c",query],
+                return manage.compose(["exec","-T","postgres","psql","-U","postgres","-d",manage.history_target(project=self.project)["database"],"-tA","-c",query],
                                       project=self.project,capture=True,check=check)
             before=sql("SELECT count(*) FROM event_inbox").stdout.strip()
             with self.assertRaisesRegex(RuntimeError,"OPERATOR_AUTHENTICATION_REQUIRED"):
@@ -168,6 +170,54 @@ class StreamingIntegrationTests(unittest.TestCase):
             self.assertIn("append-only",immutable.stderr)
         finally:
             path.unlink(missing_ok=True)
+
+    def test_z_isolated_rebuild_failure_dry_run_cutover_and_new_event_delivery(self):
+        self.wait_for_zero_lag()
+        old=manage.history_target(project=self.project)
+        self.assertTrue(projection_operations.reconcile(manage,project=self.project)["ok"])
+        with stream_operations.exclusive(manage,self.project):
+            dry=projection_operations.rebuild(manage,project=self.project,dry_run=True)
+            self.assertTrue(dry["ok"],dry)
+            self.assertEqual(dry["status"],"DRY_RUN_VERIFIED")
+            self.assertEqual(manage.history_target(project=self.project),old)
+            failed=projection_operations.rebuild(manage,project=self.project,inject_mismatch=True)
+            self.assertFalse(failed["ok"],failed)
+            self.assertEqual(failed["status"],"RECONCILIATION_FAILED")
+            self.assertTrue(any(error.startswith("ORDER_STATE_OWNER_MONEY_MISMATCH") for error in failed["reconciliation"]["errors"]))
+            self.assertEqual(manage.history_target(project=self.project),old)
+            healthy=manage.request_json("http://127.0.0.1:8089/actuator/health/readiness")
+            self.assertEqual(healthy[0],200)
+            active=projection_operations.rebuild(manage,project=self.project)
+            self.assertTrue(active["ok"],active)
+            self.assertEqual(active["status"],"ACTIVE")
+        self.assertEqual(manage.history_target(project=self.project),active["candidate"])
+        self.assertNotEqual(active["candidate"],old)
+        first=active["watermarks"]["firstHighWater"]; second=active["watermarks"]["secondHighWater"]
+        self.assertEqual(set(first),{"0","1","2"})
+        self.assertTrue(all(second[key]>=first[key] for key in first))
+        self.customer=manage.customer_token_for("checkout-test-customer",self.credentials["DEMO_CUSTOMER_PASSWORD"])
+        self.other=manage.customer_token_for("checkout-test-customer-b",self.credentials["DEMO_CUSTOMER_PASSWORD"])
+        status,history=manage.request_json("http://127.0.0.1:8089/api/v1/order-history",token=self.customer)
+        self.assertEqual(status,200);self.assertTrue(history["orders"])
+        existing=history["orders"][0]["id"]
+        self.assertEqual(manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{existing}",token=self.other)[0],404)
+        _,products=manage.request_json("http://127.0.0.1:8081/api/v1/catalog/products?q=football")
+        sku=products[0]["skus"][0]["id"]
+        status,accepted=manage.request_json("http://127.0.0.1:8086/api/v1/orders/checkout",token=self.customer,method="POST",
+            data=json.dumps({"lines":[{"skuId":sku,"quantity":1}],"couponCode":None}).encode(),headers={"Idempotency-Key":"post-rebuild-"+uuid.uuid4().hex})
+        self.assertEqual(status,202)
+        deadline=time.monotonic()+60
+        while time.monotonic()<deadline:
+            projected_status,projected=manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{accepted['orderId']}",token=self.customer)
+            if projected_status==200 and projected["lastSequence"]>=3:break
+            time.sleep(0.5)
+        self.assertEqual(projected_status,200)
+        self.assertEqual(projected["state"],"FULFILLMENT_SCHEDULED")
+        self.assertEqual(projected["totalMinor"],accepted["totalMinor"])
+        self.wait_for_zero_lag()
+        reconciled=projection_operations.reconcile(manage,project=self.project)
+        self.assertTrue(reconciled["ok"],reconciled)
+        self.assertEqual(reconciled["target"],active["candidate"])
 
 
 if __name__ == "__main__":

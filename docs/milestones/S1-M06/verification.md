@@ -1,21 +1,41 @@
 # S1-M06 verification record
 
-Revision 3 · 2026-10-24 · Targeted replay verification passed after the prior full CI; human acceptance remains open.
+Revision 4 · 2026-10-24 · Full CI after replay/rebuild passed; explicit remaining acceptance is in [the matrix](acceptance-matrix.md).
+
+## Latest full CI and rebuild verification
+
+Command: `SE_OFFLINE=true ./devops/scripts/ci` (exit 0). Current pinned dependencies are unchanged. The run included:
+
+- 81 Java tests across nine modules, counted once per standalone Maven summary: Catalog 10, Configuration 12, Pricing 13, Inventory 13, Customer 4, Orders 10, Payment 4, Fulfillment 2, Order History 13. Docker image build test reruns are excluded from this total. This is the authoritative latest count; earlier recorded aggregate counts are preserved below as historical reports.
+- 40 executed Python unit cases: 26 operations/target tests, two event-contract cases, six reconciliation/control-path cases, and six operator CLI/lock cases. Discovery reported 62 test methods; 22 live core methods and the streaming class were intentionally skipped during unit discovery and explicitly invoked against Docker below.
+- Compose validation, Helm lint/render/negative checks, Terraform format/init/validate plus three native tests passed; no cloud provisioning.
+- Core integration passed twice, 22 tests each (37.609 and 39.858 seconds).
+- Streaming integration passed twice, three journeys each (248.843 and 259.483 seconds). Each pass exercises consumer commit/offset crash recovery, audited replay with publication-boundary failures, and rebuild dry-run/mismatch/success followed by a new checkout reaching `FULFILLMENT_SCHEDULED` on the new target.
+- Application restart, database readiness/liveness/reconnection and identity token recovery checks passed.
+- All seven Selenium journeys passed in 40.662 seconds, including owner-scoped customer history after cutover.
+
+The earlier targeted rebuild run passed all three journeys in 256.815 seconds. New reconciliation and target/index tests were first observed failing before their implementations existed, then passed. Readiness-failure rollback is covered by a control-path unit test; the live mismatch probe verifies preservation of the serving target. These are distinct evidence scopes.
+
+Post-CI `stream-reconcile` returned `ok: true`, 190 unique retained events, 70 orders, five resolved poison records, ten replay audits and no reconciliation errors. It compared exact content/ownership/state/line/money facts, not only counts. Reported order totals were INR 32,247,935 minor units across all current states, not recognized sales. The active saved target is a generated `order_history_r_...` database with its corresponding generated group; inspect the local target via `stream-status`.
+
+Memory sampling used repository `.venv` Python and repeated `docker stats --no-stream` during the full run. From 11:11:45 to 11:26:40 UTC, 210 samples recorded a maximum 5,237.09 MiB for SuperSports containers (15 containers at that sample) and 5,331.09 MiB across all running Docker containers. The host reports 17,179,869,184 bytes (16 GiB), with Docker allocated 7.75 GiB. Sampling sleeps two seconds after each Docker query, so this is a sampled maximum for this CI workload and can miss shorter spikes. It does not establish sustained/concurrent throughput or host/VM overhead capacity. Raw logs and samples remain ignored under `devops/.local/`.
+
+The complete design is still open for the explicit source/DLQ transaction crash windows, delayed/gapped delivery and timed-gap UI behavior, broker-outage freshness, sustained/concurrent resource/lag measurements and separate human checks. See [implementation review](rebuild-review.md), [manual acceptance](manual-acceptance.md), and [completion audit](acceptance-matrix.md).
 
 ## Environment
 
 - Mac ARM64 (`aarch64`), Docker 29.8.0, Docker RAM allocation 7.75 GiB, Python 3.14.7 in repository `.venv`.
 - Apache Kafka `4.3.1`, Debezium Connect `3.7.0.Final`, PostgreSQL `18.6`, and pinned application base images are recorded in `devops/images.lock.json`.
-- Connect REST reports connector `supersports-orders-outbox` RUNNING and task 0 RUNNING. `order-history-v1` consumer lag was 0 on partitions 0, 1 and 2 after the test run.
+- The initial streaming slice observed connector `supersports-orders-outbox` and task 0 RUNNING, with the original `order-history-v1` group at zero lag. Rebuilds now use generated groups; obtain the current pair and lag from `stream-status`.
 - Fourteen runtime containers were healthy. One `docker stats --no-stream` snapshot summed to approximately 4,719 MiB RSS (about 4.61 GiB) against the 7.75 GiB Docker allocation. In that snapshot Kafka used 480.4 MiB, Connect 496.3 MiB, and Order History 425.3 MiB. A separate cold Connect startup reached approximately 770 MiB before settling near 549 MiB; its limit is now 1 GiB. These are observations, not peak/load measurements.
 
-## Automated checks
+## Earlier crash-recovery CI record (before replay/rebuild)
 
 Command: `SE_OFFLINE=true ./devops/scripts/ci`
 
 - Compose configuration validation passed.
 - Python operations and JSON Schema contract unit suite passed; JSON Schema validates all five supported event types, rejects incomplete sequence/privacy payloads, and validates the live outbox rows.
-- Java unit suite passed: 84 tests, 0 failures/errors, including the six Order History tests after crash-injector changes.
+- The earlier narrative recorded 84 aggregate Java tests without a preserved per-module breakdown here. The authoritative latest total is the 81 tests counted once per module at the top of this record; image-build reruns are not added to that total.
 - Python unit discovery reported 49 test methods, with 22 live core methods and the streaming class intentionally skipped. The actual executed unit cases were 27 (25 operations and two event-contract cases); live integration ran separately below. Earlier text labeling all 49 as unit cases was inaccurate.
 - Helm lint/render and intended negative cases passed. Terraform format/init/validate/test passed (3 tests); no cloud provisioning occurred.
 - Core integration suite passed twice (22 tests per pass), before and after recovery checks.
@@ -25,18 +45,18 @@ Command: `SE_OFFLINE=true ./devops/scripts/ci`
 
 ## Database evidence
 
-After the latest replay integration run and test-created synthetic orders:
+Historical replay-slice snapshot before rebuild work:
 
 - Orders outbox: 153 events, 153 distinct event IDs.
 - Order History inbox: 153 events; 57 projected orders, zero pending sequence gaps, four replay audits and zero unpublished replay deliveries.
-- The source and inbox totals match; consumer lag is zero. Reconciliation here covers retained outbox/inbox counts and the tested customer projection path only. It is not the designed full historical replay/rebuild reconciliation.
+- Those source/inbox totals matched with zero lag. That earlier check covered counts and the customer path; the latest full reconciliation above compares retained content and rebuilt state.
 
 ## Open acceptance and limitations
 
 - The owner must perform and record the separate [manual acceptance checklist](manual-acceptance.md).
-- Peak memory, throughput and sustained lag under load have not been measured.
-- Isolated candidate projection rebuild/reconciliation/cutover remains unimplemented. Full M06 design completion is open; do not represent that behavior as tested.
-- Full CI was rerun after the crash recovery change and passed end to end: `SE_OFFLINE=true ./devops/scripts/ci`. It rebuilt the ARM64 images, validated Compose/Helm/Terraform, ran Java/Python unit checks, two core integration passes, two streaming passes with injected crash recovery, recovery checks, and seven Selenium journeys. That full run predates the replay follow-up below; candidate rebuild commands remain pending.
+- The CI sampled memory maximum is recorded above. Sustained throughput/concurrent load and lag remain unmeasured.
+- Candidate rebuild/reconciliation/cutover is now implemented and tested; the full M06 design still has the acceptance gaps listed in the matrix.
+- Earlier full CI after crash recovery passed; the newer full run at the top of this record also covers replay and rebuild.
 - Review evidence is in [design-review.md](design-review.md). This report contains measured runtime facts separately from the deferred design proposal.
 
 ## Replay follow-up verification
@@ -49,4 +69,4 @@ After the last full CI, the replay slice added operator authentication, append-o
 - `SE_OFFLINE=true .venv/bin/python -m unittest discover -s apps/storefront/tests -p test_customer_history_ui.py -v`: one Selenium journey passed in 4.590 seconds.
 - Compose validation and `git diff --check` passed. No dependency version was added or changed.
 
-The full CI has not yet been rerun after this replay slice. [Implementation review and coverage limits](replay-review.md) record the manual scan and unavailable independent review capability. Operator manual acceptance remains separate.
+This replay-only evidence predates the latest full CI at the top of this record. [Implementation review and coverage limits](replay-review.md) record the manual scan and unavailable independent review capability. Operator manual acceptance remains separate.

@@ -14,13 +14,14 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name="order-history.operator-mode",havingValue="true")
 class OperatorRunner implements ApplicationRunner {
     private final ReplayOperations replay;
+    private final ProjectionOperations projection;
     private final boolean enabled;
     private final String jwks,issuer;
     private int exitCode;
-    OperatorRunner(ReplayOperations replay,@Value("${order-history.operator-enabled:false}") boolean enabled,
+    OperatorRunner(ReplayOperations replay,ProjectionOperations projection,@Value("${order-history.operator-enabled:false}") boolean enabled,
                    @Value("${order-history.operator-jwks:http://identity:8080/realms/supersports/protocol/openid-connect/certs}") String jwks,
                    @Value("${order-history.operator-issuer:http://localhost:8180/realms/supersports}") String issuer) {
-        this.replay=replay;this.enabled=enabled;this.jwks=jwks;this.issuer=issuer;
+        this.replay=replay;this.projection=projection;this.enabled=enabled;this.jwks=jwks;this.issuer=issuer;
     }
 
     @Override public void run(ApplicationArguments arguments) {
@@ -34,6 +35,9 @@ class OperatorRunner implements ApplicationRunner {
             Map<String,Object> result=switch(String.valueOf(action)) {
                 case "demo-poison" -> replay.demo();
                 case "replay" -> replay.replay(request,subject);
+                case "snapshot" -> projection.snapshot();
+                case "inspect" -> projection.inspect();
+                case "rebuild" -> projection.rebuild(Boolean.TRUE.equals(request.get("injectMismatch")));
                 default -> throw new IllegalArgumentException("UNKNOWN_OPERATOR_ACTION");
             };
             System.out.println("SUPERSPORTS_OPERATOR_RESULT "+EventContent.write(Map.of("ok",true,"result",result)));

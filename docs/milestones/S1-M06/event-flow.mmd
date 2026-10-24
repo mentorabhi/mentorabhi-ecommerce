@@ -35,7 +35,17 @@ flowchart LR
   replay[Operator token + correction + stable operation ID]
   audit[(Immutable replay audit
   durable publication intent)]
-  rebuild[Future: candidate projection rebuild/reconcile/cutover]
+  rebuild[Isolated database + distinct group
+  replay to two high-water marks]
+  reconcile[Compare IDs/hashes/timeline
+  owners/state/money/audits]
+  cutover[Readiness-checked cutover
+  persist database/group target]
+  failure[Retain serving target
+  record failed candidate receipt]
   dlq --> replay --> audit
   audit -->|retryable corrected publication| kafka
   kafka -. replay retained history .-> rebuild
+  rebuild --> reconcile
+  reconcile -->|pass| cutover --> projection
+  reconcile -->|fail| failure

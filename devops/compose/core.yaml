@@ -358,7 +358,8 @@ services:
     cpus: 1.0
     environment:
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx384m -XX:MaxMetaspaceSize=128m"
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_history
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${ORDER_HISTORY_DATABASE_NAME:-order_history}"
+      ORDER_HISTORY_CONSUMER_GROUP: "${ORDER_HISTORY_CONSUMER_GROUP:-order-history-v1}"
       SPRING_DATASOURCE_USERNAME: supersports_order_history
       SPRING_DATASOURCE_PASSWORD: "${ORDER_HISTORY_DB_PASSWORD:?Run configure}"
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://localhost:8180/realms/supersports-customers"

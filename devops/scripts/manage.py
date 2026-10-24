@@ -11,6 +11,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 import time
 from uuid import UUID
 from urllib.error import HTTPError, URLError
@@ -177,7 +178,47 @@ def compose_command(root: Path, project: str, arguments: list[str]) -> list[str]
     ]
 
 
-def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | None = None) -> dict:
+def history_target_path(root: Path = ROOT, project="supersports") -> Path:
+    return root / "devops/.local" / f"order-history-target-{validated_project_name(project)}.json"
+
+
+def validated_history_target(value):
+    if not isinstance(value, dict) or set(value) != {"database", "group"}:
+        raise ValueError("Invalid Order History database/group target.")
+    if value == {"database": "order_history", "group": "order-history-v1"}:
+        return dict(value)
+    database = value.get("database")
+    match = re.fullmatch(r"order_history_r_([a-f0-9]{12})", database) if isinstance(database, str) else None
+    if not match or value["group"] != "order-history-r-" + match.group(1):
+        raise ValueError("Order History candidate database/group must have the same generated suffix.")
+    return dict(value)
+
+
+def history_target(root: Path = ROOT, project="supersports"):
+    path = history_target_path(root, project)
+    if path.is_symlink() or path.parent.is_symlink():
+        raise ValueError("Refusing a symlinked Order History target.")
+    if not path.exists():
+        return {"database": "order_history", "group": "order-history-v1"}
+    return validated_history_target(json.loads(path.read_text()))
+
+
+def set_history_target(value, *, root: Path = ROOT, project="supersports"):
+    target = validated_history_target(value)
+    path = history_target_path(root, project)
+    if path.is_symlink() or path.parent.is_symlink():
+        raise ValueError("Refusing a symlinked Order History target.")
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    descriptor, temporary = tempfile.mkstemp(prefix=".history-target-", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "w") as handle:
+            json.dump(target, handle); handle.write("\n"); handle.flush(); os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+
+
+def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | None = None, project="supersports") -> dict:
     environment = os.environ.copy()
     environment.update(load_credentials(root / "devops/.local/bootstrap.env"))
     lock = json.loads((root / "devops/images.lock.json").read_text())
@@ -186,6 +227,9 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
     for key in ("STOREFRONT_NODE_IMAGE", "STOREFRONT_NGINX_IMAGE"):
         environment[key] = lock[key]
     environment["RELEASE_VERSION"] = validated_version(version)
+    target = history_target(root, project)
+    environment["ORDER_HISTORY_DATABASE_NAME"] = target["database"]
+    environment["ORDER_HISTORY_CONSUMER_GROUP"] = target["group"]
     for service in DEPLOYABLES:
         environment[f"{service.upper().replace('-', '_')}_IMAGE"] = (
             images[service] if images else f"supersports/{service}:{version}"
@@ -206,10 +250,15 @@ def run(command: list[str], *, environment=None, capture=False, check=True, cwd=
 
 
 def compose(arguments: list[str], *, root=ROOT, project="supersports",
-            version=DEFAULT_VERSION, images=None, capture=False, check=True):
+            version=DEFAULT_VERSION, images=None, capture=False, check=True, input_text=None, history_override=None):
+    environment=deployment_env(root,version,images,project=project)
+    if history_override is not None:
+        target=validated_history_target(history_override)
+        environment["ORDER_HISTORY_DATABASE_NAME"]=target["database"]
+        environment["ORDER_HISTORY_CONSUMER_GROUP"]=target["group"]
     return run(compose_command(root, project, arguments),
-               environment=deployment_env(root, version, images),
-               capture=capture, check=check, cwd=root)
+               environment=environment,
+               capture=capture, check=check, cwd=root, input_text=input_text)
 
 
 def provision_databases(root=ROOT, project="supersports", version=DEFAULT_VERSION):
@@ -283,6 +332,9 @@ def streaming_up(project="supersports", version=DEFAULT_VERSION):
         compose(["--profile", "streaming", "exec", "-T", "kafka", "/opt/kafka/bin/kafka-topics.sh",
                  "--bootstrap-server", "localhost:9092", "--create", "--if-not-exists", "--topic", topic,
                  "--partitions", str(partitions), "--replication-factor", "1"], project=project, version=version)
+        compose(["--profile", "streaming", "exec", "-T", "kafka", "/opt/kafka/bin/kafka-configs.sh",
+                 "--bootstrap-server", "localhost:9092", "--entity-type", "topics", "--entity-name", topic,
+                 "--alter", "--add-config", "retention.ms=-1"], project=project, version=version)
     register_orders_connector(project=project, version=version)
 
 
@@ -298,7 +350,8 @@ def streaming_status(project="supersports", version=DEFAULT_VERSION):
             compose(["--profile", "streaming", "exec", "-T", "kafka", "/opt/kafka/bin/kafka-topics.sh",
                      "--bootstrap-server", "localhost:9092", "--describe", "--topic", name], project=project, version=version)
         compose(["--profile", "streaming", "exec", "-T", "kafka", "/opt/kafka/bin/kafka-consumer-groups.sh",
-                 "--bootstrap-server", "localhost:9092", "--describe", "--group", "order-history-v1"], project=project, version=version, check=False)
+                 "--bootstrap-server", "localhost:9092", "--describe", "--group", history_target(project=project)["group"]], project=project, version=version, check=False)
+        print("Active Order History target:", json.dumps(history_target(project=project)))
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
         print("Orders CDC connector status: unavailable")
 
@@ -707,7 +760,7 @@ def main(argv=None):
     parser.add_argument("action", choices=[
         "doctor", "configure", "validate", "build", "up", "down", "status",
         "unit", "test", "reset", "release", "rollback",
-        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "restart", "stream-demo-poison", "stream-replay",
+        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "restart", "stream-demo-poison", "stream-replay", "stream-reconcile", "stream-rebuild",
     ])
     parser.add_argument("release_version", nargs="?")
     parser.add_argument("--project", default="supersports")
@@ -721,6 +774,8 @@ def main(argv=None):
     parser.add_argument("--corrected-payload-file")
     parser.add_argument("--operation-id")
     parser.add_argument("--reason")
+    parser.add_argument("--dry-run",action="store_true")
+    parser.add_argument("--inject-reconciliation-mismatch",action="store_true")
     arguments = parser.parse_args(argv)
     try:
         project = validated_project_name(arguments.project)
@@ -767,14 +822,23 @@ def main(argv=None):
                 raise ValueError("Fault injection is one-shot; pass --once.")
             stream_fault(arguments.release_version, arguments.order_id, next_event=arguments.next_event,
                          project=project, version=version)
-        elif action in ("stream-demo-poison", "stream-replay"):
+        elif action in ("stream-demo-poison", "stream-replay", "stream-rebuild", "stream-reconcile"):
             import stream_operations
-            if action == "stream-demo-poison":
-                result = stream_operations.demo(sys.modules[__name__], project=project, version=version)
+            import projection_operations
+            if action == "stream-reconcile":
+                result=projection_operations.reconcile(sys.modules[__name__],project=project,version=version)
             else:
-                result = stream_operations.replay(sys.modules[__name__], arguments.source_coordinate,
-                    arguments.corrected_payload_file, arguments.operation_id, arguments.reason, project=project, version=version)
+                with stream_operations.exclusive(sys.modules[__name__],project):
+                    if action == "stream-demo-poison":
+                        result = stream_operations.demo(sys.modules[__name__], project=project, version=version)
+                    elif action == "stream-replay":
+                        result = stream_operations.replay(sys.modules[__name__], arguments.source_coordinate,
+                            arguments.corrected_payload_file, arguments.operation_id, arguments.reason, project=project, version=version)
+                    else:
+                        result=projection_operations.rebuild(sys.modules[__name__],project=project,version=version,
+                            dry_run=arguments.dry_run,inject_mismatch=arguments.inject_reconciliation_mismatch)
             print(json.dumps(result, indent=2))
+            if result.get("ok") is False:return 1
         elif action == "restart":
             service = arguments.release_version
             allowed = (*SERVICES, "kafka-connect", "kafka", *STREAMING_SERVICES)
@@ -783,6 +847,7 @@ def main(argv=None):
             compose(["--profile", "streaming", "restart", service], project=project, version=version)
         elif action == "reset":
             compose(["down", "--volumes", "--remove-orphans"], project=project, version=version)
+            history_target_path(project=project).unlink(missing_ok=True)
             print(f"Removed {project} runtime volumes; local credentials and build cache preserved.")
         elif action == "release":
             release(project=project, version=arguments.release_version)

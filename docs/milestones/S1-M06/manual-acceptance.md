@@ -1,6 +1,6 @@
 # S1-M06 manual end-user acceptance
 
-Revision 4 · 2026-10-24 · CDC, customer history, crash recovery and audited poison replay. Run manually after automated checks; leave boxes unchecked until performed by a person.
+Revision 5 · 2026-10-24 · Adds isolated rebuild, reconciliation and cutover checks. Run manually after automated checks; leave boxes unchecked until performed by a person.
 
 Use synthetic accounts and orders only. Do not paste personal data, bearer tokens or secrets into this file.
 
@@ -15,7 +15,7 @@ Use synthetic accounts and orders only. Do not paste personal data, bearer token
 - [ ] Restart Kafka Connect with `./devops/scripts/supersports restart kafka-connect`. Confirm its connector task returns to RUNNING and newly checked out orders appear in history.
 - [ ] Run `./devops/scripts/supersports streaming-down`. Confirm the storefront and operator workspace remain available. Restart with `./devops/scripts/supersports streaming-up` when finished.
 
-Storefront URL: http://localhost:3000 · Operator UI: http://localhost:3000/admin · Kafka: localhost:9092 · Connect REST: http://localhost:8090 · Order History readiness: http://localhost:8089/actuator/health/readiness
+Storefront URL: http://localhost:3000 · Operator UI: http://localhost:3000/admin · Kafka: `kafka:9092` inside Compose (use the local CLI; no host port) · Connect REST: http://localhost:8090 · Order History readiness: http://localhost:8089/actuator/health/readiness
 
 ## 2. CDC and Kafka checks
 
@@ -39,18 +39,31 @@ Storefront URL: http://localhost:3000 · Operator UI: http://localhost:3000/admi
 - [ ] If interrupted, retry with the same operation ID, correction and reason. A queued delivery is resumed; publication before receipt persistence may redeliver safely. An already applied event with changed content is rejected rather than rewritten. A changed reason or correction under an existing operation ID conflicts.
 - [ ] Delete the returned temporary correction file after checks. Retained DLQ and audit records remain available for investigation; they are not deleted by replay.
 
-## 4. Read-only database checks
+## 4. Projection rebuild and reconciliation
+
+- [ ] Run `./devops/scripts/supersports stream-reconcile`. Confirm `ok: true`, no errors, matching retained event/order facts and reported currency totals. Totals include all current order states and are not recognized sales. Read the historical-retention limitation in the output.
+- [ ] Record the active database and consumer group from `stream-status`. Run `./devops/scripts/supersports stream-rebuild --dry-run`. Confirm `DRY_RUN_VERIFIED`, matching candidate facts, first/second high-water marks for all three partitions, and a private receipt file under `devops/.local/stream-rebuilds/`. The saved active target must still be the previous pair.
+- [ ] Run `./devops/scripts/supersports stream-rebuild --inject-reconciliation-mismatch`. This intentionally changes one amount in the isolated candidate. Expect a nonzero exit, `RECONCILIATION_FAILED`, and an amount mismatch. Confirm `stream-status` still names the original target and the customer history UI still loads.
+- [ ] Run `./devops/scripts/supersports stream-rebuild`. Confirm `ACTIVE`, successful reconciliation, a new database/group pair and a healthy Order History container. The target is saved after service readiness; a startup failure recreates the previous pair.
+- [ ] Sign in as the same customer and open an existing order. Confirm amounts, products, ownership and sequence history remain correct. Place a new synthetic order and wait for `FULFILLMENT_SCHEDULED`; confirm the new consumer continues after the captured offsets. The other customer must still receive 404 for the order.
+- [ ] Run `stream-reconcile` again and confirm it passes on the new target. Restart Order History, run `stream-status`, and confirm the saved target survives restart.
+- [ ] Inspect replay audit/delivery rows in the active database using section 5. Confirm the pre-rebuild operation IDs, actors, reasons, timestamps and publication receipts are retained. Candidates and previous projection databases are retained for diagnosis and consume local disk; reset removes runtime volumes after explicit confirmation.
+
+## 5. Read-only database checks
 
 Run these local checks after the test order has completed. Use only synthetic test records.
 
+Set `SUPERSPORTS_HISTORY_DB` to the active database printed by `stream-status`. It starts as `order_history`; successful rebuilds select a generated `order_history_r_...` database.
+
 ```sh
+SUPERSPORTS_HISTORY_DB='<active database from stream-status>'
 docker exec supersports-postgres-1 psql -U postgres -d orders -c "SELECT version,description,success FROM flyway_schema_history ORDER BY installed_rank;"
 docker exec supersports-postgres-1 psql -U postgres -d orders -c "SELECT count(*) AS events, count(DISTINCT event_id) AS unique_ids, count(*) FILTER (WHERE event_id IS NULL OR aggregate_sequence IS NULL OR customer_key IS NULL) AS incomplete FROM order_outbox;"
-docker exec supersports-postgres-1 psql -U postgres -d order_history -c "SELECT version,description,success FROM flyway_schema_history ORDER BY installed_rank;"
-docker exec supersports-postgres-1 psql -U postgres -d order_history -c "SELECT count(*) AS inbox_events, count(DISTINCT event_id) AS unique_ids FROM event_inbox;"
-docker exec supersports-postgres-1 psql -U postgres -d order_history -c "SELECT state,count(*) FROM order_history_projection GROUP BY state ORDER BY state;"
-docker exec supersports-postgres-1 psql -U postgres -d order_history -c "SELECT operation_id,source_coordinate,event_id,operator_subject,reason,created_at FROM order_history_replay_audit ORDER BY created_at DESC LIMIT 10;"
-docker exec supersports-postgres-1 psql -U postgres -d order_history -c "SELECT operation_id,published_topic,published_partition,published_offset,published_at FROM order_history_replay_delivery ORDER BY published_at DESC NULLS FIRST LIMIT 10;"
+docker exec supersports-postgres-1 psql -U postgres -d "$SUPERSPORTS_HISTORY_DB" -c "SELECT version,description,success FROM flyway_schema_history ORDER BY installed_rank;"
+docker exec supersports-postgres-1 psql -U postgres -d "$SUPERSPORTS_HISTORY_DB" -c "SELECT count(*) AS inbox_events, count(DISTINCT event_id) AS unique_ids FROM event_inbox;"
+docker exec supersports-postgres-1 psql -U postgres -d "$SUPERSPORTS_HISTORY_DB" -c "SELECT state,count(*) FROM order_history_projection GROUP BY state ORDER BY state;"
+docker exec supersports-postgres-1 psql -U postgres -d "$SUPERSPORTS_HISTORY_DB" -c "SELECT operation_id,source_coordinate,event_id,operator_subject,reason,created_at FROM order_history_replay_audit ORDER BY created_at DESC LIMIT 10;"
+docker exec supersports-postgres-1 psql -U postgres -d "$SUPERSPORTS_HISTORY_DB" -c "SELECT operation_id,published_topic,published_partition,published_offset,published_at FROM order_history_replay_delivery ORDER BY published_at DESC NULLS FIRST LIMIT 10;"
 docker stats --no-stream
 ```
 
@@ -60,7 +73,7 @@ docker stats --no-stream
 
 ## Scope still pending
 
-Candidate projection rebuild/reconciliation/cutover remain unimplemented. Do not attempt `stream-rebuild` or `stream-reconcile`; those commands do not exist yet. Poison correction/replay and deterministic consumer crash injection are implemented and covered above and in the streaming integration suite.
+Commands above are implemented. Remaining M06 acceptance includes broader source/consumer failure-boundary evidence, sequence-gap demonstrations, sustained load/freshness measurements and owner manual results. The separate acceptance matrix records the open gates; do not treat this guide as a completed human test record.
 
 ## Human result
 

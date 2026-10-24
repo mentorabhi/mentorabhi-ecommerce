@@ -6,20 +6,30 @@ import os
 from pathlib import Path
 import re
 import tempfile
+import fcntl
+from contextlib import contextmanager
 from uuid import UUID
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
 
-def operator(manage, request, *, project="supersports", version="s1-m06", token=None):
+def operator(manage, request, *, project="supersports", version="s1-m06", token=None, target=None):
     """Use stdin for the token/payload; return only the structured operator receipt."""
     if token is None:
         token = manage.token_for("admin", manage.configure_admin_login(manage.ROOT))
     body = {**request, "token": token}
-    arguments = ["--profile", "streaming", "run", "--rm", "-T", "--no-deps", "order-history",
+    arguments = ["--profile", "streaming", "run", "--rm", "-T", "--no-deps"]
+    if request.get("action")=="rebuild" and (target is None or target==manage.history_target(project=project)):
+        raise ValueError("Rebuild requires a candidate different from the active target.")
+    if target is not None:
+        target=manage.validated_history_target(target)
+        arguments += ["-e", "SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/"+target["database"],
+                      "-e", "ORDER_HISTORY_CONSUMER_GROUP="+target["group"]]
+        if request.get("action")=="rebuild":arguments += ["-e","ORDER_HISTORY_REBUILD_TARGET=true"]
+    arguments += ["order-history",
                  "--spring.main.web-application-type=none", "--order-history.operator-mode=true",
                  "--spring.main.banner-mode=off", "--logging.level.root=WARN"]
     result = manage.run(manage.compose_command(manage.ROOT, project, arguments),
-                        environment=manage.deployment_env(manage.ROOT, version),
+                        environment=manage.deployment_env(manage.ROOT, version, project=project),
                         input_text=json.dumps(body), capture=True, check=False)
     receipts = [line.removeprefix("SUPERSPORTS_OPERATOR_RESULT ")
                 for line in result.stdout.splitlines() if line.startswith("SUPERSPORTS_OPERATOR_RESULT ")]
@@ -32,6 +42,21 @@ def operator(manage, request, *, project="supersports", version="s1-m06", token=
             code = "OPERATOR_OPERATION_FAILED"
         raise RuntimeError(f"Order History operator: {code}")
     return receipt["result"]
+
+
+@contextmanager
+def exclusive(manage, project="supersports"):
+    directory=manage.ROOT/"devops/.local"
+    if directory.is_symlink():raise ValueError("Refusing a symlinked local state directory.")
+    directory.mkdir(parents=True,exist_ok=True,mode=0o700)
+    path=directory/f"stream-operator-{manage.validated_project_name(project)}.lock"
+    descriptor=os.open(path,os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
+    try:
+        try:fcntl.flock(descriptor,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError as error:raise RuntimeError("Another streaming operator is active; retry after it finishes.") from error
+        yield
+    finally:
+        os.close(descriptor)
 
 
 def demo(manage, *, project="supersports", version="s1-m06"):

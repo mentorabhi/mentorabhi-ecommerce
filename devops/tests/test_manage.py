@@ -120,6 +120,19 @@ class ConfigureTests(unittest.TestCase):
 
 
 class CommandTests(unittest.TestCase):
+    def test_active_history_target_is_persisted_and_validates_database_group_pair(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            self.assertEqual(manage.history_target(root),{"database":"order_history","group":"order-history-v1"})
+            target={"database":"order_history_r_012345abcdef","group":"order-history-r-012345abcdef"}
+            manage.set_history_target(target,root=root)
+            self.assertEqual(manage.history_target(root),target)
+            self.assertEqual(manage.history_target_path(root).stat().st_mode & 0o777,0o600)
+            for invalid in ({"database":"orders","group":"order-history-v1"},
+                            {"database":"order_history_r_012345abcdef","group":"order-history-r-ffffffffffff"}):
+                with self.assertRaises(ValueError):manage.set_history_target(invalid,root=root)
+            self.assertEqual(manage.history_target(root),target)
+
     def test_up_recreates_services_from_the_latest_built_images(self):
         from unittest.mock import patch
         with patch.object(manage, "provision_databases"), \

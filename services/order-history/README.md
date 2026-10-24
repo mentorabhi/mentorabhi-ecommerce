@@ -33,4 +33,6 @@ Implemented: versioned envelope/backfill, Debezium CDC, event topic, durable inb
 
 Local operator commands: `stream-demo-poison` and `stream-replay --source-coordinate ... --corrected-payload-file ... --operation-id ... --reason ...`. The CLI uses a transient non-web container, verifies the operator token, and records immutable audit plus resumable publication intent. See the [manual guide](../../docs/milestones/S1-M06/manual-acceptance.md) and [workflow detail](../../docs/milestones/S1-M06/operator-workflows.md).
 
-Candidate projection rebuild/reconciliation/cutover remains unimplemented against the full reviewed M06 design.
+`stream-reconcile` compares retained Orders owner/admin diagnostic facts with Kafka, the inbox, timeline, projected state/owner/lines/money and replay records. This diagnostic is orchestrated by devops; the service itself still reads only its own database and Kafka.
+
+`stream-rebuild --dry-run`, `stream-rebuild --inject-reconciliation-mismatch`, and `stream-rebuild` create isolated database/group candidates, replay to two successive high-water marks, copy replay audit/delivery records, and reconcile before cutover. The normal consumer resumes at the candidate group's captured offsets. Compose saves the database/group pair in ignored local state after readiness; startup failure recreates the prior pair. Explicit reset clears that saved pair along with runtime volumes. See the [completion audit](../../docs/milestones/S1-M06/acceptance-matrix.md) for remaining broader failure, freshness and load acceptance.
