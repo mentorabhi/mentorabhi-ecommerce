@@ -38,6 +38,8 @@ services:
     build:
       context: .
       dockerfile: devops/docker/analytics-api.Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: "${PYTHON_BASE_IMAGE:?Use devops/scripts/supersports configure}"
     image: supersports/analytics-api:local
     depends_on:
       trino: {condition: service_started}
@@ -54,6 +56,8 @@ services:
     build:
       context: .
       dockerfile: devops/docker/superset.Dockerfile
+      args:
+        SUPERSET_BASE_IMAGE: "${SUPERSET_BASE_IMAGE:?Use devops/scripts/supersports configure}"
     image: supersports/superset:6.1.0-local
     ports: ["127.0.0.1:8095:8088"]
     environment:
@@ -72,6 +76,8 @@ services:
     build:
       context: .
       dockerfile: devops/docker/relationship-graph.Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: "${PYTHON_BASE_IMAGE:?Use devops/scripts/supersports configure}"
     image: supersports/relationship-graph:local
     environment:
       GRAPH_DB_PASSWORD: "${GRAPH_DB_PASSWORD:?Run configure}"

@@ -179,6 +179,7 @@ def compose_command(root: Path, project: str, arguments: list[str]) -> list[str]
         "--env-file", str(root / "devops/.local/bootstrap.env"),
         "-f", str(root / "devops/compose/core.yaml"),
         "-f", str(root / "devops/compose/analytics.yaml"),
+        "-f", str(root / "devops/compose/ops.yaml"),
     ]
     if configuration(root,project)["enabled"]:
         command += ["-f",str(root / "devops/compose/host-access.yaml")]
@@ -230,7 +231,7 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
     environment = os.environ.copy()
     environment.update(load_credentials(root / "devops/.local/bootstrap.env"))
     lock = json.loads((root / "devops/images.lock.json").read_text())
-    for key in ("BUILD_IMAGE", "JAVA_IMAGE", "POSTGRES_IMAGE", "KEYCLOAK_IMAGE", "KAFKA_IMAGE", "KAFKA_UI_IMAGE", "DEBEZIUM_CONNECT_IMAGE", "NEO4J_IMAGE", "TRINO_IMAGE", "SPARK_IMAGE"):
+    for key in ("BUILD_IMAGE", "JAVA_IMAGE", "POSTGRES_IMAGE", "KEYCLOAK_IMAGE", "KAFKA_IMAGE", "KAFKA_UI_IMAGE", "DEBEZIUM_CONNECT_IMAGE", "NEO4J_IMAGE", "TRINO_IMAGE", "SPARK_IMAGE", "SUPERSET_BASE_IMAGE", "PYTHON_BASE_IMAGE", "PROMETHEUS_IMAGE", "GRAFANA_IMAGE"):
         environment[key] = lock[key]
     for key in ("STOREFRONT_NODE_IMAGE", "STOREFRONT_NGINX_IMAGE"):
         environment[key] = lock[key]
@@ -246,12 +247,15 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
     return environment
 
 
-def run(command: list[str], *, environment=None, capture=False, check=True, cwd=ROOT, input_text=None):
-    result = subprocess.run(
-        command, cwd=cwd, env=environment, text=True, input=input_text,
-        stdout=subprocess.PIPE if capture else None,
-        stderr=subprocess.PIPE if capture else None, check=False,
-    )
+def run(command: list[str], *, environment=None, capture=False, check=True, cwd=ROOT, input_text=None, timeout=None):
+    try:
+        result = subprocess.run(
+            command, cwd=cwd, env=environment, text=True, input=input_text,
+            stdout=subprocess.PIPE if capture else None,
+            stderr=subprocess.PIPE if capture else None, check=False, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError("Local operation exceeded its configured command timeout; inspect service status and logs.") from error
     if check and result.returncode:
         # Never include the environment, token bodies or command arguments in an exception.
         raise RuntimeError(f"Operation failed with exit {result.returncode}; inspect the service status/logs.")
@@ -259,7 +263,7 @@ def run(command: list[str], *, environment=None, capture=False, check=True, cwd=
 
 
 def compose(arguments: list[str], *, root=ROOT, project="supersports",
-            version=DEFAULT_VERSION, images=None, capture=False, check=True, input_text=None, history_override=None):
+            version=DEFAULT_VERSION, images=None, capture=False, check=True, input_text=None, history_override=None, timeout=None):
     environment=deployment_env(root,version,images,project=project)
     if history_override is not None:
         target=validated_history_target(history_override)
@@ -267,7 +271,7 @@ def compose(arguments: list[str], *, root=ROOT, project="supersports",
         environment["ORDER_HISTORY_CONSUMER_GROUP"]=target["group"]
     return run(compose_command(root, project, arguments),
                environment=environment,
-               capture=capture, check=check, cwd=root, input_text=input_text)
+               capture=capture, check=check, cwd=root, input_text=input_text, timeout=timeout)
 
 
 def provision_databases(root=ROOT, project="supersports", version=DEFAULT_VERSION):
@@ -772,7 +776,7 @@ def main(argv=None):
     parser.add_argument("action", choices=[
         "doctor", "configure", "validate", "build", "up", "down", "status",
         "unit", "test", "reset", "release", "rollback",
-        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "stream-dlq-fault", "restart", "stream-demo-poison", "stream-replay", "stream-reconcile", "stream-rebuild", "analytics-up", "analytics-run", "analytics-down", "graph-up", "graph-down", "dashboard-studio-up", "dashboard-studio-down",
+        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "stream-dlq-fault", "restart", "stream-demo-poison", "stream-replay", "stream-reconcile", "stream-rebuild", "analytics-up", "analytics-run", "analytics-down", "graph-up", "graph-down", "dashboard-studio-up", "dashboard-studio-down", "observability-up", "observability-down", "backup", "restore-drill",
     ])
     parser.add_argument("release_version", nargs="?")
     parser.add_argument("--project", default="supersports")
@@ -840,6 +844,19 @@ def main(argv=None):
             compose(["--profile", "analytics", "--profile", "dashboards", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "trino", "superset"], project=project, version=version)
         elif action == "dashboard-studio-down":
             compose(["--profile", "dashboards", "stop", "superset"], project=project, version=version)
+        elif action == "observability-up":
+            compose(["--profile", "observability", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "health-exporter", "prometheus", "grafana"], project=project, version=version)
+        elif action == "observability-down":
+            compose(["--profile", "observability", "stop", "health-exporter", "prometheus", "grafana"], project=project, version=version)
+        elif action == "backup":
+            import recovery_operations
+            print(json.dumps(recovery_operations.backup(sys.modules[__name__], root=ROOT, project=project), indent=2))
+        elif action == "restore-drill":
+            if not arguments.release_version:
+                raise ValueError("restore-drill requires a backup directory under devops/.local/backups.")
+            import recovery_operations
+            result = recovery_operations.restore_drill(sys.modules[__name__], arguments.release_version, root=ROOT, source_project=project)
+            print(json.dumps(result, indent=2))
         elif action == "streaming-down":
             compose(["--profile", "streaming", "stop", *STREAMING_SERVICES, "kafka-ui", "kafka-connect", "kafka"], project=project, version=version)
         elif action == "stream-status":

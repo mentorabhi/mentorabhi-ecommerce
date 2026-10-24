@@ -61,6 +61,22 @@ devops/scripts/supersports reset --confirm-reset supersports
 ```
 down preserves data. reset needs the explicit matching project name; never use it for routine shutdown. Optional --project supersports-<suffix> selects a separate named project, but the default host ports mean profiles run sequentially. These commands never prune unrelated containers/images/volumes. Build caches are preserved.
 
+## Optional M08 analytics and M09 operations
+
+These profiles are separate from core startup. Analytics URLs and acceptance steps are in `docs/milestones/S1-M08/manual-acceptance.md`.
+
+```sh
+devops/scripts/supersports analytics-up
+devops/scripts/supersports analytics-run
+devops/scripts/supersports graph-up
+devops/scripts/supersports dashboard-studio-up
+devops/scripts/supersports observability-up
+devops/scripts/supersports backup
+devops/scripts/supersports restore-drill devops/.local/backups/<backup-directory>
+```
+
+Prometheus is loopback-only at `http://localhost:9090`; Grafana is `http://localhost:3001` with local demo login `admin` / `admin`. Backups stay in ignored `devops/.local/backups/`; restrict and protect that host directory because it contains personal/order data. `restore-drill` checks the manifest, restores into a unique disposable Compose project and removes only that project's volume. See the M09 manual guide for end-user verification. RPO/RTO remain proposed until a timed restore drill is performed.
+
 ## Alternate deployment and limitations
 See [Helm chart](helm/supersports/README.md), [Terraform skeleton](terraform/README.md) and [the deployment lesson](../docs/lessons/S1-M02.md).
 Helm rendering is not proof of a successful Kubernetes deployment. Terraform's built-in state record is a local specification skeleton, not infrastructure provisioning. Stop Compose before a kind exercise. No cloud provider is configured.

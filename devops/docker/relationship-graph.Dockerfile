@@ -1,4 +1,5 @@
-FROM python:3.13-slim
+ARG PYTHON_BASE_IMAGE
+FROM ${PYTHON_BASE_IMAGE}
 WORKDIR /app
 COPY services/relationship-graph/requirements.txt .
 RUN pip install --no-cache-dir --requirement requirements.txt

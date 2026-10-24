@@ -1,0 +1,16 @@
+[
+  {"name":"storefront","url":"http://storefront:8080/healthz"},
+  {"name":"identity","url":"http://identity:9000/health/ready"},
+  {"name":"postgres","url":"tcp://postgres:5432"},
+  {"name":"kafka","url":"tcp://kafka:9092"},
+  {"name":"catalog","url":"http://catalog:8080/actuator/health/readiness"},
+  {"name":"configuration","url":"http://configuration:8080/actuator/health/readiness"},
+  {"name":"pricing","url":"http://pricing:8080/actuator/health/readiness"},
+  {"name":"inventory","url":"http://inventory:8080/actuator/health/readiness"},
+  {"name":"customer","url":"http://customer:8080/actuator/health/readiness"},
+  {"name":"orders","url":"http://orders:8080/actuator/health/readiness"},
+  {"name":"payment-simulator","url":"http://payment-simulator:8080/actuator/health/readiness"},
+  {"name":"fulfillment-simulator","url":"http://fulfillment-simulator:8080/actuator/health/readiness"},
+  {"name":"reviews","url":"http://reviews:8080/actuator/health/readiness"},
+  {"name":"support","url":"http://support:8080/actuator/health/readiness"}
+]

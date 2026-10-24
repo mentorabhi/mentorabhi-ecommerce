@@ -11,7 +11,11 @@ Revision 1 · 2026-10-24 · Design before implementation
 - **Warehouse storage:** local shared filesystem volume by default. Spark writes Parquet-backed Iceberg tables; Trino reads the same volume. A dedicated PostgreSQL `lakehouse` database/role stores JDBC catalog metadata. This is entirely local and leaves a storage adapter boundary for later local S3-compatible or managed-service configuration; no cloud endpoint or credential is introduced.
 - **Dashboard:** Superset `6.1.0` is the latest stable release identified; Superset 7 remains a release candidate on the Apache release page. It is a separate optional dashboard profile, not part of the core 16 GB startup. Source: [Apache Superset releases](https://github.com/apache/superset/releases).
 
-All exact image digests and ARM64 manifests must be pinned/recorded before deployment. No M08 images or services have been started. Startup, memory and license checks remain unverified.
+The pinned registry manifest references below identify exact tags and ARM64 support. Local pulls/builds, service startup, memory and license acceptance remain unverified.
+
+## Registry manifest lock (2026-10-24)
+
+The configured OCI indexes were inspected from the official Docker registries before the consolidated test phase. `devops/images.lock.json` pins the index digests so Docker can select the host architecture. The observed indexes advertise `linux/arm64` for Neo4j 2026.10.1 (index `sha256:f238979f3c80da6f383f2e4fe91be4dc3580d7ee3b7edec83d0b8783c53b74a4`), Trino 484 (`sha256:2704eb53935af5e582d63d6033e9bf99d20c325e9b0e30b1016ef59a4773979f`), Spark 4.1.3 (`sha256:bf9d035a7c32a8ca46aa58d6348182ffd7d2dff6409206ecfbb3915ff1fef211`), and Superset 6.1.0 (`sha256:16b50bbef6648912a79e3293d418fefa743ce555d36c5af6b85d859119ed7f88`). Indexes are multi-platform and include `linux/amd64` as well. Registry manifests are not a substitute for local pull/build/runtime verification.
 
 ## Data ownership and flow
 

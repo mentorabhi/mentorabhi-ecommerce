@@ -1,0 +1,12 @@
+{
+  "uid": "supersports-service-health",
+  "title": "SuperSports local service health",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "15s",
+  "time": {"from": "now-15m", "to": "now"},
+  "panels": [
+    {"id": 1, "title": "Readiness by service", "type": "stat", "gridPos": {"x": 0, "y": 0, "w": 24, "h": 8}, "datasource": {"type": "prometheus", "uid": "supersports-prometheus"}, "targets": [{"expr": "supersports_service_up", "legendFormat": "{{service}}", "refId": "A"}], "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "orientation": "auto", "textMode": "value_and_name", "colorMode": "background", "graphMode": "area", "justifyMode": "auto"}, "fieldConfig": {"defaults": {"mappings": [{"type": "value", "options": {"0": {"text": "DOWN", "color": "red"}, "1": {"text": "UP", "color": "green"}}}], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}}},
+    {"id": 2, "title": "Latest readiness probe time", "type": "timeseries", "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8}, "datasource": {"type": "prometheus", "uid": "supersports-prometheus"}, "targets": [{"expr": "supersports_service_probe_seconds", "legendFormat": "{{service}}", "refId": "A"}], "fieldConfig": {"defaults": {"unit": "s", "min": 0}, "overrides": []}, "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}}}
+  ]
+}

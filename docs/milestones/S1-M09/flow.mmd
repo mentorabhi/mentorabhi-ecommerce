@@ -1,0 +1,15 @@
+flowchart LR
+  R[Operator] --> N[Loopback Nginx gateway]
+  N --> S[Stateless commerce services]
+  S --> P[(Single local PostgreSQL)]
+  S --> K[(Single local Kafka)]
+  P --> B[Per-database custom dumps + SHA-256]
+  B --> D[Ignored local backup directory]
+  D --> X[Isolated disposable restore project]
+  X --> V[Schema/table/readability verification]
+  S --> H[Health exporter]
+  P --> H
+  K --> H
+  H --> M[Prometheus]
+  M --> G[Grafana service health dashboard]
+  L[Helm replicas/resources] -. larger hosts .-> S

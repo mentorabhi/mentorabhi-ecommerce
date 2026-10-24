@@ -1,0 +1,91 @@
+name: supersports
+services:
+  health-exporter:
+    profiles: ["observability"]
+    build:
+      context: .
+      dockerfile: devops/docker/health-exporter.Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: "${PYTHON_BASE_IMAGE:?Use devops/scripts/supersports configure}"
+    image: supersports/health-exporter:local
+    volumes: ["./devops/observability/health-targets.json:/etc/supersports/health-targets.json:ro"]
+    environment:
+      HEALTH_TARGETS_FILE: /etc/supersports/health-targets.json
+    mem_limit: 128m
+    cpus: 0.5
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+  prometheus:
+    profiles: ["observability"]
+    image: "${PROMETHEUS_IMAGE:?Use devops/scripts/supersports configure}"
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--storage.tsdb.retention.time=7d", "--storage.tsdb.retention.size=512MB", "--web.enable-lifecycle"]
+    ports: ["127.0.0.1:9090:9090"]
+    volumes: ["./devops/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro", "prometheus-data:/prometheus"]
+    mem_limit: 384m
+    cpus: 0.5
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      health-exporter: {condition: service_started}
+    restart: unless-stopped
+  grafana:
+    profiles: ["observability"]
+    image: "${GRAFANA_IMAGE:?Use devops/scripts/supersports configure}"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    ports: ["127.0.0.1:3001:3000"]
+    volumes:
+      - "./devops/observability/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "./devops/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro"
+      - grafana-data:/var/lib/grafana
+    mem_limit: 512m
+    cpus: 0.75
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      prometheus: {condition: service_started}
+    restart: unless-stopped
+  restore-postgres:
+    profiles: ["restore-drill"]
+    image: "${POSTGRES_IMAGE:?Use devops/scripts/supersports configure}"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Run configure}"
+      POSTGRES_DB: postgres
+      CATALOG_DB_PASSWORD: "${CATALOG_DB_PASSWORD:?Run configure}"
+      CONFIGURATION_DB_PASSWORD: "${CONFIGURATION_DB_PASSWORD:?Run configure}"
+      IDENTITY_DB_PASSWORD: "${IDENTITY_DB_PASSWORD:?Run configure}"
+      PRICING_DB_PASSWORD: "${PRICING_DB_PASSWORD:?Run configure}"
+      INVENTORY_DB_PASSWORD: "${INVENTORY_DB_PASSWORD:?Run configure}"
+      CUSTOMER_DB_PASSWORD: "${CUSTOMER_DB_PASSWORD:?Run configure}"
+      ORDERS_DB_PASSWORD: "${ORDERS_DB_PASSWORD:?Run configure}"
+      PAYMENT_DB_PASSWORD: "${PAYMENT_DB_PASSWORD:?Run configure}"
+      FULFILLMENT_DB_PASSWORD: "${FULFILLMENT_DB_PASSWORD:?Run configure}"
+      CDC_DB_PASSWORD: "${CDC_DB_PASSWORD:?Run configure}"
+      ORDER_HISTORY_DB_PASSWORD: "${ORDER_HISTORY_DB_PASSWORD:?Run configure}"
+      REVIEWS_DB_PASSWORD: "${REVIEWS_DB_PASSWORD:?Run configure}"
+      SUPPORT_DB_PASSWORD: "${SUPPORT_DB_PASSWORD:?Run configure}"
+      LAKEHOUSE_DB_PASSWORD: "${LAKEHOUSE_DB_PASSWORD:?Run configure}"
+    volumes:
+      - restore-drill-data:/var/lib/postgresql
+      - ./devops/postgres/provision.sql:/opt/supersports/provision.sql:ro
+      - ./devops/.local/backups:/backups:ro
+    mem_limit: 384m
+    cpus: 1.0
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: "no"
+volumes:
+  prometheus-data:
+  grafana-data:
+  restore-drill-data:
