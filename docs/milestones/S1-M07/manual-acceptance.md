@@ -1,6 +1,6 @@
 # S1-M07 manual acceptance — post-purchase lifecycle
 
-Status: Not executable until implementation. Update commands and queries to match delivered services before asking the owner to run this checklist.
+Status: In progress. The Payment-ledger section below is executable now; remaining post-purchase sections await their service/API implementation.
 
 ## Start and health
 
@@ -27,6 +27,15 @@ Status: Not executable until implementation. Update commands and queries to matc
 ## Read-only database checks
 
 Use owner-scoped database accounts from ignored `devops/.local/bootstrap.env`; never use an application role to inspect another service's tables. Check Orders, Payment, Fulfillment, Inventory, Reviews and Support for consistent operation IDs, bounded refund totals, return quantities, restock decisions, moderation history, and ticket ownership. Add exact read-only SQL after schemas are implemented.
+
+### Payment ledger unit (available now)
+
+1. Run checkout through the storefront and confirm its Payment record shows one `AUTHORIZED` and one `CAPTURED` row.
+2. Use the local payment status API from the integration suite or inspect the Payment database. Verify there is at most one authorization/capture per order, capture amount/currency equal authorization, and cumulative refunds stay at or below capture.
+3. With the synthetic API scenarios in the integration test, verify a repeated capture, over-refund, cross-order operation-key reuse and capture-after-void receive conflict; two concurrent refunds cannot exceed the capture.
+4. Query only the Payment database with its own read-only admin connection. Example: `SELECT operation, state, currency, amount_minor FROM payment_operation WHERE order_id = '<synthetic-order-uuid>' ORDER BY id;`
+
+The checks above have automated evidence; human execution is still pending. Never use real payment data.
 
 ## Result record
 

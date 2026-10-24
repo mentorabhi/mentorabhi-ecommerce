@@ -56,4 +56,6 @@ Host database inspection is now explicitly authorized (R22/ADR 0007). The option
 
 Kafbat UI is available at `http://localhost:8091` when the streaming profile is active. It is pinned in images.lock, read-only in its cluster configuration, and connected to the existing broker and Debezium Kafka Connect. See `docs/setup/kafka-ui.md` and the M06 design/verification; local UI read-only is not broker ACL enforcement.
 
+M07 Unit 1 payment-ledger bounds has been implemented locally and verified; details in `docs/milestones/S1-M07/verification.md`. It was advanced because the inspected Payment owner code could repeat captures/refunds beyond captured money, directly blocking safe post-purchase refunds. M06 acceptance is still active; this scoped M07 unit does not imply S1-M06 or M07 completion.
+
 Native host Ollama setup/server/model/connectivity is a Nova prerequisite, documented in docs/setup/prerequisites.md. Commerce bootstrap must not require Ollama to be running.

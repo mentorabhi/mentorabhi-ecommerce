@@ -1,0 +1,11 @@
+stateDiagram-v2
+  [*] --> NoDecision
+  NoDecision --> Authorized: approve once
+  NoDecision --> Declined: decline once
+  Authorized --> Captured: one full capture / same amount + currency
+  Authorized --> Voided: void before capture
+  Captured --> Captured: bounded positive partial refund
+  Captured --> Refunded: cumulative refunds equal capture
+  Voided --> [*]
+  Declined --> [*]
+  Refunded --> [*]

@@ -14,3 +14,7 @@ Revision 1 · 2026-10-24 · Reviewed against accepted R08/AE10, ADRs 0003–0006
 ## Review outcome
 
 Design is implementation-ready. Before coding each workflow, inspect existing Orders, Payment, Fulfillment, Inventory, Reviews/Support structure and integration tests. Add narrow versioned contracts and owner-side data model. Reconciliation and M09 recovery evidence must include post-purchase operations. The diagram and manual acceptance guide are part of this milestone and must evolve with implementation.
+
+## Unit review — Payment ledger bounds (2026-10-24)
+
+Before code, traced `PaymentSimulator.execute` and `payment_operation`: confirmed that fence locking exists but capture/refund arithmetic, post-void rejection and cross-order key ownership are not enforced. The separate [unit design](payment-ledger-design.md) and [state diagram](payment-ledger-flow.mmd) define ledger rules, migration backstops, race handling and live tests. Owner review resolved identified edge cases; implementation may proceed.

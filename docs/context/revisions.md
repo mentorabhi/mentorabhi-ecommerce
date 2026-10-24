@@ -1,6 +1,10 @@
 # Revision history
 Append dated entries with reason, changed artifacts, evidence and remaining work.
 
+## 2026-10-24 — M07 Unit 1 Payment ledger bounds
+
+Source intake showed that new operation keys could duplicate captures, exceed cumulative captures through refunds, capture after void and reuse one global idempotency key across orders. Reviewed the focused design/diagram first. Added owner-side deterministic ledger rules, full amount/currency capture, positive bounded cumulative refunds, single-decision authorization/void/capture database indexes, order-aware replay and conflict-safe global-key insert. Existing Payment DB preflight found 67 AUTHORIZE and 54 CAPTURE rows with no duplicate operation cardinality; migration V2 applied. Ten Java tests, live API boundary/concurrency/reuse test, and normal checkout regression passed; deployed service readiness UP. M07 remains in progress and M06 gates remain open.
+
 ## 2026-10-24 — Local Kafka UI
 
 Added Kafbat UI v1.5.0 by verified OCI digest to the streaming profile; pinned index includes ARM64. It is host-accessible on loopback port 8091, read-only, linked to Kafka and Debezium Connect, with 512 MiB cap/256 MiB heap and external update checks disabled. Two Compose unit cases, two live API integration cases and Selenium passed. Observed cluster online, one broker, seven topics, 135 online partitions, retained event messages, consumer groups and running Debezium connector/task. Sample RSS 271 MiB/512 MiB. Manual host-browser/feature acceptance is separate; app read-only is not Kafka ACL enforcement. No full CI run. See `docs/milestones/S1-M06/kafka-ui-design.md` and `docs/setup/kafka-ui.md`.

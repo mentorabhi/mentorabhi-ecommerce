@@ -3,9 +3,11 @@ import json
 import os
 from pathlib import Path
 import sys
+import threading
 import time
 import unittest
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -169,6 +171,50 @@ class CoreIntegrationTests(unittest.TestCase):
             self.assertEqual(reservation.stdout.strip(),"RELEASED")
         finally:
             self.assertEqual(manage.request_json(update_url,token=self.admin,method="PUT",data=json.dumps({"value":setting["value"],"expectedRevision":changed["settingRevision"]}).encode())[0],200)
+
+    def test_payment_ledger_bounds_capture_refund_ownership_and_void(self):
+        base="http://127.0.0.1:8087/api/v1/internal/checkout/payments"
+        def operation(order_id,name,key,amount=100,currency="INR"):
+            body={"orderId":order_id,"operationKey":key,"fence":1,"amountMinor":amount,"currency":currency,"authorizationMode":"APPROVE"}
+            return manage.request_json(f"{base}/{name}",token=self.checkout_worker,method="POST",data=json.dumps(body).encode())
+
+        order=str(uuid.uuid4())
+        auth_key="ledger-auth-"+uuid.uuid4().hex
+        self.assertEqual(operation(order,"authorize",auth_key)[0],200)
+        self.assertEqual(operation(order,"capture","ledger-capture-"+uuid.uuid4().hex)[0],200)
+        self.assertEqual(operation(order,"capture","ledger-capture-again-"+uuid.uuid4().hex)[0],409)
+        self.assertEqual(operation(order,"refund","ledger-refund-"+uuid.uuid4().hex,60)[0],200)
+        self.assertEqual(operation(order,"refund","ledger-refund-"+uuid.uuid4().hex,40)[0],200)
+        self.assertEqual(operation(order,"refund","ledger-refund-"+uuid.uuid4().hex,1)[0],409)
+        self.assertEqual(operation(order,"refund","ledger-refund-"+uuid.uuid4().hex,1,currency="USD")[0],409)
+        self.assertEqual(operation(str(uuid.uuid4()),"authorize",auth_key)[0],409)
+
+        barrier=threading.Barrier(2)
+        shared_key="ledger-cross-order-race-"+uuid.uuid4().hex
+        def claim(order_id):
+            barrier.wait(timeout=5)
+            return operation(order_id,"authorize",shared_key)[0]
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            cross_order=list(pool.map(claim,[str(uuid.uuid4()),str(uuid.uuid4())]))
+        self.assertEqual(sorted(cross_order),[200,409])
+
+        concurrent_order=str(uuid.uuid4())
+        self.assertEqual(operation(concurrent_order,"authorize","ledger-auth-"+uuid.uuid4().hex)[0],200)
+        self.assertEqual(operation(concurrent_order,"capture","ledger-capture-"+uuid.uuid4().hex)[0],200)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes=list(pool.map(lambda amount:operation(concurrent_order,"refund","ledger-race-"+uuid.uuid4().hex,amount)[0],[60,50]))
+        self.assertEqual(sorted(outcomes),[200,409])
+
+        void_order=str(uuid.uuid4())
+        self.assertEqual(operation(void_order,"authorize","ledger-auth-"+uuid.uuid4().hex)[0],200)
+        self.assertEqual(operation(void_order,"void","ledger-void-"+uuid.uuid4().hex)[0],200)
+        self.assertEqual(operation(void_order,"capture","ledger-capture-"+uuid.uuid4().hex)[0],409)
+
+        _,ledger=manage.request_json(f"{base}/{order}/status",token=self.checkout_worker)
+        refunds=[item["amountMinor"] for item in ledger["operations"] if item["operation"]=="REFUND"]
+        captures=[item["amountMinor"] for item in ledger["operations"] if item["operation"]=="CAPTURE"]
+        self.assertEqual(sum(refunds),100)
+        self.assertEqual(len(captures),1)
 
     def test_orders_worker_resumes_persisted_saga_after_restart(self):
         _,products=manage.request_json(f"{CATALOG}/api/v1/catalog/products?q=football")

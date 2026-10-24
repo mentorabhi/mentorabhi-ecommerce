@@ -10,6 +10,8 @@
 - Inventory owns checkout allocations; physical return inspection/restock needs a separate return operation identity and audit rather than reusing checkout reservation transitions.
 - Reviews and Support are new independent service projects. Both require customer ownership and operator/customer audience isolation, plus narrow authoritative Orders lookups.
 
+M07 Unit 1's reviewed design and state diagram are in `payment-ledger-design.md` and `payment-ledger-flow.mmd`; its scope is limited to the Payment-owned ledger and preserves the existing checkout worker contract.
+
 ## Units in dependency order
 
 1. **Payment ledger correctness.** Serialize operations per order using its existing payment fence lock. Verify same-key order ownership as well as payload. Enforce one authorization decision and one full capture, valid void eligibility, immutable currency, and cumulative refunds at most captured funds. Keep zero-value orders valid. Derive existing balances from the service-owned ledger; do not infer money from Orders or Catalog. Add direct API integration/concurrency checks, including last refundable capacity, same-key replay/conflict and capture after void.
