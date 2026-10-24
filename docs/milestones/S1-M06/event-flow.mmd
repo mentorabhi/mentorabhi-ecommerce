@@ -1,0 +1,42 @@
+flowchart LR
+  subgraph Orders[Orders service / owned PostgreSQL]
+    tx[State transition transaction]
+    seq[(Per-order sequence row)]
+    outbox[(Versioned outbox event)]
+    tx -->|lock and increment| seq
+    tx -->|same commit| outbox
+  end
+  migration[Additive migration
+  deterministic event ID + sequence backfill]
+  wal[Logical WAL]
+  connect[Debezium Connect
+  consistent snapshot then WAL]
+  kafka[(Kafka order topic
+  key = order ID)]
+  subgraph History[Order History service / owned PostgreSQL]
+    inbox[(Inbox + payload hash)]
+    gap[(Per-order gap buffer)]
+    projection[(Versioned projection DB)]
+    audit[(Replay audit)]
+  end
+  consumer[At-least-once consumer]
+  dlq[(DLQ topic
+  Kafka transaction with offset)]
+  cli[Local operator replay / rebuild CLI]
+  api[Customer API
+  owner from verified token]
+  ui[Storefront order history]
+  rebuild[New projection target
+  high-water catch-up + reconcile]
+  migration -. legacy rows .-> outbox
+  outbox --> wal --> connect --> kafka --> consumer
+  consumer -->|in-order event| inbox
+  inbox --> projection
+  consumer -->|sequence gap| gap
+  gap -. missing predecessor arrives .-> inbox
+  consumer -->|invalid/poison| dlq
+  dlq --> cli --> consumer
+  cli --> audit
+  projection --> api --> ui
+  rebuild -. replay to cutover marks .-> projection
+  rebuild -->|compare retained event IDs/hashes| Orders
