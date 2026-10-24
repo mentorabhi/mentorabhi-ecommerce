@@ -193,9 +193,9 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
     return environment
 
 
-def run(command: list[str], *, environment=None, capture=False, check=True, cwd=ROOT):
+def run(command: list[str], *, environment=None, capture=False, check=True, cwd=ROOT, input_text=None):
     result = subprocess.run(
-        command, cwd=cwd, env=environment, text=True,
+        command, cwd=cwd, env=environment, text=True, input=input_text,
         stdout=subprocess.PIPE if capture else None,
         stderr=subprocess.PIPE if capture else None, check=False,
     )
@@ -707,7 +707,7 @@ def main(argv=None):
     parser.add_argument("action", choices=[
         "doctor", "configure", "validate", "build", "up", "down", "status",
         "unit", "test", "reset", "release", "rollback",
-        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "restart",
+        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "restart", "stream-demo-poison", "stream-replay",
     ])
     parser.add_argument("release_version", nargs="?")
     parser.add_argument("--project", default="supersports")
@@ -717,6 +717,10 @@ def main(argv=None):
     parser.add_argument("--order-id")
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--next-event", action="store_true")
+    parser.add_argument("--source-coordinate")
+    parser.add_argument("--corrected-payload-file")
+    parser.add_argument("--operation-id")
+    parser.add_argument("--reason")
     arguments = parser.parse_args(argv)
     try:
         project = validated_project_name(arguments.project)
@@ -763,6 +767,14 @@ def main(argv=None):
                 raise ValueError("Fault injection is one-shot; pass --once.")
             stream_fault(arguments.release_version, arguments.order_id, next_event=arguments.next_event,
                          project=project, version=version)
+        elif action in ("stream-demo-poison", "stream-replay"):
+            import stream_operations
+            if action == "stream-demo-poison":
+                result = stream_operations.demo(sys.modules[__name__], project=project, version=version)
+            else:
+                result = stream_operations.replay(sys.modules[__name__], arguments.source_coordinate,
+                    arguments.corrected_payload_file, arguments.operation_id, arguments.reason, project=project, version=version)
+            print(json.dumps(result, indent=2))
         elif action == "restart":
             service = arguments.release_version
             allowed = (*SERVICES, "kafka-connect", "kafka", *STREAMING_SERVICES)

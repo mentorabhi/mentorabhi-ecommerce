@@ -2,7 +2,7 @@
 
 Revision 1 · 2026-10-24 · Design and review complete; implementation not started.
 
-Design: [post-purchase design](design.md). Review: [design review](design-review.md). Editable flow: [post-purchase-flow.mmd](post-purchase-flow.mmd). Manual checks: [manual acceptance](manual-acceptance.md). Requirements: R08 and AE10 in [accepted requirements](../../requirements/accepted-requirements.md).
+Design: [post-purchase design](design.md). Review: [design review](design-review.md). Editable flow: [post-purchase-flow.mmd](post-purchase-flow.mmd). Manual checks: [manual acceptance](manual-acceptance.md). Requirements: R08 and AE10 in [accepted requirements](../../../requirements/accepted-requirements.md).
 
 ## Objective
 

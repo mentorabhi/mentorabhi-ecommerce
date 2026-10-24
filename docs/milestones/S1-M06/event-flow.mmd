@@ -32,7 +32,10 @@ flowchart LR
   gap -. missing predecessor arrives .-> inbox
   consumer -->|invalid/poison| dlq
   projection --> api --> ui
-  planned[Future: operator-audited DLQ correction/replay]
+  replay[Operator token + correction + stable operation ID]
+  audit[(Immutable replay audit
+  durable publication intent)]
   rebuild[Future: candidate projection rebuild/reconcile/cutover]
-  consumer -. not implemented in this slice .-> planned
+  dlq --> replay --> audit
+  audit -->|retryable corrected publication| kafka
   kafka -. replay retained history .-> rebuild

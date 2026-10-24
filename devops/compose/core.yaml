@@ -367,6 +367,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       ORDER_HISTORY_OWNER_KEY: "${ORDER_HISTORY_OWNER_KEY:?Run configure}"
       ORDER_HISTORY_FAULT_DIRECTORY: /tmp/order-history-fault
+      ORDER_HISTORY_OPERATOR_ENABLED: "true"
     depends_on:
       postgres: {condition: service_healthy}
       identity: {condition: service_healthy}

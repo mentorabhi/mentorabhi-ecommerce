@@ -15,6 +15,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "devops/scripts"))
 import manage
+import stream_operations
 
 
 class StreamingIntegrationTests(unittest.TestCase):
@@ -122,6 +123,51 @@ class StreamingIntegrationTests(unittest.TestCase):
         self.assertNotEqual(private_read.returncode, 0)
         self.assertIn("permission denied for database", private_read.stderr.lower())
         self.assertIn("does not have connect privilege", private_read.stderr.lower())
+
+    def test_operator_poison_replay_is_audited_idempotent_and_restartable(self):
+        self.wait_for_zero_lag()
+        demo=stream_operations.demo(manage,project=self.project)
+        path=Path(demo["correctedPayloadFile"])
+        try:
+            corrected=path.read_text()
+            event=json.loads(corrected)
+            operation=demo["operationId"]
+            request={"action":"replay","sourceCoordinate":demo["sourceCoordinate"],"correctedPayload":corrected,
+                     "operationId":operation,"reason":"integration poison version correction"}
+            def sql(query,check=True):
+                return manage.compose(["exec","-T","postgres","psql","-U","postgres","-d","order_history","-tA","-c",query],
+                                      project=self.project,capture=True,check=check)
+            before=sql("SELECT count(*) FROM event_inbox").stdout.strip()
+            with self.assertRaisesRegex(RuntimeError,"OPERATOR_AUTHENTICATION_REQUIRED"):
+                stream_operations.operator(manage,request,project=self.project,token=self.customer)
+            with self.assertRaisesRegex(RuntimeError,"INJECTED_BEFORE_PUBLISH"):
+                stream_operations.operator(manage,{**request,"failBeforePublish":True},project=self.project)
+            self.assertEqual(sql(f"SELECT count(*) FROM order_history_replay_audit WHERE operation_id='{operation}'").stdout.strip(),"1")
+            with self.assertRaisesRegex(RuntimeError,"INJECTED_AFTER_PUBLISH"):
+                stream_operations.operator(manage,{**request,"failAfterPublish":True},project=self.project)
+            self.wait_for_zero_lag()
+            self.assertEqual(sql(f"SELECT count(*) FROM order_history_replay_delivery WHERE operation_id='{operation}' AND published_at IS NULL").stdout.strip(),"1")
+            result=stream_operations.replay(manage,demo["sourceCoordinate"],path,operation,request["reason"],project=self.project)
+            self.assertEqual(result["status"],"PUBLISHED")
+            self.assertEqual(result["eventId"],event["eventId"])
+            self.assertEqual(result,stream_operations.replay(manage,demo["sourceCoordinate"],path,operation,request["reason"],project=self.project))
+            self.wait_for_zero_lag()
+            self.assertEqual(sql("SELECT count(*) FROM event_inbox").stdout.strip(),before)
+            with self.assertRaisesRegex(RuntimeError,"REPLAY_OPERATION_ID_CONFLICT"):
+                stream_operations.operator(manage,{**request,"reason":"changed reason"},project=self.project)
+            changed={**event,"occurredAt":"2026-10-24T01:02:03Z"}
+            with self.assertRaisesRegex(RuntimeError,"APPLIED_EVENT_CANNOT_BE_REWRITTEN"):
+                stream_operations.operator(manage,{**request,"operationId":str(uuid.uuid4()),"correctedPayload":json.dumps(changed)},project=self.project)
+            formatted=json.dumps(event,sort_keys=True,indent=2)
+            second=stream_operations.operator(manage,{**request,"operationId":str(uuid.uuid4()),"correctedPayload":formatted},project=self.project)
+            self.assertEqual(second["status"],"PUBLISHED")
+            self.wait_for_zero_lag()
+            self.assertEqual(sql("SELECT count(*) FROM event_inbox").stdout.strip(),before)
+            immutable=sql(f"UPDATE order_history_replay_audit SET reason='rewrite' WHERE operation_id='{operation}'",check=False)
+            self.assertNotEqual(immutable.returncode,0)
+            self.assertIn("append-only",immutable.stderr)
+        finally:
+            path.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

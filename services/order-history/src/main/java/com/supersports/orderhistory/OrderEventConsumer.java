@@ -18,10 +18,12 @@ import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
+@ConditionalOnProperty(name="order-history.operator-mode",havingValue="false",matchIfMissing=true)
 class OrderEventConsumer implements SmartLifecycle {
     private static final Logger log=LoggerFactory.getLogger(OrderEventConsumer.class);
     private final HistoryProjector projector;private final ConsumerCrashInjector crashInjector;private final String brokers,topic,dlq,group;private final AtomicBoolean running=new AtomicBoolean();private Thread thread;
@@ -45,7 +47,7 @@ class OrderEventConsumer implements SmartLifecycle {
     }
     private void sendToDlq(KafkaProducer<String,String> producer,KafkaConsumer<String,String> consumer,ConsumerRecord<String,String> source,String code){
         String coordinate=source.topic()+":"+source.partition()+":"+source.offset();
-        ProducerRecord<String,String> dead=new ProducerRecord<>(dlq,coordinate,source.value());dead.headers().add(new RecordHeader("source-topic",source.topic().getBytes(java.nio.charset.StandardCharsets.UTF_8)));dead.headers().add(new RecordHeader("source-partition",Integer.toString(source.partition()).getBytes(java.nio.charset.StandardCharsets.UTF_8)));dead.headers().add(new RecordHeader("source-offset",Long.toString(source.offset()).getBytes(java.nio.charset.StandardCharsets.UTF_8)));dead.headers().add(new RecordHeader("error-code",code.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        ProducerRecord<String,String> dead=new ProducerRecord<>(dlq,coordinate,source.value());dead.headers().add(new RecordHeader("source-topic",source.topic().getBytes(java.nio.charset.StandardCharsets.UTF_8)));dead.headers().add(new RecordHeader("source-partition",Integer.toString(source.partition()).getBytes(java.nio.charset.StandardCharsets.UTF_8)));dead.headers().add(new RecordHeader("source-offset",Long.toString(source.offset()).getBytes(java.nio.charset.StandardCharsets.UTF_8)));dead.headers().add(new RecordHeader("error-code",code.getBytes(java.nio.charset.StandardCharsets.UTF_8)));if(source.key()!=null)dead.headers().add(new RecordHeader("source-key",source.key().getBytes(java.nio.charset.StandardCharsets.UTF_8)));
         try{producer.beginTransaction();producer.send(dead).get();producer.sendOffsetsToTransaction(Map.of(new TopicPartition(source.topic(),source.partition()),new OffsetAndMetadata(source.offset()+1)),consumer.groupMetadata());producer.commitTransaction();log.error("Poison order event moved to DLQ at {} with {}",coordinate,code);}
         catch(Exception error){try{producer.abortTransaction();}catch(RuntimeException ignored){}consumer.seek(new TopicPartition(source.topic(),source.partition()),source.offset());throw new IllegalStateException("Could not commit poison event and consumer offset atomically",error);}
     }
