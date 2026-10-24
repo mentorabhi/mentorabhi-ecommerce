@@ -16,6 +16,7 @@ class PricingRepository {
     PricingRepository(JdbcTemplate jdbc) { this.jdbc = jdbc; }
 
     Map<String,Object> currency() { return jdbc.queryForMap("SELECT code,revision FROM store_currency WHERE id=1"); }
+    Map<String,Object> publicSkuPrice(UUID skuId) { return jdbc.queryForMap("SELECT p.sku_id AS \"skuId\",p.currency,p.amount_minor AS \"amountMinor\" FROM sku_price p JOIN store_currency c ON c.code=p.currency AND c.id=1 WHERE p.sku_id=?", skuId); }
     List<Map<String,Object>> prices() { return jdbc.queryForList("SELECT sku_id AS \"skuId\",currency,amount_minor AS \"amountMinor\",revision FROM sku_price ORDER BY sku_id,currency"); }
 
     @Transactional

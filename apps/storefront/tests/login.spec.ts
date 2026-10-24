@@ -16,7 +16,7 @@ test('catalog admin stays rendered after local Keycloak login', async ({ page })
   const pageErrors: string[] = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
 
-  await page.goto('/')
+  await page.goto('/admin')
   await page.getByRole('button', { name: /sign in with local account/i }).click()
   await page.locator('input[name="username"]').fill('catalog-admin')
   await page.locator('input[name="password"]').fill(localCatalogAdminPassword())
@@ -31,4 +31,24 @@ test('catalog admin stays rendered after local Keycloak login', async ({ page })
   await expect(page.getByRole('heading', { name: 'Catalog.' })).toBeVisible()
   await expect(page.getByText('Pro Willow Cricket Bat')).toBeVisible()
   expect(pageErrors).toEqual([])
+})
+
+test('customer can browse, search and open a product without signing in', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('navigation', { name: 'Shopping' })).toBeVisible()
+  await expect.poll(async () => page.locator('.store-card').count(), { timeout: 15_000 }).toBeGreaterThanOrEqual(6)
+  await page.getByLabel('Search sports gear').fill('football')
+  await page.getByLabel('Search sports gear').press('Enter')
+  await expect(page.getByRole('heading', { name: /results for “football”/i })).toBeVisible()
+  await expect(page.locator('.store-card')).toHaveCount(3)
+  await page.getByRole('button', { name: /view control match football/i }).click()
+  await expect(page.locator('.detail-layout')).toBeVisible()
+  await expect(page.getByText(/availability snapshot/i)).toBeVisible()
+})
+
+test('football category deep links resolve slugs to the matching products', async ({ page }) => {
+  await page.goto('/?category=football-equipment')
+  await expect(page.getByRole('heading', { name: 'Football Equipment' })).toBeVisible()
+  await expect(page.locator('.store-card')).toHaveCount(3)
+  await expect(page.getByRole('link', { name: 'Football Equipment', exact: true })).toHaveClass(/active/)
 })

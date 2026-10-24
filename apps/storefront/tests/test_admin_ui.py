@@ -67,7 +67,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.wait = WebDriverWait(self.driver, 20)
 
     def login(self, username: str, password_key: str):
-        self.driver.get(BASE_URL)
+        self.driver.get(BASE_URL + "/admin")
         self.wait.until(lambda driver: driver.execute_script(
             "return document.querySelector('.brand-banner')?.naturalWidth > 0"))
         self.wait.until(lambda driver: driver.execute_script(
@@ -311,6 +311,94 @@ class SuperSportsAdminUiTests(unittest.TestCase):
                 except TimeoutException:
                     pass
 
+        self.assert_no_react_hook_order_error()
+
+    def register_customer(self, username: str, email: str):
+        password = f"SS-{uuid.uuid4().hex}Aa!"
+        self.driver.get(BASE_URL + "/account")
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".profile-prompt")))
+        self.wait.until(EC.element_to_be_clickable(
+            (By.XPATH, "//button[contains(., 'Sign in or create account')]"))).click()
+        self.wait.until(lambda driver: "/realms/supersports-customers/" in driver.current_url)
+        self.wait.until(EC.element_to_be_clickable((By.LINK_TEXT, "Register"))).click()
+        for name, value in (("firstName", "UI"), ("lastName", "Customer"), ("email", email), ("username", username)):
+            self.wait.until(EC.presence_of_element_located((By.NAME, name))).send_keys(value)
+        self.driver.find_element(By.NAME, "password").send_keys(password)
+        self.driver.find_element(By.NAME, "password-confirm").send_keys(password)
+        self.driver.find_element(By.CSS_SELECTOR, "input[type='submit']").click()
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".shop-shell")))
+
+    def test_customer_self_registration_browse_profile_cart_and_isolation(self):
+        suffix = uuid.uuid4().hex[:10]
+        first = f"shopper-{suffix}"
+        self.driver.get(BASE_URL)
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".store-product-grid")))
+        self.assertGreaterEqual(len(self.driver.find_elements(By.CSS_SELECTOR, ".store-card")), 6)
+        self.driver.find_element(By.ID, "store-search").send_keys("football")
+        self.driver.find_element(By.ID, "store-search").send_keys(Keys.ENTER)
+        self.wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, ".collection-heading h1").text == 'Results for “football”')
+        self.wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, ".store-card")) == 3)
+
+        self.register_customer(first, f"{first}@example.local")
+        customer_auth = self.driver.execute_async_script("""
+          const done=arguments[0];
+          try {
+            const stored=Object.values(sessionStorage).map(v=>{try{return JSON.parse(v)}catch{return null}}).find(v=>v&&v.access_token);
+            if(!stored)return done({error:'customer token missing'});
+            const payload=stored.access_token.split('.')[1];
+            const claims=JSON.parse(atob(payload.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-payload.length%4)%4)));
+            Promise.all(['/api/customer/profile','/api/catalog/admin/products','/api/pricing/coupons','/api/inventory/balances'].map(path=>
+              fetch(path,{headers:{Authorization:`Bearer ${stored.access_token}`}}).then(response=>response.status)
+            )).then(statuses=>done({iss:claims.iss,aud:claims.aud,statuses}));
+          } catch(error){done({error:String(error)})}
+        """)
+        self.assertEqual(customer_auth.get("iss"), "http://localhost:8180/realms/supersports-customers", customer_auth)
+        self.assertIn("supersports-customer-api", customer_auth.get("aud", []), customer_auth)
+        self.assertNotIn("supersports-api", customer_auth.get("aud", []), customer_auth)
+        self.assertEqual(customer_auth.get("statuses"), [200, 401, 401, 401], customer_auth)
+
+        self.driver.get(BASE_URL)
+        first_card = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".store-card-image")))
+        first_card.click()
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".detail-layout")))
+        self.driver.find_element(By.XPATH, "//button[contains(., 'Wishlist')]").click()
+        self.wait.until(lambda driver: "Saved to your wishlist." in driver.find_element(By.CSS_SELECTOR, ".shop-shell").text)
+        self.driver.find_element(By.XPATH, "//button[contains(., 'Add to cart')]").click()
+        self.wait.until(lambda driver: "Added to your cart." in driver.find_element(By.CSS_SELECTOR, ".shop-shell").text)
+        self.driver.find_element(By.XPATH, "//button[contains(., 'Add to cart')]").click()
+        self.wait.until(lambda driver: "Added to your cart." in driver.find_element(By.CSS_SELECTOR, ".shop-shell").text)
+        self.driver.find_element(By.CSS_SELECTOR, ".shop-actions a[href='/cart']").click()
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".saved-row")))
+        self.assertIn("Cart", self.driver.find_element(By.CSS_SELECTOR, ".customer-page").text)
+        self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, ".saved-row input[type='number']").get_attribute("value"), "2")
+
+        self.driver.get(BASE_URL + "/account")
+        fields = {"fullName": "UI Customer", "phone": "9876543210", "line1": "18 Race Course Road",
+                  "line2": "", "city": "Bengaluru", "state": "Karnataka", "postalCode": "560001"}
+        for name, value in fields.items():
+            field = self.wait.until(EC.presence_of_element_located((By.NAME, name)))
+            field.clear(); field.send_keys(value)
+        self.driver.find_element(By.XPATH, "//button[contains(., 'Save profile and address')]").click()
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[role='status']")))
+        search = self.driver.find_element(By.ID, "store-search")
+        search.send_keys("football")
+        search.send_keys(Keys.ENTER)
+        self.wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, ".collection-heading h1").text == 'Results for “football”')
+        self.wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, ".store-card")) == 3)
+
+        self.driver.get(BASE_URL + "/account")
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".address-form")))
+        self.driver.find_element(By.XPATH, "//button[contains(., 'Sign out')]").click()
+        self.wait.until(lambda driver: driver.current_url.rstrip("/") == BASE_URL)
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".shop-shell")))
+        second = f"shopper-{uuid.uuid4().hex[:10]}"
+        self.register_customer(second, f"{second}@example.local")
+        self.driver.get(BASE_URL + "/cart")
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-page")))
+        self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, ".saved-row"), "Second customer inherited the first customer's cart")
+        self.driver.get(BASE_URL + "/wishlist")
+        self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-page")))
+        self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, ".store-card"), "Second customer inherited the first customer's wishlist")
         self.assert_no_react_hook_order_error()
 
 

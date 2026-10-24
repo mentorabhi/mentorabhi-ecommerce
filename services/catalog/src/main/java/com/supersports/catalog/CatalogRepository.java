@@ -32,6 +32,18 @@ class CatalogRepository {
         return jdbc.query(query,(rs,n)->{var row=new LinkedHashMap<String,Object>();for(String field:List.of("id","categoryId","slug","brand","title","description","status","revision"))row.put(field,rs.getObject(field));row.put("skus",Json.read(rs.getString("skus")));return row;});
     }
 
+    List<Map<String, Object>> searchProducts(String query, String category) {
+        String search = query == null || query.isBlank() ? null : query.trim();
+        String selectedCategory = category == null || category.isBlank() ? null : category.trim();
+        return jdbc.query("SELECT p.id,p.category_id AS \"categoryId\",p.slug,p.brand,p.title,p.description,p.status,p.revision,COALESCE(jsonb_agg(jsonb_build_object('id',s.id,'code',s.code,'attributes',s.attributes,'assetKey',s.asset_key,'altText',s.alt_text)) FILTER (WHERE s.id IS NOT NULL),'[]'::jsonb)::text AS skus FROM products p JOIN categories c ON c.id=p.category_id LEFT JOIN skus s ON s.product_id=p.id AND s.active WHERE p.status='active' AND c.active AND (CAST(? AS text) IS NULL OR p.title ILIKE '%'||?||'%' OR p.brand ILIKE '%'||?||'%' OR p.description ILIKE '%'||?||'%' OR c.name ILIKE '%'||?||'%' OR c.slug ILIKE '%'||?||'%') AND (CAST(? AS text) IS NULL OR c.id::text=? OR c.slug=?) GROUP BY p.id ORDER BY p.title LIMIT 100",
+                (rs,n)->{var row=new LinkedHashMap<String,Object>();for(String field:List.of("id","categoryId","slug","brand","title","description","status","revision"))row.put(field,rs.getObject(field));row.put("skus",Json.read(rs.getString("skus")));return row;},
+                search,search,search,search,search,search,selectedCategory,selectedCategory,selectedCategory);
+    }
+
+    Map<String,Object> publicSku(UUID id) {
+        return jdbc.queryForObject("SELECT s.id,(s.active AND p.status='active' AND c.active) AS active FROM skus s JOIN products p ON p.id=s.product_id JOIN categories c ON c.id=p.category_id WHERE s.id=?", (rs,n)->Map.of("id",rs.getObject("id"),"active",rs.getBoolean("active")), id);
+    }
+
     Map<String,Object> skuStatus(UUID id) {
         return jdbc.queryForMap("SELECT s.id, (s.active AND p.status='active') AS active FROM skus s JOIN products p ON p.id=s.product_id WHERE s.id=?", id);
     }

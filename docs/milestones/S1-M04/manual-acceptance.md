@@ -1,68 +1,66 @@
 # S1-M04 manual end-user acceptance
 
-Revision 2 · 2026-10-24 · Draft checklist; customer account flow uses the `supersports-customers` realm.
+Revision 3 · 2026-10-24 · Local runtime is available; owner-run checks are pending.
 
-These checks are manual and separate from automated tests. Record results after M04 runtime is available.
+These are manual checks outside automated tests. Do not mark a check complete based on the verification record alone. No password or token belongs in this document.
 
 ## Start and service health
 
-- [ ] Start the documented S1-M04 profile with `./devops/scripts/supersports up`.
-- [ ] Confirm storefront is reachable at http://localhost:3000 and its health endpoint returns healthy.
-- [ ] Confirm identity, Catalog, Pricing, Inventory, Customer and PostgreSQL containers are running and healthy.
-- [ ] Run `./devops/scripts/supersports status`; record profile and image versions.
+- [ ] From the repository root, start the profile with `./devops/scripts/supersports up`.
+- [ ] Run `./devops/scripts/supersports status`; confirm eight containers are running: PostgreSQL, Keycloak, Catalog, Configuration, Pricing, Inventory, Customer and Storefront. Record image tags.
+- [ ] Confirm the Storefront returns `ok` at http://localhost:3000/healthz.
+- [ ] Confirm readiness returns `{"status":"UP"}` at `http://localhost:8081/actuator/health/readiness` (Catalog), `8082` (Configuration), `8083` (Pricing), `8084` (Inventory), and `8085` (Customer).
+- [ ] Confirm Keycloak readiness at `http://localhost:8180/health/ready` and the `supersports-customers` realm discovery document advertises `http://localhost:8180/realms/supersports-customers` as issuer.
 
-## Customer browsing
+## Public storefront and discovery
 
-- [ ] Open the home page and use Cricket and Football navigation.
-- [ ] Search by product name and inspect no-result behavior.
-- [ ] Apply category/attribute filters, sort by price/name, and clear filters.
-- [ ] Open product details, choose each valid variant, inspect price/currency and availability labels.
-- [ ] Verify product image alt text and keyboard-only navigation/focus.
-- [ ] Change store currency in the existing admin configuration and confirm the product page displays the matching explicit price book. Confirm no exchange conversion is implied.
-- [ ] Resize to mobile and confirm menus, cards, search and product actions remain usable.
+- [ ] Open http://localhost:3000. Confirm the supplied SuperSports icon and banner load and the six synthetic products show descriptions, images, prices and stock snapshots.
+- [ ] Use Cricket and Football category navigation. Confirm each category shows the corresponding products.
+- [ ] Search by a product name, by `football`, and by a term with no matches. Confirm `football` returns all three Football fixtures and no-result messaging is clear.
+- [ ] Sort by name and both price directions. Open product details and confirm the displayed active-currency price and stock are labelled as snapshots.
+- [ ] Confirm no checkout, payment or stock reservation is implied in the cart or product pages; those belong to S1-M05.
+- [ ] Use keyboard-only navigation. Confirm visible focus, meaningful image alternative text and working product/category controls.
+- [ ] Resize to a phone-sized viewport and repeat search, category navigation, product details and the primary product actions.
+- [ ] In the operator workspace at http://localhost:3000/admin, switch active currency to USD, return to the storefront and confirm USD-specific fixture prices are shown. Switch back to INR and confirm prices return to the explicit INR book; no exchange-rate conversion is implied. Local admin sign-in is `admin` / `admin`.
 
-## Account, wishlist, cart and address
+## Self-registration, ownership and profile
 
-- [ ] Register a new customer using the storefront's local Keycloak registration flow and sign in; never copy a password into this guide.
-- [ ] Add/remove a wishlist item; refresh and confirm persistence.
-- [ ] Add multiple variants to cart, change quantities, remove a line, refresh and confirm persistence.
-- [ ] Confirm displayed cart values are informational and the UI does not claim stock reservation or checkout completion.
-- [ ] Enter an Indian address with a valid state and PIN; save and edit it.
-- [ ] Submit invalid/missing state and PIN values; confirm accessible field-level validation.
-- [ ] With a second test customer, repeat cart/wishlist/profile flows. Confirm the second account cannot view or alter the first account’s records by editing paths or request data.
-- [ ] Using the browser's customer token, call M03 Catalog, Pricing, Inventory and Configuration APIs; confirm each rejects the token. Confirm the Customer API rejects an operator token.
-- [ ] Sign out and confirm personal pages require a customer session; public browsing remains available.
-- [ ] Visit the M03 admin workspace and confirm the configured admin account still performs expected catalog operations. Confirm customer credentials cannot administer Catalog, Pricing or Inventory.
+- [ ] From the storefront's Account area, choose **Sign in or create account**, then **Register** in the customer realm. Complete local registration and confirm return to the storefront as a signed-in customer. This account is separate from the M03 operator account.
+- [ ] Open a product. Add and remove it from the wishlist; refresh and confirm the saved state persists.
+- [ ] Add products to the cart. Open Cart, change quantity, remove an item, refresh and confirm cart persistence. Confirm no reservation or order was made.
+- [ ] In Account, save and edit a valid Indian address with state and six-digit PIN. Try missing state and invalid PIN and confirm validation prevents saving.
+- [ ] Register a second customer in a separate browser session. Confirm the second customer's cart, wishlist and address are separate from the first customer's data, including after a page refresh.
+- [ ] With a customer token, call M03 Catalog, Pricing, Inventory and Configuration protected routes; confirm they reject the customer-realm token. With an operator token, call the Customer profile route; confirm it rejects that token.
+- [ ] Sign out. Confirm Account requires sign-in while public product browsing continues to work. Confirm customer credentials cannot sign in as the operator account.
 
 ## Database checks
 
-Use local owner/admin database access only. Customer data must be checked in the Customer database; do not query another service's private tables using an application service role. Replace placeholders with the actual local DB container/owner/database names documented by the implementation.
+Use the local PostgreSQL owner account for these read-only checks. The SQL returns migration state and counts only; it does not select addresses or authentication credentials. Run from the repository root:
 
-```sql
--- Migration state
-SELECT installed_rank, version, description, success
+```sh
+docker compose --project-directory . --project-name supersports --env-file devops/.local/bootstrap.env -f devops/compose/core.yaml exec -T postgres sh -ec 'PGPASSWORD="$POSTGRES_PASSWORD" psql -X -v ON_ERROR_STOP=1 -U postgres -d customer' <<'SQL'
+SELECT version, description, success
 FROM flyway_schema_history
 ORDER BY installed_rank;
 
--- Verify only non-sensitive aggregate ownership and counts; do not print addresses.
-SELECT customer_subject, count(*) AS cart_lines
-FROM cart_line
-GROUP BY customer_subject;
-
-SELECT customer_subject, count(*) AS wishlist_items
-FROM wishlist_item
-GROUP BY customer_subject;
+SELECT count(*) AS customer_profiles FROM customer_profile;
+SELECT count(DISTINCT subject) AS cart_owners, count(*) AS cart_items FROM cart_item;
+SELECT count(DISTINCT subject) AS wishlist_owners, count(*) AS wishlist_items FROM wishlist_item;
+SQL
 ```
 
-- [ ] Confirm records for the two test subjects remain separate after browser restart.
-- [ ] Confirm no passwords, bearer tokens or payment details are persisted in Customer tables.
-- [ ] Record database/container, command, timestamp, row counts and redacted result; do not paste address values into this file.
+- [ ] Confirm Customer migration version `1` succeeded and profile/cart/wishlist counts reflect the test users.
+- [ ] Confirm the two test accounts have separate cart and wishlist ownership. The `subject` is the verified Keycloak subject; no application service role accepts an owner supplied by the browser.
+- [ ] Confirm the Customer database contains no password, bearer-token or payment-detail columns. Customer data is in database `customer`, owned by the Customer service role; do not inspect another service's private tables using an application service role.
+- [ ] Record timestamp, Git revision, command and aggregate results here. Do not paste address values, email addresses, subject identifiers, passwords or tokens.
+- [ ] Selenium creates two uniquely named customer-realm accounts during each full run and leaves their local identity records/data in the development profile. Keep or clean those accounts intentionally; `./devops/scripts/supersports reset --confirm-reset supersports` removes all local DB/identity volumes.
 
 ## Manual result
 
 - Tester/date:
 - Git revision:
 - Profile and dataset:
-- Outcome (pass/fail per section):
+- Outcome by section (pass/fail):
 - Issues / evidence paths:
-- Cleanup performed (test customer/cart data):
+- Database aggregate results (no identifiers):
+- Cleanup performed:

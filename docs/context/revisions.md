@@ -73,3 +73,9 @@ Created the customer storefront design and editable Mermaid architecture; separa
 ## 2026-10-24 — S1-M04 self-registration decision
 
 The user selected customer self-registration. Design review found that same-realm audience mapping could expose M03 administration; tightened the design to a dedicated `supersports-customers` realm, exact issuer and customer-only API audience. Added ADR 0004, R21/AE21, bidirectional token-isolation checks and the manual acceptance path. Design revision 2 is ready for implementation.
+
+## 2026-10-24 — S1-M04 implementation and verification
+
+Implemented the customer-owned profile, Indian address, cart and wishlist service with a dedicated self-registration realm; public storefront discovery uses Catalog/Pricing/Inventory snapshots. Added responsive React storefront and supplied brand assets, category/search/product flows, Playwright and Selenium coverage, Customer database provisioning, contracts and Nginx API routing. Browser review fixes cover category slug deep links, search from non-shop pages, and additive cart quantity (maximum 99).
+
+Final verification: 22 Python tests, 36 Java tests across five services, Helm/Terraform/Compose validation, 17 live integration tests both before and after recovery, four recovery assertions and five Selenium journeys passed. Three Playwright tests and frontend build passed separately. A read-only Customer DB aggregate reported migration 1 successful, 12 profiles, six cart owners/six items and seven wishlist owners/seven items. One eight-container RSS sample was 2,112.6 MiB with 7.75 GiB Docker allocation; this is not peak/load evidence. Owner manual acceptance remains pending. Storefront is available at `http://localhost:3000`; operator UI at `http://localhost:3000/admin`. No Nova behavior is claimed. Next milestone is S1-M05 after the M04 Git checkpoint.

@@ -31,7 +31,8 @@ class PricingSecurity {
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/pricing/currency", "/api/v1/pricing/prices", "/api/v1/pricing/coupons").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/pricing/currency", "/api/v1/pricing/public/skus/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/pricing/prices", "/api/v1/pricing/coupons").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/pricing/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/pricing/**").authenticated()
                         .anyRequest().denyAll())

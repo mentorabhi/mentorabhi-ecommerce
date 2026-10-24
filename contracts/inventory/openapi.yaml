@@ -3,6 +3,8 @@ info: {title: SuperSports Inventory API, version: 1.0.0}
 servers: [{url: /api/v1/inventory}]
 security: [{bearerAuth: []}]
 paths:
+  /availability/{skuId}:
+    get: {summary: Read informational available-quantity snapshot, security: [], responses: {'200': {description: On-hand quantity; not a reservation}}}
   /warehouses:
     get: {summary: List active warehouses, responses: {'200': {description: Warehouses}}}
   /balances:

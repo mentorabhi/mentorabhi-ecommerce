@@ -44,6 +44,12 @@ class SecurityPolicyTest {
     @Test void anonymousRequestsRequireSignIn() throws Exception {
         mvc.perform(get("/api/v1/catalog/admin/products")).andExpect(status().isUnauthorized());
     }
+    @Test void customerBrowseReadsArePublicButOperatorStatusIsProtected() throws Exception {
+        mvc.perform(get("/api/v1/catalog/products")).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/catalog/categories")).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/catalog/public/skus/example")).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/catalog/status")).andExpect(status().isUnauthorized());
+    }
     @Test void invalidTokenIsRejected() throws Exception {
         mvc.perform(get("/api/v1/catalog/admin/products").header("Authorization", "Bearer invalid"))
                 .andExpect(status().isUnauthorized());

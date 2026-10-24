@@ -31,7 +31,8 @@ class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/catalog/status", "/api/v1/catalog/sports", "/api/v1/catalog/categories", "/api/v1/catalog/products", "/api/v1/catalog/skus/*/status", "/api/v1/catalog/admin/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/catalog/sports", "/api/v1/catalog/categories", "/api/v1/catalog/products", "/api/v1/catalog/public/skus/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/catalog/status", "/api/v1/catalog/skus/*/status", "/api/v1/catalog/admin/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/catalog/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/catalog/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/catalog/**").authenticated()

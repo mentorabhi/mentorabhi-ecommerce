@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.client.RestClient;
@@ -28,7 +29,11 @@ class CatalogController {
     @GetMapping("/status") Status status() { return new Status("catalog", "ready", repository.schemaVersion()); }
     @GetMapping("/sports") List<Map<String,Object>> sports() { return repository.sports(); }
     @GetMapping("/categories") List<Map<String,Object>> categories() { return repository.categories(); }
-    @GetMapping("/products") List<Map<String,Object>> products() { return repository.products(true); }
+    @GetMapping("/products") List<Map<String,Object>> products(@RequestParam(required=false) String q, @RequestParam(required=false) String category) {
+        if (q != null && q.length() > 100) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search query is too long");
+        return repository.searchProducts(q, category);
+    }
+    @GetMapping("/public/skus/{skuId}") Map<String,Object> publicSku(@PathVariable UUID skuId) { return repository.publicSku(skuId); }
     @GetMapping("/admin/products") List<Map<String,Object>> allProducts() { return repository.products(false); }
     @GetMapping("/skus/{skuId}/status") Map<String,Object> skuStatus(@PathVariable UUID skuId) { return repository.skuStatus(skuId); }
 

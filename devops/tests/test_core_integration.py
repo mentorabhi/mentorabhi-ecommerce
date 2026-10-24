@@ -14,6 +14,7 @@ CATALOG = "http://127.0.0.1:8081"
 CONFIGURATION = "http://127.0.0.1:8082"
 PRICING = "http://127.0.0.1:8083"
 INVENTORY = "http://127.0.0.1:8084"
+CUSTOMER = "http://127.0.0.1:8085"
 
 
 @unittest.skipUnless(os.environ.get("SUPERSPORTS_INTEGRATION") == "1",
@@ -32,7 +33,7 @@ class CoreIntegrationTests(unittest.TestCase):
                                        "supersports-other-cli")
 
     def test_public_health_is_up_without_sensitive_details(self):
-        for base in (CATALOG, CONFIGURATION, PRICING, INVENTORY):
+        for base in (CATALOG, CONFIGURATION, PRICING, INVENTORY, CUSTOMER):
             for probe in ("liveness", "readiness"):
                 with self.subTest(base=base, probe=probe):
                     status, body = manage.request_json(f"{base}/actuator/health/{probe}")
@@ -40,10 +41,32 @@ class CoreIntegrationTests(unittest.TestCase):
                     self.assertEqual(body, {"status": "UP"})
 
     def test_anonymous_api_access_is_unauthorized(self):
-        for url in (f"{CATALOG}/api/v1/catalog/status", f"{CATALOG}/api/v1/catalog/products",
+        for url in (f"{CATALOG}/api/v1/catalog/status", f"{CATALOG}/api/v1/catalog/admin/products",
                     f"{CONFIGURATION}/api/v1/configuration", f"{PRICING}/api/v1/pricing/prices",
-                    f"{INVENTORY}/api/v1/inventory/balances"):
+                    f"{INVENTORY}/api/v1/inventory/balances", f"{CUSTOMER}/api/v1/customer/profile"):
             self.assertEqual(manage.request_json(url)[0], 401)
+
+    def test_public_customer_browsing_and_snapshots_are_available_without_signin(self):
+        status, products = manage.request_json(f"{CATALOG}/api/v1/catalog/products?q=football")
+        self.assertEqual(status, 200)
+        self.assertTrue(products)
+        football_codes = {sku["code"] for product in products for sku in product["skus"]}
+        self.assertEqual(football_codes, {"SS-FB-BALL-001", "SS-FB-CONE-001", "SS-FB-GLOVE-001"})
+        proxy_status, proxy_products = manage.request_json(
+            "http://127.0.0.1:3000/api/catalog/products?q=football")
+        self.assertEqual(proxy_status, 200)
+        self.assertEqual(proxy_products, products)
+        self.assertEqual(manage.request_json(f"{CATALOG}/api/v1/catalog/categories")[0], 200)
+        sku = products[0]["skus"][0]["id"]
+        self.assertEqual(manage.request_json(f"{CATALOG}/api/v1/catalog/public/skus/{sku}")[0], 200)
+        self.assertEqual(manage.request_json(f"{PRICING}/api/v1/pricing/public/skus/{sku}")[0], 200)
+        status, availability = manage.request_json(f"{INVENTORY}/api/v1/inventory/availability/{sku}")
+        self.assertEqual(status, 200)
+        self.assertTrue(availability["snapshot"])
+
+    def test_operator_identity_cannot_access_customer_resources(self):
+        self.assertEqual(manage.request_json(f"{CUSTOMER}/api/v1/customer/profile", token=self.local_admin)[0], 401)
+        self.assertEqual(manage.request_json(f"{CUSTOMER}/api/v1/customer/cart", token=self.admin)[0], 401)
 
     def test_customer_and_catalog_admin_can_read_catalog_status(self):
         for token in (self.customer, self.catalog_admin):
@@ -143,17 +166,22 @@ class CoreIntegrationTests(unittest.TestCase):
             "http://127.0.0.1:8180/realms/supersports/.well-known/openid-configuration")
         self.assertEqual(status, 200)
         self.assertEqual(body["issuer"], "http://localhost:8180/realms/supersports")
+        status, body = manage.request_json(
+            "http://127.0.0.1:8180/realms/supersports-customers/.well-known/openid-configuration")
+        self.assertEqual(status, 200)
+        self.assertEqual(body["issuer"], "http://localhost:8180/realms/supersports-customers")
 
     def psql(self, role, database, sql):
         keys = {"catalog": "CATALOG_DB_PASSWORD", "configuration": "CONFIGURATION_DB_PASSWORD",
-                "pricing": "PRICING_DB_PASSWORD", "inventory": "INVENTORY_DB_PASSWORD"}
+                "pricing": "PRICING_DB_PASSWORD", "inventory": "INVENTORY_DB_PASSWORD",
+                "customer": "CUSTOMER_DB_PASSWORD"}
         command = ('export PGPASSWORD="$' + keys[role] + '"; exec psql -X -A -t '
                    f'-h 127.0.0.1 -U supersports_{role} -d {database} -c \'{sql}\'')
         return manage.compose(["exec", "-T", "postgres", "sh", "-ec", command],
                               project=self.project, capture=True, check=False)
 
     def test_each_service_can_connect_to_its_own_migrated_database(self):
-        for service in ("catalog", "configuration", "pricing", "inventory"):
+        for service in ("catalog", "configuration", "pricing", "inventory", "customer"):
             result = self.psql(service, service,
                                "SELECT count(*) FROM flyway_schema_history WHERE success")
             self.assertEqual(result.returncode, 0)
@@ -161,7 +189,8 @@ class CoreIntegrationTests(unittest.TestCase):
 
     def test_service_database_roles_cannot_connect_to_each_other_database(self):
         for owner, other in (("catalog", "configuration"), ("configuration", "catalog"),
-                             ("pricing", "inventory"), ("inventory", "pricing")):
+                             ("pricing", "inventory"), ("inventory", "pricing"),
+                             ("customer", "catalog"), ("catalog", "customer")):
             result = self.psql(owner, other, "SELECT 1")
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("permission denied", result.stderr.lower())
@@ -170,7 +199,7 @@ class CoreIntegrationTests(unittest.TestCase):
         result = manage.compose(["ps", "--format", "json"], project=self.project, capture=True)
         # Compose emits one JSON object per line for multiple services.
         rows = [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
-        self.assertEqual({row["Service"] for row in rows}, {"postgres", "identity", "catalog", "configuration", "pricing", "inventory", "storefront"})
+        self.assertEqual({row["Service"] for row in rows}, {"postgres", "identity", "catalog", "configuration", "pricing", "inventory", "customer", "storefront"})
         for row in rows:
             publishers = row.get("Publishers") or []
             if row["Service"] == "postgres":

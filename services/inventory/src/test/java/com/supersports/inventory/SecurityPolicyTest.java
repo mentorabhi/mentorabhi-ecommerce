@@ -40,6 +40,10 @@ class SecurityPolicyTest {
     @Test void anonymousRequestsRequireSignIn() throws Exception {
         mvc.perform(get("/api/v1/inventory/balances")).andExpect(status().isUnauthorized());
     }
+    @Test void onlyAvailabilitySnapshotIsPublic() throws Exception {
+        mvc.perform(get("/api/v1/inventory/availability/example")).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/inventory/movements")).andExpect(status().isUnauthorized());
+    }
     @Test void invalidTokenIsRejected() throws Exception {
         mvc.perform(get("/api/v1/inventory/balances").header("Authorization", "Bearer invalid"))
                 .andExpect(status().isUnauthorized());

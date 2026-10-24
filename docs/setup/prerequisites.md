@@ -26,7 +26,7 @@ printf 'ADMIN_PASSWORD=admin\n' > devops/.local/admin-login.env
 chmod 600 devops/.local/admin-login.env
 ```
 
-Sign in at `http://localhost:3000` with username `admin` and password `admin`. The ignored file is local-only; the identity provisioning step synchronizes it on each `supersports up`. Infrastructure/database credentials stay in the separate generated bootstrap file.
+Customer storefront: `http://localhost:3000`. Admin workspace: `http://localhost:3000/admin`, username `admin`, password `admin`. The ignored file is local-only; the identity provisioning step synchronizes it on each `supersports up`. Infrastructure/database credentials stay in the separate generated bootstrap file.
 
 Install the pinned UI test dependency in the repository environment:
 
@@ -34,7 +34,7 @@ Install the pinned UI test dependency in the repository environment:
 .venv/bin/python -m pip install -r apps/storefront/tests/requirements.txt
 ```
 
-After starting the full S1-M03 profile, run the authenticated browser suite with `devops/scripts/supersports ui-test`. It uses the ignored local demo credentials, creates one stable Selenium product and coupon on first run, and appends an inventory adjustment/reversal pair on each run. Retain these records in the local development database so UI-to-database results remain inspectable. Browser driver acquisition is managed by Selenium Manager.
+After starting the full commerce profile, run `devops/scripts/supersports ui-test`. Selenium covers admin merchandising and a self-registering customer flow, including separate customer accounts, profile/cart/wishlist, public search/product detail and token-audience isolation. It retains one stable Selenium admin product/coupon, appends an inventory adjustment/reversal pair per successful run, and creates uniquely named local customer test accounts. Retain these records in the local development databases so UI-to-database results remain inspectable. Browser driver acquisition is managed by Selenium Manager.
 
 ## Nova prerequisite: native host Ollama
 Use the Ollama installation already present on the host. Do not install, create or start an Ollama Docker container. This is the explicit exception to the Dockerized application/dependency stack. Stage 1 commerce must work while Ollama is stopped.

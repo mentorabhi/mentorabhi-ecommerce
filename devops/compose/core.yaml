@@ -37,6 +37,7 @@ services:
       IDENTITY_DB_PASSWORD: "${IDENTITY_DB_PASSWORD:?Run configure}"
       PRICING_DB_PASSWORD: "${PRICING_DB_PASSWORD:?Run configure}"
       INVENTORY_DB_PASSWORD: "${INVENTORY_DB_PASSWORD:?Run configure}"
+      CUSTOMER_DB_PASSWORD: "${CUSTOMER_DB_PASSWORD:?Run configure}"
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./devops/postgres/init.sh:/docker-entrypoint-initdb.d/10-supersports.sh:ro
@@ -75,6 +76,7 @@ services:
     ports: ["127.0.0.1:8180:8080"]
     volumes:
       - ./devops/identity/supersports-realm.json:/opt/keycloak/data/import/supersports-realm.json:ro
+      - ./devops/identity/supersports-customers-realm.json:/opt/keycloak/data/import/supersports-customers-realm.json:ro
     depends_on:
       postgres: {condition: service_healthy}
     healthcheck:
@@ -164,6 +166,28 @@ services:
       CATALOG_BASE_URL: http://catalog:8080
     ports: ["127.0.0.1:8084:8080"]
 
+  customer:
+    <<: *app-runtime
+    image: "${CUSTOMER_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/commerce.Dockerfile
+      args:
+        BUILD_IMAGE: "${BUILD_IMAGE:?Use devops/scripts/supersports}"
+        JAVA_IMAGE: "${JAVA_IMAGE:?Use devops/scripts/supersports}"
+        SERVICE_NAME: customer
+        RELEASE_VERSION: "${RELEASE_VERSION:-s1-m04}"
+    environment:
+      <<: *app-environment
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/customer
+      SPRING_DATASOURCE_USERNAME: supersports_customer
+      SPRING_DATASOURCE_PASSWORD: "${CUSTOMER_DB_PASSWORD:?Run configure}"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "http://localhost:8180/realms/supersports-customers"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "http://identity:8080/realms/supersports-customers/protocol/openid-connect/certs"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_AUDIENCES: "supersports-customer-api"
+      CATALOG_BASE_URL: http://catalog:8080
+    ports: ["127.0.0.1:8085:8080"]
+
   storefront:
     restart: unless-stopped
     image: "${STOREFRONT_IMAGE:?Use devops/scripts/supersports}"
@@ -184,6 +208,7 @@ services:
       catalog: {condition: service_healthy}
       pricing: {condition: service_healthy}
       inventory: {condition: service_healthy}
+      customer: {condition: service_healthy}
       identity: {condition: service_healthy}
     ports: ["127.0.0.1:3000:8080"]
 

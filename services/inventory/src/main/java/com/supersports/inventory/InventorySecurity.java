@@ -31,6 +31,7 @@ class InventorySecurity {
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/inventory/availability/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/inventory/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/inventory/**").authenticated()
                         .anyRequest().denyAll())

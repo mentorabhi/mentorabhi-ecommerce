@@ -19,18 +19,21 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[2]
 SECRET_KEYS = (
     "POSTGRES_PASSWORD", "CATALOG_DB_PASSWORD", "CONFIGURATION_DB_PASSWORD",
-    "IDENTITY_DB_PASSWORD", "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD",
+    "IDENTITY_DB_PASSWORD", "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD", "CUSTOMER_DB_PASSWORD",
     "KEYCLOAK_ADMIN_PASSWORD", "DEMO_CUSTOMER_PASSWORD",
     "DEMO_PLATFORM_ADMIN_PASSWORD", "DEMO_CATALOG_ADMIN_PASSWORD", "DEMO_INVENTORY_OPERATOR_PASSWORD",
 )
-LEGACY_SECRET_KEYS = (
+M02_SECRET_KEYS = (
     "POSTGRES_PASSWORD", "CATALOG_DB_PASSWORD", "CONFIGURATION_DB_PASSWORD",
     "IDENTITY_DB_PASSWORD", "KEYCLOAK_ADMIN_PASSWORD", "DEMO_CUSTOMER_PASSWORD",
     "DEMO_PLATFORM_ADMIN_PASSWORD", "DEMO_CATALOG_ADMIN_PASSWORD",
 )
-SERVICES = ("catalog", "configuration", "pricing", "inventory")
+LEGACY_SECRET_KEYS = (*M02_SECRET_KEYS, "PRICING_DB_PASSWORD", "INVENTORY_DB_PASSWORD",
+                      "DEMO_INVENTORY_OPERATOR_PASSWORD")
+SERVICES = ("catalog", "configuration", "pricing", "inventory", "customer")
 DEPLOYABLES = (*SERVICES, "storefront")
-DEFAULT_VERSION = "s1-m03"
+SERVICE_PORTS = (8081, 8082, 8083, 8084, 8085)
+DEFAULT_VERSION = "s1-m04"
 TOKEN_URL = "http://127.0.0.1:8180/realms/supersports/protocol/openid-connect/token"
 
 
@@ -123,7 +126,7 @@ def configure(root: Path = ROOT) -> Path:
                 if not separator or key not in LEGACY_SECRET_KEYS or key in existing or not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", value):
                     raise
                 existing[key] = value
-            if set(existing) != set(LEGACY_SECRET_KEYS):
+            if set(existing) not in (set(M02_SECRET_KEYS), set(LEGACY_SECRET_KEYS)):
                 raise
             with path.open("a") as handle:
                 for key in sorted(set(SECRET_KEYS) - set(existing)):
@@ -352,20 +355,20 @@ def recovery(root=ROOT, project="supersports"):
     if before[0] != 200:
         raise RuntimeError("Configuration snapshot is unavailable before recovery test.")
     compose(["restart", *SERVICES], root=root, project=project)
-    for port in (8081, 8082, 8083, 8084):
+    for port in SERVICE_PORTS:
         wait_status(f"http://127.0.0.1:{port}/actuator/health/readiness")
     if request_json(url, token=token) != before:
         raise RuntimeError("Configuration changed unexpectedly across application restart.")
     print("PASS: configuration and migration state survive application restart")
     try:
         compose(["stop", "postgres"], root=root, project=project)
-        for port in (8081, 8082, 8083, 8084):
+        for port in SERVICE_PORTS:
             wait_status(f"http://127.0.0.1:{port}/actuator/health/readiness", 503, timeout=45)
             wait_status(f"http://127.0.0.1:{port}/actuator/health/liveness", 200, timeout=15)
         print("PASS: database outage removes readiness without killing liveness")
     finally:
         compose(["start", "postgres"], root=root, project=project)
-        for port in (8081, 8082, 8083, 8084):
+        for port in SERVICE_PORTS:
             wait_status(f"http://127.0.0.1:{port}/actuator/health/readiness", timeout=120)
     print("PASS: database reconnection restores readiness")
     deadline = time.monotonic() + 120

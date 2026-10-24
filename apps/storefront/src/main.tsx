@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { User, UserManager, WebStorageStateStore } from 'oidc-client-ts'
 import './style.css'
+import CustomerStore from './CustomerStore'
 
-const manager = new UserManager({
+const operatorManager = new UserManager({
   authority: 'http://localhost:8180/realms/supersports',
   client_id: 'supersports-web',
-  redirect_uri: `${window.location.origin}/signin-callback`,
-  post_logout_redirect_uri: window.location.origin,
+  redirect_uri: `${window.location.origin}/admin/signin-callback`,
+  post_logout_redirect_uri: `${window.location.origin}/admin`,
   response_type: 'code',
   scope: 'openid profile email',
   userStore: new WebStorageStateStore({ store: window.sessionStorage }),
@@ -36,7 +37,7 @@ async function api<T>(path: string, token: string, options: RequestInit = {}): P
 class ApiError extends Error { constructor(message: string, readonly status: number) { super(message) } }
 const money = (amount: number, currency: Currency) => new Intl.NumberFormat('en-IN', { style: 'currency', currency }).format(amount / 100)
 
-function App() {
+function AdminApp() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [screen, setScreen] = useState<'catalog' | 'pricing' | 'inventory'>('catalog')
@@ -60,20 +61,20 @@ function App() {
   useEffect(() => {
     const callback = async () => {
       try {
-        if (window.location.pathname === '/signin-callback') {
-          const signedIn = await manager.signinRedirectCallback()
+        if (window.location.pathname === '/admin/signin-callback') {
+          const signedIn = await operatorManager.signinRedirectCallback()
           setUser(signedIn)
-          window.history.replaceState({}, document.title, '/')
-        } else setUser(await manager.getUser())
+          window.history.replaceState({}, document.title, '/admin')
+        } else setUser(await operatorManager.getUser())
       } catch { setError(new Error('Sign in could not be completed. Return to the login page and try again.')) }
       finally { setLoading(false) }
     }
     void callback()
     const loaded = (signedIn: User) => setUser(signedIn)
     const unloaded = () => setUser(null)
-    manager.events.addUserLoaded(loaded)
-    manager.events.addUserUnloaded(unloaded)
-    return () => { manager.events.removeUserLoaded(loaded); manager.events.removeUserUnloaded(unloaded) }
+    operatorManager.events.addUserLoaded(loaded)
+    operatorManager.events.addUserUnloaded(unloaded)
+    return () => { operatorManager.events.removeUserLoaded(loaded); operatorManager.events.removeUserUnloaded(unloaded) }
   }, [])
 
   const run = async (work: () => Promise<void>) => {
@@ -108,14 +109,14 @@ function App() {
   useEffect(() => { void refresh().catch((caught) => setError(caught)) }, [token])
 
   if (loading) return <main className="center-state" aria-live="polite">Loading your workspace…</main>
-  if (!user) return <main className="login-shell"><a className="login-brand" href="/"><img src="/brand/supersports-icon.jpg" alt=""/><strong>Super<span>Sports</span></strong></a><div className="login-card"><p className="eyebrow">MERCHANDISING WORKSPACE</p><h1>Make every<br/>match count.</h1><p>Manage the gear, prices and stock that keep players ready.</p><button className="button primary wide" onClick={() => void manager.signinRedirect()}>Sign in with local account <span aria-hidden="true">↗</span></button><p className="quiet">Local admin · English · INR default</p></div><div className="login-art"><img className="brand-banner" src="/brand/supersports-banner.jpg" alt="SuperSports sports and fitness banner"/></div></main>
+  if (!user) return <main className="login-shell"><a className="login-brand" href="/"><img src="/brand/supersports-icon.jpg" alt=""/><strong>Super<span>Sports</span></strong></a><div className="login-card"><p className="eyebrow">MERCHANDISING WORKSPACE</p><h1>Make every<br/>match count.</h1><p>Manage the gear, prices and stock that keep players ready.</p><button className="button primary wide" onClick={() => void operatorManager.signinRedirect()}>Sign in with local account <span aria-hidden="true">↗</span></button><p className="quiet">Local admin · English · INR default</p></div><div className="login-art"><img className="brand-banner" src="/brand/supersports-banner.jpg" alt="SuperSports sports and fitness banner"/></div></main>
 
   const title = accessibleScreens.find((item) => item.id === screen)?.label ?? 'Catalog'
 
   return <div className="app-shell">
     <aside className="sidebar"><a className="brand-link brand-lockup" href="#home"><img src="/brand/supersports-icon.jpg" alt=""/><strong>Super<span>Sports</span></strong></a><div className="workspace-label">LOCAL COMMERCE <span>DEV</span></div><nav aria-label="Workspace sections">{accessibleScreens.map((item) => <button key={item.id} className={`nav-item ${screen===item.id?'selected':''}`} onClick={() => { setScreen(item.id); setError(null); setMessage('') }}><span className="nav-icon" aria-hidden="true">{item.icon}</span>{item.label}{screen===item.id && <span className="nav-active"/>}</button>)}</nav><div className="sidebar-bottom"><div className="health-dot"><i/>All services connected</div><div className="profile"><div className="avatar">{user.profile.preferred_username?.toString().slice(0,1).toUpperCase() ?? 'S'}</div><div><strong>{user.profile.preferred_username?.toString() ?? 'Local user'}</strong><span>Local account</span></div></div></div></aside>
-    <main id="home" className="main-area"><header className="topbar"><div className="breadcrumb"><span>Workspace</span><b>/</b><strong>{title}</strong></div><div className="top-actions"><span className="live-badge"><i/>LOCAL ENVIRONMENT</span><button className="icon-button refresh-button" aria-label="Refresh data" onClick={() => void run(async()=>{await refresh();setMessage('Workspace data refreshed.')})}>⟳</button><button className="icon-button" aria-label="Sign out" onClick={() => void manager.signoutRedirect()}>↪</button></div></header><div className="content"><div className="page-heading"><div><p className="eyebrow">SUPERSPORTS STUDIO <span className="heading-dot">●</span> {screen==='catalog'?'MERCHANDISING':screen==='pricing'?'REVENUE TOOLS':'FULFILMENT'}</p><h1>{title}<span className="heading-period">.</span></h1><p className="subtitle">{screen==='catalog'?'Build a catalog players can trust.':screen==='pricing'?'Keep every price and offer in play.':'Know what is ready for the next order.'}</p></div>{screen==='catalog'&&<div className="summary-chip"><span className="summary-number">{products.length.toString().padStart(2,'0')}</span><span>ACTIVE<br/>PRODUCTS</span></div>}</div>
-      {error && <div className={`notice ${error instanceof ApiError&&error.status===403?'warning':'error'}`} role="alert"><span aria-hidden="true">{error instanceof ApiError&&error.status===403?'◉':'!'}</span><div><strong>{error instanceof ApiError&&error.status===403?'Access limited':'We couldn’t load that'}</strong><p>{error.message}</p>{error instanceof ApiError&&error.status===401&&<button className="text-button" onClick={() => void manager.signinRedirect()}>Sign in again</button>}</div><button className="notice-close" aria-label="Dismiss message" onClick={()=>setError(null)}>×</button></div>}
+    <main id="home" className="main-area"><header className="topbar"><div className="breadcrumb"><span>Workspace</span><b>/</b><strong>{title}</strong></div><div className="top-actions"><span className="live-badge"><i/>LOCAL ENVIRONMENT</span><button className="icon-button refresh-button" aria-label="Refresh data" onClick={() => void run(async()=>{await refresh();setMessage('Workspace data refreshed.')})}>⟳</button><button className="icon-button" aria-label="Sign out" onClick={() => void operatorManager.signoutRedirect()}>↪</button></div></header><div className="content"><div className="page-heading"><div><p className="eyebrow">SUPERSPORTS STUDIO <span className="heading-dot">●</span> {screen==='catalog'?'MERCHANDISING':screen==='pricing'?'REVENUE TOOLS':'FULFILMENT'}</p><h1>{title}<span className="heading-period">.</span></h1><p className="subtitle">{screen==='catalog'?'Build a catalog players can trust.':screen==='pricing'?'Keep every price and offer in play.':'Know what is ready for the next order.'}</p></div>{screen==='catalog'&&<div className="summary-chip"><span className="summary-number">{products.length.toString().padStart(2,'0')}</span><span>ACTIVE<br/>PRODUCTS</span></div>}</div>
+      {error && <div className={`notice ${error instanceof ApiError&&error.status===403?'warning':'error'}`} role="alert"><span aria-hidden="true">{error instanceof ApiError&&error.status===403?'◉':'!'}</span><div><strong>{error instanceof ApiError&&error.status===403?'Access limited':'We couldn’t load that'}</strong><p>{error.message}</p>{error instanceof ApiError&&error.status===401&&<button className="text-button" onClick={() => void operatorManager.signinRedirect()}>Sign in again</button>}</div><button className="notice-close" aria-label="Dismiss message" onClick={()=>setError(null)}>×</button></div>}
       {message&&<div className="notice success" role="status"><span aria-hidden="true">✓</span><div><strong>Done</strong><p>{message}</p></div><button className="notice-close" aria-label="Dismiss message" onClick={()=>setMessage('')}>×</button></div>}
       {screen==='catalog'&&<Catalog products={products} categories={categories} token={token} saving={saving} run={run} refresh={refresh} setMessage={setMessage}/>}
       {screen==='pricing'&&<Pricing prices={prices} products={products} currency={currency} currencyRevision={currencyRevision} coupons={coupons} token={token} saving={saving} run={run} refresh={refresh} setMessage={setMessage}/>}
@@ -154,3 +155,7 @@ function Inventory({balances,products,token,saving,run,refresh,setMessage}:{bala
 }
 
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>)
+
+function App() {
+  return window.location.pathname.startsWith('/admin') ? <AdminApp/> : <CustomerStore/>
+}

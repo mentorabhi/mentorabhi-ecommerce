@@ -42,6 +42,11 @@ class SecurityPolicyTest {
     @Test void anonymousRequestsRequireSignIn() throws Exception {
         mvc.perform(get("/api/v1/pricing/prices")).andExpect(status().isUnauthorized());
     }
+    @Test void activeCurrencyAndProductPriceReadsArePublic() throws Exception {
+        mvc.perform(get("/api/v1/pricing/currency")).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/pricing/public/skus/example")).andExpect(status().isOk());
+        mvc.perform(get("/api/v1/pricing/coupons")).andExpect(status().isUnauthorized());
+    }
     @Test void invalidTokenIsRejected() throws Exception {
         mvc.perform(get("/api/v1/pricing/prices").header("Authorization", "Bearer invalid"))
                 .andExpect(status().isUnauthorized());

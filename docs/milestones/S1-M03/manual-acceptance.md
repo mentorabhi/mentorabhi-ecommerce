@@ -25,7 +25,7 @@ http://localhost:3000/healthz                    Storefront
 
 ## Sign in and inspect the UI
 
-Open **http://localhost:3000**. If a prior failed login left the page in a stale state, reload it before starting.
+Open **http://localhost:3000/admin**. The customer storefront is now at the root URL. If a prior failed login left the page in a stale state, reload it before starting.
 
 Sign in with username `admin` and password `admin`. These are local demo credentials stored in the ignored `devops/.local/admin-login.env` file. Confirm the Catalog workspace renders and remains visible after the redirect. All signed-in local accounts can use every admin section; role assignments are unnecessary (ADR 0003).
 

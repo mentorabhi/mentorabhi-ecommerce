@@ -1,0 +1,25 @@
+openapi: 3.1.0
+info: {title: SuperSports Customer API, version: 1.0.0}
+servers: [{url: /api/v1/customer}]
+security: [{customerBearer: []}]
+paths:
+  /profile:
+    get: {summary: Read the authenticated subject's profile and address, responses: {'200': {description: Profile defaults country to IN}}}
+    put: {summary: Update the authenticated subject's Indian profile/address, responses: {'200': {description: Updated revision}, '409': {description: Stale profile revision}, '422': {description: Invalid Indian address}}}
+  /cart:
+    get: {summary: List the authenticated subject's cart, responses: {'200': {description: SKU/quantity/revision lines}}}
+  /cart/items/{skuId}:
+    put: {summary: Set quantity for an active SKU in the authenticated subject's cart, responses: {'200': {description: Cart line}, '422': {description: Inactive SKU or invalid quantity}}}
+    delete: {summary: Remove a cart line from the authenticated subject's cart, responses: {'204': {description: Removed}}}
+  /wishlist:
+    get: {summary: List the authenticated subject's wishlist, responses: {'200': {description: SKU IDs}}}
+  /wishlist/items/{skuId}:
+    post: {summary: Save an active SKU to the authenticated subject's wishlist, responses: {'204': {description: Saved}, '422': {description: Inactive SKU}}}
+    delete: {summary: Remove a SKU from the authenticated subject's wishlist, responses: {'204': {description: Removed}}}
+components:
+  securitySchemes:
+    customerBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Signed token from issuer http://localhost:8180/realms/supersports-customers with audience supersports-customer-api. Subject is derived from the token; no owner identifier is accepted.
