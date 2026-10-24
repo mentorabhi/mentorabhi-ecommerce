@@ -310,6 +310,36 @@ services:
       start_period: 30s
     ports: ["127.0.0.1:9092:9092"]
 
+  kafka-ui:
+    profiles: ["streaming"]
+    image: "${KAFKA_UI_IMAGE:?Use devops/scripts/supersports}"
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      JAVA_OPTS: "-Xms64m -Xmx256m"
+      KAFKA_CLUSTERS_0_NAME: supersports
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_READONLY: "true"
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: debezium
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
+      DYNAMIC_CONFIG_ENABLED: "false"
+      MCP_ENABLED: "false"
+      GITHUB_RELEASE_INFO_ENABLED: "false"
+      LOGGING_LEVEL_IO_KAFBAT_UI: INFO
+    depends_on:
+      kafka: {condition: service_healthy}
+      kafka-connect: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    ports: ["127.0.0.1:8091:8080"]
+
   kafka-connect:
     profiles: ["streaming"]
     image: "${DEBEZIUM_CONNECT_IMAGE:?Use devops/scripts/supersports}"

@@ -1,0 +1,13 @@
+flowchart LR
+  H[Mac browser localhost:8091] --> U[Kafbat UI read-only cluster]
+  U --> K[Existing Kafka broker kafka:9092]
+  U --> C[Existing Kafka Connect kafka-connect:8083]
+  C --> D[Debezium PostgreSQL connector]
+  K --> T[Topics / messages / partitions / consumer lag]
+  subgraph Docker streaming profile
+    U
+    K
+    C
+    D
+    T
+  end

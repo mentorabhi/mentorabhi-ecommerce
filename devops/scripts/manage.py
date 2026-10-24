@@ -227,7 +227,7 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
     environment = os.environ.copy()
     environment.update(load_credentials(root / "devops/.local/bootstrap.env"))
     lock = json.loads((root / "devops/images.lock.json").read_text())
-    for key in ("BUILD_IMAGE", "JAVA_IMAGE", "POSTGRES_IMAGE", "KEYCLOAK_IMAGE", "KAFKA_IMAGE", "DEBEZIUM_CONNECT_IMAGE"):
+    for key in ("BUILD_IMAGE", "JAVA_IMAGE", "POSTGRES_IMAGE", "KEYCLOAK_IMAGE", "KAFKA_IMAGE", "KAFKA_UI_IMAGE", "DEBEZIUM_CONNECT_IMAGE"):
         environment[key] = lock[key]
     for key in ("STOREFRONT_NODE_IMAGE", "STOREFRONT_NGINX_IMAGE"):
         environment[key] = lock[key]
@@ -823,7 +823,7 @@ def main(argv=None):
         elif action == "streaming-up":
             streaming_up(project=project, version=version)
         elif action == "streaming-down":
-            compose(["--profile", "streaming", "stop", *STREAMING_SERVICES, "kafka-connect", "kafka"], project=project, version=version)
+            compose(["--profile", "streaming", "stop", *STREAMING_SERVICES, "kafka-ui", "kafka-connect", "kafka"], project=project, version=version)
         elif action == "stream-status":
             streaming_status(project=project, version=version)
         elif action == "stream-fault":
@@ -850,7 +850,7 @@ def main(argv=None):
             if result.get("ok") is False:return 1
         elif action == "restart":
             service = arguments.release_version
-            allowed = (*SERVICES, "kafka-connect", "kafka", *STREAMING_SERVICES)
+            allowed = (*SERVICES, "kafka-connect", "kafka-ui", "kafka", *STREAMING_SERVICES)
             if service not in allowed:
                 raise ValueError("Restart requires a known SuperSports service name.")
             compose(["--profile", "streaming", "restart", service], project=project, version=version)

@@ -22,6 +22,8 @@ Storefront URL: http://localhost:3000 · Operator UI: http://localhost:3000/admi
 
 ## 2. CDC and Kafka checks
 
+- [ ] Follow the [Kafka UI guide](../../setup/kafka-ui.md) at http://localhost:8091 to inspect brokers, event messages, partitions, consumer lag and Debezium connector status from the host browser.
+
 - [ ] In `./devops/scripts/supersports stream-status`, confirm `supersports-orders-outbox` connector and task are RUNNING and topics `commerce.order.events.v1` (3 partitions) and `commerce.order.events.dlq.v1` (1 partition) exist.
 - [ ] Place a new synthetic order in the storefront. Confirm it first appears as an accepted order and then its status advances asynchronously.
 - [ ] Read a small sample from `commerce.order.events.v1` using the local Kafka console consumer. Confirm the key is the order ID and payload fields include event ID, event version and aggregate sequence. Confirm payloads do not contain a delivery address, email address, raw customer subject or payment instrument.

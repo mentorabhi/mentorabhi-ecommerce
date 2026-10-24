@@ -14,6 +14,18 @@ Implemented observed freshness (`CURRENT`, `DELAYED`, `BLOCKED`, `UNAVAILABLE`),
 
 No full CI rerun, isolated gap/outage evidence, DBeaver GUI setup or human manual acceptance is claimed. See [host setup and human checks](../../setup/database-access.md). Remaining milestone gates in the matrix stay open.
 
+## Host Kafka UI addition — 2026-10-24
+
+Added Kafbat UI v1.5.0 by digest, with Linux ARM64 manifest, to the Compose `streaming` profile. It binds to `127.0.0.1:8091`, connects to the existing Kafka broker and Debezium Connect endpoints, and runs read-only. The image is Apache-2.0; GitHub update checking, dynamic configuration and MCP are disabled. Resource limit 512 MiB/0.5 CPU, Java heap 256 MiB.
+
+- Rendered Compose profile unit tests: two passed, covering opt-in profile, loopback binding, dependencies, image digest, read-only access and resource limit.
+- Runtime host API checks: two passed. `/actuator/health` UP; cluster ONLINE/read-only; broker 1; seven topics; event topic has three partitions and retained messages; a message stream returned a MESSAGE event; consumer groups and the active rebuild group were listed; Debezium connector and task RUNNING.
+- Selenium host-browser check passed in 2.000 seconds; cluster overview rendered.
+- Runtime Docker sample: 271 MiB of 512 MiB cap; Compose reports healthy. This is a point observation, not a peak measurement.
+- Compose config validation and existing 26 `test_manage.py` unit cases passed. No full CI rerun.
+
+Host URL: http://localhost:8091. User manual checks remain open in [the Kafka UI guide](../../setup/kafka-ui.md). Read-only mode is an application-level safeguard; it does not configure Kafka ACLs.
+
 Revision 5 · 2026-10-24 · Full rebuild CI plus focused tombstone/numeric-replay follow-up passed; remaining acceptance is in [the matrix](acceptance-matrix.md).
 
 ## Focused follow-up after rebuild checkpoint

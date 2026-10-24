@@ -54,4 +54,6 @@ All numeric capacity targets remain proposed until measured. No cloud or hosted 
 
 Host database inspection is now explicitly authorized (R22/ADR 0007). The optional Compose override binds PostgreSQL only to `127.0.0.1:15432`, persists the choice in ignored local state, and uses existing generated credentials. See `docs/setup/database-access.md`; never copy credentials into tracked documentation. M06 now exposes observed freshness and falls back to owned Orders records when streaming is delayed/unavailable; its planned isolated runtime gap/outage acceptance remains open.
 
+Kafbat UI is available at `http://localhost:8091` when the streaming profile is active. It is pinned in images.lock, read-only in its cluster configuration, and connected to the existing broker and Debezium Kafka Connect. See `docs/setup/kafka-ui.md` and the M06 design/verification; local UI read-only is not broker ACL enforcement.
+
 Native host Ollama setup/server/model/connectivity is a Nova prerequisite, documented in docs/setup/prerequisites.md. Commerce bootstrap must not require Ollama to be running.

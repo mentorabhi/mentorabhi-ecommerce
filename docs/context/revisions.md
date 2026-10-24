@@ -1,6 +1,10 @@
 # Revision history
 Append dated entries with reason, changed artifacts, evidence and remaining work.
 
+## 2026-10-24 — Local Kafka UI
+
+Added Kafbat UI v1.5.0 by verified OCI digest to the streaming profile; pinned index includes ARM64. It is host-accessible on loopback port 8091, read-only, linked to Kafka and Debezium Connect, with 512 MiB cap/256 MiB heap and external update checks disabled. Two Compose unit cases, two live API integration cases and Selenium passed. Observed cluster online, one broker, seven topics, 135 online partitions, retained event messages, consumer groups and running Debezium connector/task. Sample RSS 271 MiB/512 MiB. Manual host-browser/feature acceptance is separate; app read-only is not Kafka ACL enforcement. No full CI run. See `docs/milestones/S1-M06/kafka-ui-design.md` and `docs/setup/kafka-ui.md`.
+
 ## 2026-10-24 — Host inspection and M06 freshness checkpoint
 
 Accepted R22/ADR 0007 at the user's request: add opt-in loopback PostgreSQL access for DBeaver, preserve the existing volume/password and private defaults, persist only non-secret configuration, and document native verification/manual client setup. Psycopg/binary 3.3.6 is pinned as an optional development dependency; Python 3.14/macOS ARM64 wheel authentication against PostgreSQL 18.6 passed. Four access and 26 management unit tests plus all 23 core integration tests passed, including native host authentication and binding isolation. DBeaver GUI setup is not claimed. All 14 containers were healthy afterwards.
