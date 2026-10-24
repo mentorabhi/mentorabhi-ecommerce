@@ -85,6 +85,18 @@ class ConfigureTests(unittest.TestCase):
             self.assertEqual({key: extended[key] for key in old}, old)
             self.assertEqual(set(extended), set(manage.SECRET_KEYS))
 
+    def test_configure_extends_known_m06_credentials_without_rotating_them(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = manage.configure(root)
+            values = manage.load_credentials(path)
+            old = {key: values[key] for key in manage.PRE_M07_SECRET_KEYS}
+            path.write_text("\n".join(f"{key}={value}" for key, value in old.items()) + "\n")
+            manage.configure(root)
+            extended = manage.load_credentials(path)
+            self.assertEqual({key: extended[key] for key in old}, old)
+            self.assertEqual(set(extended), set(manage.SECRET_KEYS))
+
     def test_customer_realm_is_self_registration_only_with_its_own_api_audience(self):
         realm = json.loads((ROOT / "devops/identity/supersports-customers-realm.json").read_text())
         self.assertEqual(realm["realm"], "supersports-customers")

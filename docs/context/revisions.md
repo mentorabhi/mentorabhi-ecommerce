@@ -219,3 +219,8 @@ Added a reviewed extension design, review and editable dataflow before updating 
 ## 2026-10-24 — S1-M09 recovery hardening and image lock
 
 Bounded PostgreSQL dump/restore command execution, incomplete backup-set cleanup, and isolated restore checks now cover databases that were empty at backup time. M09 records the non-atomic nature of sequential per-database dumps. Official OCI manifests were inspected and image indexes pinned with ARM64 support for Prometheus 3.15.1, Grafana 13.2.2, Python 3.13.17-slim and M08 Neo4j, Trino, Spark and Superset images. The proposed Grafana 13.3.0 container tag did not exist and was corrected to available stable 13.2.2. Unit/integration test source and manual steps are updated, but no test, build, image pull or runtime operation was run.
+
+
+## 2026-10-24 — Stage 1 consolidated verification resumed
+
+After all Stage 1 development was checkpointed, resumed verification at the M06 open gates. The first status command identified a bootstrap migration defect: line validation omitted keys in the valid PRE_M07 set even though the migration recognized that set. The parser now validates against current SECRET_KEYS, while the subsequent exact prior-version set check still rejects unknown/incomplete key sets. Added an M06 credential-upgrade regression; it passed (1 test). The supported local configure migration preserved old values, filled only missing keys, and active service status showed 15 healthy containers. Broader tests and runtime acceptance remain in progress.

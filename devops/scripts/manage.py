@@ -150,7 +150,7 @@ def configure(root: Path = ROOT) -> Path:
                 if not line or line.startswith("#"):
                     continue
                 key, separator, value = line.partition("=")
-                if not separator or key not in (*LEGACY_SECRET_KEYS, "REVIEWS_DB_PASSWORD", "SUPPORT_DB_PASSWORD", "LAKEHOUSE_DB_PASSWORD", "GRAPH_DB_PASSWORD", "SUPERSET_SECRET_KEY") or key in existing or not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", value):
+                if not separator or key not in SECRET_KEYS or key in existing or not re.fullmatch(r"[A-Za-z0-9_-]{32,128}", value):
                     raise
                 existing[key] = value
             if set(existing) not in (set(M02_SECRET_KEYS), set(PRE_M05_SECRET_KEYS), set(LEGACY_SECRET_KEYS), set(PRE_M07_SECRET_KEYS), set(PRE_M08_SECRET_KEYS)):

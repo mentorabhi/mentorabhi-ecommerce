@@ -1,6 +1,6 @@
 # S1-M09 — Reliability, scaling and recovery
 
-Status: Design reviewed; implementation and automated/manual verification sources are authored. M09 builds, tests, and runtime operations remain deferred until all Stage 1 development is complete.
+Status: Implementation complete; consolidated Stage 1 verification is underway. M09-specific build, tests, and runtime acceptance remain open.
 
 Inputs: [architecture proposal](../../../architecture/stage-1/S1-M09.excalidraw), [design](design.md), [editable flow](flow.mmd), [review](design-review.md), [manual acceptance](manual-acceptance.md), and [ADR 0009](../../decisions/0009-local-restore-and-telemetry.md).
 
