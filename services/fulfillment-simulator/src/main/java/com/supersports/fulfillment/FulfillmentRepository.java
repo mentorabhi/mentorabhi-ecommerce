@@ -62,9 +62,11 @@ class FulfillmentRepository {
         Instant created=Instant.now();
         jdbc.update("INSERT INTO shipment_transition_audit(operation_id,order_id,request_hash,previous_state,next_state,previous_revision,next_revision,actor_subject,reason,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
             operationId,order,fingerprint,state,target,revision,nextRevision,actor,reason,Timestamp.from(created));
-        return Map.of("orderId",order,"trackingId",shipment.get("tracking_id"),"previousState",state,"state",target,
-            "previousRevision",revision,"revision",nextRevision,"estimatedDeliveryAt",shipment.get("estimated_delivery_at"),
-            "operationId",operationId,"actorSubject",actor,"reason",reason,"createdAt",created,"replayed",false);
+        return Map.ofEntries(Map.entry("orderId",order),Map.entry("trackingId",shipment.get("tracking_id")),
+            Map.entry("previousState",state),Map.entry("state",target),Map.entry("previousRevision",revision),
+            Map.entry("revision",nextRevision),Map.entry("estimatedDeliveryAt",shipment.get("estimated_delivery_at")),
+            Map.entry("operationId",operationId),Map.entry("actorSubject",actor),Map.entry("reason",reason),
+            Map.entry("createdAt",created),Map.entry("replayed",false));
     }
 
     Map<String,Object> status(UUID order){
@@ -110,16 +112,18 @@ class FulfillmentRepository {
         var rows=jdbc.queryForList("SELECT tracking_id,estimated_delivery_at FROM shipment WHERE order_id=?",order);
         if(rows.isEmpty())throw new ShipmentNotFoundException();
         var row=rows.getFirst();
-        return Map.of("orderId",order,"trackingId",row.get("tracking_id"),"previousState",audit.get("previous_state"),"state",audit.get("next_state"),
-            "previousRevision",audit.get("previous_revision"),"revision",audit.get("next_revision"),"estimatedDeliveryAt",row.get("estimated_delivery_at"),
-            "operationId",audit.get("operation_id"),"actorSubject",audit.get("actor_subject"),"reason",audit.get("reason"),
-            "createdAt",audit.get("created_at"),"replayed",replayed);
+        return Map.ofEntries(Map.entry("orderId",order),Map.entry("trackingId",row.get("tracking_id")),
+            Map.entry("previousState",audit.get("previous_state")),Map.entry("state",audit.get("next_state")),
+            Map.entry("previousRevision",audit.get("previous_revision")),Map.entry("revision",audit.get("next_revision")),
+            Map.entry("estimatedDeliveryAt",row.get("estimated_delivery_at")),Map.entry("operationId",audit.get("operation_id")),
+            Map.entry("actorSubject",audit.get("actor_subject")),Map.entry("reason",audit.get("reason")),
+            Map.entry("createdAt",audit.get("created_at")),Map.entry("replayed",replayed));
     }
     private static String hash(String value){
         try{return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));}
         catch(Exception error){throw new IllegalStateException("SHA-256 is unavailable",error);}
     }
-    private static class StaleFenceException extends RuntimeException{}
+    static class StaleFenceException extends RuntimeException{}
     static class StaleRevisionException extends RuntimeException{}
     static class OperationConflictException extends RuntimeException{}
     static class InvalidTransitionException extends RuntimeException{}

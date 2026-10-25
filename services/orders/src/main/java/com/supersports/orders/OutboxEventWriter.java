@@ -36,19 +36,25 @@ class OutboxEventWriter {
     }
 
     void append(UUID orderId,String subject,String eventType,Map<String,Object> data) {
-        appendVersion(orderId,subject,eventType,data,1);
+        appendVersion(orderId,subject,eventType,data,1,Instant.now());
+    }
+
+    void appendSynthetic(UUID orderId,String subject,String eventType,Map<String,Object> data,Instant occurredAt) {
+        if(!Set.of("OrderAccepted","OrderConfirmed").contains(eventType))throw new IllegalArgumentException("Unsupported synthetic order event type");
+        if(data==null||!orderId.toString().equals(String.valueOf(data.get("orderId"))))throw new IllegalArgumentException("Order event aggregate differs from its data");
+        appendVersion(orderId,subject,eventType,data,1,occurredAt);
     }
 
     void appendPostPurchase(UUID orderId,String subject,String eventType,Map<String,Object> data) {
         if(!POST_PURCHASE_TYPES.contains(eventType))throw new IllegalArgumentException("Unsupported post-purchase event type");
         if(data==null||!orderId.toString().equals(String.valueOf(data.get("orderId"))))throw new IllegalArgumentException("Order event aggregate differs from its data");
-        appendVersion(orderId,subject,eventType,data,2);
+        appendVersion(orderId,subject,eventType,data,2,Instant.now());
     }
 
-    private void appendVersion(UUID orderId,String subject,String eventType,Map<String,Object> data,int version) {
+    private void appendVersion(UUID orderId,String subject,String eventType,Map<String,Object> data,int version,Instant occurredAt) {
         if(!backfillComplete)throw new IllegalStateException("Order outbox legacy backfill is not complete");
         Long sequence=jdbc.queryForObject("INSERT INTO order_event_sequence(aggregate_id,last_sequence) VALUES (?,1) ON CONFLICT (aggregate_id) DO UPDATE SET last_sequence=order_event_sequence.last_sequence+1 RETURNING last_sequence",Long.class,orderId);
-        UUID eventId=UUID.randomUUID();String customerKey=customerKey(subject);Instant occurredAt=Instant.now();
+        UUID eventId=UUID.randomUUID();String customerKey=customerKey(subject);
         Map<String,Object> envelope=new LinkedHashMap<>();envelope.put("eventId",eventId);envelope.put("eventType",eventType);envelope.put("eventVersion",version);envelope.put("aggregateType","Order");envelope.put("aggregateId",orderId);envelope.put("aggregateSequence",sequence);envelope.put("occurredAt",occurredAt.toString());envelope.put("customerKey",customerKey);envelope.put("data",data);
         jdbc.update("INSERT INTO order_outbox(aggregate_id,aggregate_type,event_type,payload,event_id,event_version,aggregate_sequence,customer_key,created_at) VALUES (?,'Order',?,?::jsonb,?,?,?,?,?)",orderId,eventType,OrdersJson.write(envelope),eventId,version,sequence,customerKey,Timestamp.from(occurredAt));
     }

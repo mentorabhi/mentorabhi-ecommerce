@@ -46,3 +46,23 @@ Added independent Reviews and Support Spring projects, database migrations/crede
 
 Authored operator shipment lookup/progression and customer tracking timeline UI, fulfillment read contract, same-origin route, Selenium source and updated manual acceptance. Tracking remains a read through Orders to the Fulfillment owner API; no cross-service database projection or unsafely synthesized tracking event is introduced. M07 code is not verified. No test, build or service command was run for this checkpoint.
 
+
+## Consolidated post-purchase acceptance — 2026-10-24
+
+`SUPERSPORTS_POSTPURCHASE_LIVE=true .venv/bin/python -m unittest devops.tests.test_postpurchase_integration -v`: 3 passed in 65.746 seconds against the real local APIs/databases. Verified: cancellation survives a stopped/restarted Payment service, retry returns the same operation and exactly one refund, a handed-off shipment and cancellation have one winner, delivered review rejects another customer's order and a wrong product, moderation is private until publication and idempotent/audited, support rejects another owner and conflicting retries, operator reply is visible to the owner, Reviews/Support restart preserves data, and a customer reply reopens a resolved ticket.
+
+Verified-review product binding regression failed first (`VerifiedReviewProductTest`); after returning the purchased product in the Orders proof and checking it in Reviews, Reviews and Orders Maven `verify` passed. Core CI's real partial-return/refund/inspection regression also passed as part of all 25 core integration cases. Browser acceptance remains separately recorded.
+
+## Stage 1 post-purchase rerun — 2026-10-25
+
+After the full demo dataset was loaded and all application services rebuilt, the live M07 suite was rerun:
+
+`SUPERSPORTS_POSTPURCHASE_LIVE=true PYTHONPATH=devops/scripts .venv/bin/python -m unittest devops.tests.test_postpurchase_integration -v` — 3/3 passed in 57.960 seconds.
+
+The three journeys passed cancellation ownership/idempotency during Payment-simulator outage and recovery; concurrent handoff/cancellation single-winner fencing; and delivered purchase product-bound review verification, moderation replay/conflict, support owner isolation, idempotent replies/status, and Reviews/Support restart persistence. Core integration separately passed partial-return/refund allocation, duplicate protection and return inspection. Selenium feature tests and owner-run manual checks are still pending; details/expected database outcomes are in the separate [manual acceptance](manual-acceptance.md) and unit guides.
+
+## Consolidated UI and post-purchase regression — 2026-10-25
+
+The full Selenium suite completed: 20 discovered journeys, 16 passed and 4 intentionally skipped outside their isolated Kafka-gap/Kafka-UI/Grafana profiles. The gap/outage storefront journeys and Kafka UI/Grafana browser checks were separately exercised and passed in their profile-specific runs. M07 customer/operator journeys covered ownership, cancellation, returns/refunds, inventory return inspection, shipment progression, review moderation, support, and customer history. `devops/scripts/supersports unit` also passed its repository-wide run; 34 live-only checks are intentionally skipped in unit mode. See the consolidated status record for command artifacts and exact suite counts.
+
+M07 local automated acceptance is complete for exercised paths. The separate owner-facing UI/database checklist is still unchecked and must be run manually; no real payment or carrier integration is implied.

@@ -1,6 +1,6 @@
 # S1-M07 manual acceptance — post-purchase lifecycle
 
-Status: Development in progress and unverified. Payment ledger and Fulfillment/Orders tracking APIs, shipment operator/customer UI, cancellation, partial returns/refunds, inventory inspection, verified reviews/moderation and owned support are authored. Per user direction, automated execution resumes after all Stage 1 development is complete. Unit-specific service/UI/database checklists are in `cancellation-manual-checks.md`, `returns-refunds-manual-checks.md`, `return-inspection-manual-checks.md` and `reviews-support-manual-checks.md`.
+Status: Automated local tests passed for the exercised workflows. This owner-run service/UI/database checklist is intentionally unchecked until manually performed. Payment ledger and Fulfillment/Orders tracking APIs, shipment operator/customer UI, cancellation, partial returns/refunds, inventory inspection, verified reviews/moderation and owned support are implemented. Unit-specific checklists are in `cancellation-manual-checks.md`, `returns-refunds-manual-checks.md`, `return-inspection-manual-checks.md` and `reviews-support-manual-checks.md`.
 
 ## Start and health
 
@@ -53,3 +53,7 @@ The checks above have automated evidence; human execution is still pending. Neve
 - Database consistency result:
 - Issues and notes:
 - Owner acceptance: pending
+
+## Verification status update — 2026-10-25
+
+Automated M07 integration and Selenium paths have passed; the checklist above remains intentionally unchecked until the owner performs the browser and database observations. Use it to verify the live local stack and retain the expected database checks alongside each UI operation.
