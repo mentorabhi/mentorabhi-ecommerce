@@ -9,7 +9,10 @@ import time
 from urllib.error import URLError
 from urllib.request import urlopen
 
-TARGETS_FILE = Path(os.getenv("HEALTH_TARGETS_FILE", Path(__file__).resolve().parents[2] / "devops/observability/health-targets.json"))
+if os.getenv("HEALTH_TARGETS_FILE"):
+    TARGETS_FILE = Path(os.environ["HEALTH_TARGETS_FILE"])
+else:
+    TARGETS_FILE = Path(__file__).resolve().parents[2] / "devops/observability/health-targets.json"
 with TARGETS_FILE.open(encoding="utf-8") as targets_file:
     TARGETS = json.load(targets_file)
 

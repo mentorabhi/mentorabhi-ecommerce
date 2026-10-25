@@ -40,6 +40,24 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _data_fingerprint(sql: str) -> str:
+    tables = {}
+    sequences = []
+    current = None
+    for line in sql.splitlines():
+        if current is not None:
+            if line == r"\.": current = None
+            else: tables[current].append(line)
+        elif line.startswith("COPY ") and line.endswith(" FROM stdin;"):
+            current = line
+            tables[current] = []
+        elif line.startswith("SELECT pg_catalog.setval("):
+            sequences.append(line)
+    if current is not None: raise ValueError("Truncated data-only COPY stream")
+    payload = {"tables": {key: sorted(rows) for key, rows in tables.items()}, "sequences": sorted(sequences)}
+    return hashlib.sha256(json.dumps(payload,sort_keys=True).encode()).hexdigest()
+
+
 def backup(manager, *, root: Path, project: str = "supersports") -> dict:
     base = _backup_root(root)
     name = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + secrets.token_hex(3)
@@ -137,7 +155,14 @@ def restore_drill(manager, backup_directory: str, *, root: Path, source_project:
             if restored_database != database:
                 raise RuntimeError(f"Restore drill connected to the wrong database while checking {database}.")
             count = int(table_count)
-            verified.append({"database": database, "applicationTables": count})
+            original = manager.compose(["exec", "-T", "restore-postgres", "pg_restore", "--file=-", "--data-only", "--no-owner", "--no-privileges",
+                                        f"/backups/{backup_name}/{database}.dump"], root=root, project=project, capture=True, timeout=120)
+            restored = manager.compose(["exec", "-T", "restore-postgres", "pg_dump", "-U", "postgres", "-d", database,
+                                        "--data-only", "--no-owner", "--no-privileges"], root=root, project=project, capture=True, timeout=120)
+            expected_hash = _data_fingerprint(original.stdout)
+            if expected_hash != _data_fingerprint(restored.stdout):
+                raise RuntimeError(f"Restored data does not match the verified backup for {database}.")
+            verified.append({"database": database, "applicationTables": count, "dataVerified": True, "dataSha256": expected_hash})
         return {"restoreProject": project, "sourceProject": source_project, "restoredDatabases": verified,
                 "isolated": True, "cleanup": "completed"}
     finally:

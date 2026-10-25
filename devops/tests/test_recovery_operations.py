@@ -2,14 +2,22 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import recovery_operations as recovery
 
 
 class RecoveryOperationsTest(unittest.TestCase):
+    def test_data_fingerprint_ignores_row_order_but_detects_money_and_sequence_changes(self):
+        first="COPY public.orders (id, amount) FROM stdin;\n1\t100\n2\t200\n\\.\nSELECT pg_catalog.setval('public.seq', 2, true);\n"
+        reordered=first.replace("1\t100\n2\t200", "2\t200\n1\t100")
+        self.assertEqual(recovery._data_fingerprint(first), recovery._data_fingerprint(reordered))
+        self.assertNotEqual(recovery._data_fingerprint(first), recovery._data_fingerprint(first.replace("1\t100","1\t101")))
+        self.assertNotEqual(recovery._data_fingerprint(first), recovery._data_fingerprint(first.replace(", 2, true",", 3, true")))
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
@@ -46,6 +54,8 @@ class RecoveryOperationsTest(unittest.TestCase):
             def compose(self, args, **kwargs):
                 self.calls.append((args, kwargs))
                 if kwargs.get("capture"):
+                    if "pg_dump" in args or "pg_restore" in args:
+                        return type("Result", (), {"stdout": "COPY public.fixture (id) FROM stdin;\n1\n\\.\n"})()
                     database = args[args.index("-d") + 1]
                     count = 0 if database == "lakehouse" else 3
                     return type("Result", (), {"stdout": f"{database}|{count}\n"})()
@@ -70,7 +80,8 @@ class RecoveryOperationsTest(unittest.TestCase):
                    side_effect=subprocess.TimeoutExpired(cmd="pg_dump", timeout=1800)):
             with self.assertRaisesRegex(RuntimeError, "30-minute"):
                 recovery.backup(Manager(), root=self.root)
-        self.assertEqual(list((self.root / "devops/.local/backups").iterdir()), [])
+        remaining = list((self.root / "devops/.local/backups").iterdir())
+        self.assertEqual([item.name for item in remaining], ["fixture"])
 
 
 if __name__ == "__main__":

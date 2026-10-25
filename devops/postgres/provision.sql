@@ -1,4 +1,5 @@
 \getenv catalog_password CATALOG_DB_PASSWORD
+\getenv identity_password IDENTITY_DB_PASSWORD
 \getenv configuration_password CONFIGURATION_DB_PASSWORD
 \getenv pricing_password PRICING_DB_PASSWORD
 \getenv inventory_password INVENTORY_DB_PASSWORD
@@ -12,6 +13,7 @@
 \getenv support_password SUPPORT_DB_PASSWORD
 \getenv lakehouse_password LAKEHOUSE_DB_PASSWORD
 SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD %L', 'supersports_catalog', :'catalog_password') WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supersports_catalog') \gexec
+SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD %L', 'supersports_identity', :'identity_password') WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supersports_identity') \gexec
 SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD %L', 'supersports_configuration', :'configuration_password') WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supersports_configuration') \gexec
 SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD %L', 'supersports_pricing', :'pricing_password') WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supersports_pricing') \gexec
 SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD %L', 'supersports_inventory', :'inventory_password') WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supersports_inventory') \gexec
@@ -25,6 +27,7 @@ SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD
 SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD %L', 'supersports_support', :'support_password') WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supersports_support') \gexec
 SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD %L', 'supersports_lakehouse', :'lakehouse_password') WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supersports_lakehouse') \gexec
 ALTER ROLE supersports_catalog PASSWORD :'catalog_password';
+ALTER ROLE supersports_identity PASSWORD :'identity_password';
 ALTER ROLE supersports_configuration PASSWORD :'configuration_password';
 ALTER ROLE supersports_pricing PASSWORD :'pricing_password';
 ALTER ROLE supersports_inventory PASSWORD :'inventory_password';
@@ -38,6 +41,7 @@ ALTER ROLE supersports_reviews PASSWORD :'reviews_password';
 ALTER ROLE supersports_support PASSWORD :'support_password';
 ALTER ROLE supersports_lakehouse PASSWORD :'lakehouse_password';
 SELECT format('CREATE DATABASE %I OWNER %I', 'catalog', 'supersports_catalog') WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='catalog') \gexec
+SELECT format('CREATE DATABASE %I OWNER %I', 'identity', 'supersports_identity') WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='identity') \gexec
 SELECT format('CREATE DATABASE %I OWNER %I', 'configuration', 'supersports_configuration') WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='configuration') \gexec
 SELECT format('CREATE DATABASE %I OWNER %I', 'pricing', 'supersports_pricing') WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='pricing') \gexec
 SELECT format('CREATE DATABASE %I OWNER %I', 'inventory', 'supersports_inventory') WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname='inventory') \gexec
@@ -53,6 +57,8 @@ REVOKE ALL ON DATABASE catalog, configuration, pricing, inventory, customer, ord
 REVOKE ALL ON DATABASE reviews, support FROM PUBLIC;
 REVOKE ALL ON DATABASE lakehouse FROM PUBLIC;
 GRANT CONNECT ON DATABASE catalog TO supersports_catalog;
+REVOKE ALL ON DATABASE identity FROM PUBLIC;
+GRANT CONNECT ON DATABASE identity TO supersports_identity;
 GRANT CONNECT ON DATABASE configuration TO supersports_configuration;
 GRANT CONNECT ON DATABASE pricing TO supersports_pricing;
 GRANT CONNECT ON DATABASE inventory TO supersports_inventory;

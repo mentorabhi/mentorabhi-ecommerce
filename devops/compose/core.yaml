@@ -218,6 +218,7 @@ services:
       CHECKOUT_WORKER_CLIENT_ID: supersports-checkout-worker
       CHECKOUT_WORKER_CLIENT_SECRET: "${CHECKOUT_WORKER_CLIENT_SECRET:?Run configure}"
       ORDER_HISTORY_OWNER_KEY: "${ORDER_HISTORY_OWNER_KEY:?Run configure}"
+      SUPERSPORTS_SYNTHETIC_IMPORT_ENABLED: "${SUPERSPORTS_SYNTHETIC_IMPORT_ENABLED:-false}"
       CUSTOMER_BASE_URL: http://customer:8080
       CATALOG_BASE_URL: http://catalog:8080
       PRICING_BASE_URL: http://pricing:8080
@@ -435,10 +436,10 @@ services:
         SERVICE_NAME: order-history
         RELEASE_VERSION: "${RELEASE_VERSION:-s1-m06}"
     restart: unless-stopped
-    mem_limit: 512m
+    mem_limit: 768m
     cpus: 1.0
     environment:
-      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx384m -XX:MaxMetaspaceSize=128m"
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx512m -XX:MaxMetaspaceSize=128m"
       SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${ORDER_HISTORY_DATABASE_NAME:-order_history}"
       ORDER_HISTORY_CONSUMER_GROUP: "${ORDER_HISTORY_CONSUMER_GROUP:-order-history-v1}"
       SPRING_DATASOURCE_USERNAME: supersports_order_history

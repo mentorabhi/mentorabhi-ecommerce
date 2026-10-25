@@ -1,6 +1,7 @@
 """Opt-in live test source for bounded Nginx ingress, never run in this phase."""
 import os
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -9,13 +10,15 @@ from urllib.request import Request, urlopen
                      "Run only in the explicit isolated M09 acceptance pass.")
 class IngressLimitsTest(unittest.TestCase):
     def test_rate_limit_returns_429_and_normal_health_remains_available(self):
-        statuses = []
-        for _ in range(300):
+        def request(_):
             try:
                 with urlopen("http://localhost:3000/api/catalog/categories", timeout=2) as response:
-                    statuses.append(response.status)
+                    return response.status
             except HTTPError as error:
-                statuses.append(error.code)
+                with error:
+                    return error.code
+        with ThreadPoolExecutor(max_workers=24) as executor:
+            statuses = list(executor.map(request,range(400)))
         self.assertIn(429, statuses)
         with urlopen("http://localhost:3000/healthz", timeout=2) as response:
             self.assertEqual(response.status, 200)
