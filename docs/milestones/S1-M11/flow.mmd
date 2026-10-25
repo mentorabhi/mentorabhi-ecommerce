@@ -1,0 +1,20 @@
+flowchart LR
+    Sources[Public product facts and real photographs] --> Intake[Reviewed local catalog manifest and asset provenance]
+    Intake --> Seed[Idempotent owner API import]
+    Seed --> Catalog[Catalog: models, details, SKUs, similar products]
+    Seed --> Pricing[Pricing: INR and USD books]
+    Seed --> Inventory[Inventory: audited synthetic stock]
+    Seed --> Reviews[Reviews: labelled demo seed and moderation]
+    Store[Storefront app :3000] --> Catalog
+    Store --> Pricing
+    Store --> Inventory
+    Store --> Reviews
+    Store --> Orders[Orders: owned delivered purchase checks]
+    Reviews --> Orders
+    Admin[Separate Admin app :3002] --> Catalog
+    Admin --> Reviews
+    Admin --> Ops[Operational APIs]
+    CustomerID[Customer identity realm] --> Store
+    OperatorID[Operator identity realm] --> Admin
+    Guide[Verified UI access guide admin/admin] --> Admin
+    Guide --> Tools[Kafka UI / Grafana / Prometheus / Trino / Neo4j / Superset / Keycloak]

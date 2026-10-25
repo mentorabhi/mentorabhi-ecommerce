@@ -35,3 +35,21 @@ Document the complete discussion and project plan neatly in a Google Doc.
 Divide each stage into milestones covering design, infrastructure setup, development, testing, success criteria, and other necessary activities.
 
 Create separate editable Excalidraw design and architecture diagrams for every stage and major milestone.
+
+
+Add any observability integration in terms of opentelemetery along with any open source tool for visualisation for metrics like response time, logs, etc ?
+
+
+
+create random 1000 user profiles, with each user ordered random orders in the last 1 year between 1 to 100 items with 1 to 5 items per order. And before this grow the inventory with 100 items, each variation is an item. Use realistic images.
+
+
+Adding some changes and new requirements
+
+1. For every UI, share the credentials. Change all username and password, except for storefront to admin / admin
+2. In the storefront, add capabilities of ratings and reviews. Also, add more details against the product.
+3. In the storefront, remove the non-real like images and products and ensure that both cricket and football have minimum 100 products each - variation could be in terms of brand name. And within a single SKU, there could be variants in terms of colours, sizes, etc. This way each category will have minimum 1000 SKUs.
+4. In storefront add a section for similar products. Addin a reference image [Image #1]
+5. Ratings and reviews should be visible on Product page as well as category or seacrh results as well against the product. Also, there should be a provision to add ratings and reviews. For every product, you can dd 3 to 4 reviews and ratings ranging between 3 to 5 (max rating).
+6. Take inspiration from amazon.in and flipkart.com
+7. Host storefront and admin UI separately and have a different UX theme.

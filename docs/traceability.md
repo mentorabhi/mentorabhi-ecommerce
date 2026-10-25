@@ -21,6 +21,8 @@ Revision 6 · 2026-10-24. S1-M02 bootstrap and S1-M03 implementation/runtime che
 Detailed endpoint/event names, automated test paths and numeric targets will be added at each implementation milestone, not fabricated before contracts exist.
 # S1-M04 design traceability (2026-10-24)
 
+Current additions (2026-10-25): R23–R27 / AE23–AE27 map to docs/milestones/S1-M11/design.md, flow.mmd, implementation-units.md and manual-acceptance.md; design/intake only, implementation and measured verification pending. R28 / AE28 maps to S1-M12 intake and requires a reviewed local telemetry design before implementation. M06's final automated finite-window evidence is in its latest verification/matrix: 60-order/900-second soak, 900-second retained-WAL/idle-group recovery, actual state/outbox rollback and exact retained-history reconciliation. Earlier tables below retain their historical checkpoint meanings.
+
 | Requirement / acceptance | Design coverage | Evidence target |
 |---|---|---|
 | R03 / AE02 | India-default address form and server-side state/PIN validation | `design/S1-M04/storefront.md`; Customer tests and manual checklist |

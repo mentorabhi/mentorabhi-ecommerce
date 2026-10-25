@@ -9,6 +9,8 @@ All 20 defined Selenium journeys have passing evidence across the broad and fixt
 
 Six optional UIs/analytics containers were restored after the resource probes; 22 containers are running. Storefront http://localhost:3000, current Admin http://localhost:3000/admin, Kafka UI http://localhost:8091, Grafana http://localhost:3001. New user-requested catalog/review/frontend/credential and OpenTelemetry work expands Stage 1 beyond this verified base; its design intake is underway. Keep future work and owner sign-off distinct from these measured passes.
 
+Active implementation scope: [S1-M11](../milestones/S1-M11/README.md), units U1–U4 (separate Admin/access, product/review APIs and UX, 100 products/1,000 SKUs per sport with genuine local photos, consolidated tests). The accepted product hierarchy is model → size/colour SKU; seeded reviews are labelled demo data. [S1-M12](../milestones/S1-M12/README.md) captures the reaffirmed OpenTelemetry response-time/logging requirement. The M06 closure is pushed as dd57eb2; these additions are planned, not deployed yet.
+
 ## Historical consolidation snapshot — 2026-10-25 02:10 UTC
 
 Implementation across S1-M01–M10 is present on local branch `stage1`; release/push still needs the milestone checkpoint commits after verification. Stage 1 is **not yet closed**: automated service, M06 stream/recovery, M07 live post-purchase, M09 restore/ingress and dashboard Selenium checks have passed; M08 reconciliation is still being finished, the broad UI suite still needs fixture-backed execution, and all owner-run manual acceptance checklists remain unchecked.

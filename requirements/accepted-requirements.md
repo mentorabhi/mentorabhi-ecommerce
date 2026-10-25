@@ -1,5 +1,5 @@
 # Accepted requirements
-Revision 3 · 2026-10-24. User decisions override the original planning baseline. IDs are stable; append or supersede rather than silently renumber.
+Revision 4 · 2026-10-25. User decisions override the original planning baseline. IDs are stable; append or supersede rather than silently renumber.
 
 | ID | Requirement | Delivery / acceptance |
 |---|---|---|
@@ -25,6 +25,12 @@ Revision 3 · 2026-10-24. User decisions override the original planning baseline
 | R20 | Progress through commerce, Nova design, and gap-led integration in that order. | Stage gates |
 | R21 | Customer self-registration uses a local customer identity realm/API audience isolated from unrestricted merchandising administration. | S1-M04; AE21 |
 | R22 | User-requested DBeaver inspection from the host uses explicit localhost-only PostgreSQL access; private default and service database ownership remain. Existing local admin credentials may be shared directly with the user, never committed. | 2026-10-24 revision; ADR 0007; AE22 |
+| R23 | Every operational UI has a documented URL and local demo login `admin` / `admin`. Storefront customer sign-in/self-registration is the exception. Internal service/database identities retain their separate credentials. | 2026-10-25 user revision; S1-M11; AE23 |
+| R24 | Product pages, category cards and search results display published rating averages/counts; product pages display reviews and allow eligible customers to submit ratings/reviews. Keep existing verified-purchase ownership and moderation. Seed 3–4 explicitly labelled demo reviews per product, with integer ratings 3–5. | S1-M11; AE24 |
+| R25 | Replace active fictional products and generated/illustrated product art with real branded product models, sourced photographic assets and fuller product details. Cricket and Football each have at least 100 active products and 1,000 active sellable SKUs. Product colour/size variants are distinct SKUs. Historical order snapshots remain valid. This supersedes R02/R18's generated/original product-art preference and the earlier 100-SKU fixture scale. | S1-M11; AE25 |
+| R26 | Product pages include a responsive Similar Products section with clickable cards, photographs, prices, rating summaries and working keyboard/arrow navigation, informed by the user's supplied reference. | S1-M11; AE26 |
+| R27 | Storefront and Admin run as separate frontend projects, containers and host URLs with different UX themes. Use Amazon India/Flipkart shopping patterns as inspiration while retaining SuperSports branding. | S1-M11; AE27 |
+| R28 | Add local OpenTelemetry integration with request response-time/error metrics, distributed trace visualization and searchable application logs through open-source tooling. The user's updated requirement file reaffirms this earlier request; it supersedes ADR 0009's health-only scope for the follow-up implementation. | S1-M12; AE28 |
 
 ## Actors and initial journeys
 Customer: browse → compare → cart → quote → approve purchase → track → review/return.
@@ -58,6 +64,12 @@ Nova: delegated caller scoped to a signed-in actor, never a privileged bypass.
 - AE21: A self-registered customer can sign in and access only their profile/cart/wishlist; their token cannot read or mutate Catalog, Pricing, Inventory or Configuration. The operator token cannot read customer-owned data. Both isolation directions hold after restart and direct API calls; the owner is always taken from the verified token subject.
 
 - AE22: Explicit enablement binds only `127.0.0.1:15432` to PostgreSQL, survives ordinary profile restarts, authenticates from the native host, and can be disabled back to the private default. Credentials stay in ignored local state and the user's client/conversation.
+- AE23: The access guide lists each enabled UI and its tested login. Every operational UI accepts admin/admin after restart; storefront customer credentials still work and preserve ownership isolation.
+- AE24: Every active product starts with 3–4 demo-labelled published reviews, each rated 3–5. A verified delivered customer can submit a review; pending/hidden reviews do not affect public counts. Product, category and search summaries agree.
+- AE25: Owner-side catalog checks show at least 100 active products/1,000 active SKUs for each sport, complete INR/USD prices, valid stock and locally served photographic assets. Variant selection changes the exact SKU in cart/checkout. Old synthetic products are absent from storefront browsing and remain usable as immutable historical order facts.
+- AE26: Similar cards exclude the current/retired product, link to valid detail pages, and render consistent prices/ratings on desktop and mobile.
+- AE27: Storefront localhost:3000 and Admin localhost:3002 serve separate applications/themes. Legacy /admin links redirect to the Admin origin. Direct links, customer/operator callbacks and API proxying work independently.
+- AE28: A local service request produces queryable response-time/error metrics, linked trace spans and searchable structured logs. Grafana visualizes the locally stored data; credentials follow R23. Exporters do not require a hosted endpoint, and telemetry excludes credentials and personal order/address payloads. Record actual memory and retention bounds.
 
 ## Non-goals and deferred choices
 

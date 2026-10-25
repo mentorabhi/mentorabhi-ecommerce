@@ -1,6 +1,10 @@
 # Revision history
 Append dated entries with reason, changed artifacts, evidence and remaining work.
 
+## 2026-10-25 — Storefront/catalog revision and telemetry follow-up
+
+The user added seven requirements and updated the source requirement file: operational UI admin/admin access guide; visible/submittable product ratings/reviews; real photographs and at least 100 products/1,000 SKUs per Cricket/Football sport; richer details and similar-product cards; 3–4 labelled demo reviews rated 3–5 per product; Amazon/Flipkart shopping inspiration; separate Storefront/Admin projects, origins and themes. Accepted IDs R23–R27 and S1-M11 design/flow/review/units/manual guide capture those changes before implementation. The updated input also reaffirms the earlier OpenTelemetry request, tracked as R28/S1-M12 beyond ADR 0009's readiness-only implementation. Original source additions are preserved; only extra blank lines at EOF were normalized. No new feature is claimed implemented by this planning checkpoint.
+
 ## 2026-10-25 — M06 sustained workload, retention and actual transaction rollback
 
 Reviewed new design/diagrams before adding paced checkout, isolated retention and owner-scoped outbox-failure probes. Measured 60 orders/15 minutes, exact idempotency/stock/ownership/projection facts, 900.01-second inactive-slot/idle-group recovery (120 deferred changes in 11.26 seconds), 140-record exact replay, and application state/sequence/outbox rollback with safe retry. Final reconciliation passed 36,413 events / 18,041 orders with zero errors. A separate session review found false-pass and cleanup risks; fixes have 14 focused regressions, and the earlier loaded full-run reports received explicit timing/partition/resource/lifecycle post-audits. Devops discovery passed 111 tests with 34 live-only skips. Optional profiles were restored; manual owner sign-off remains separate. The recorded local acceptance windows replace unbounded 'long retention/soak pending' language without claiming production-scale retention or HA.
