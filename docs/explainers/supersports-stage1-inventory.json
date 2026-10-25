@@ -1,0 +1,536 @@
+{
+  "observedAtUtc": "2026-10-25T18:37:37.968606+00:00",
+  "sourceCommit": "e8a48688230f0bab7c1e83ec5c2f68ddfd25dcb7",
+  "scope": "Resolved local Supersports Compose definitions and sanitized runtime state; no environment values or credentials",
+  "services": [
+    {
+      "service": "admin",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "3002",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 128.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "analytics-api",
+      "profiles": [
+        "analytics"
+      ],
+      "runtimeState": "exited",
+      "hostPorts": [],
+      "memoryLimitMiB": 256.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "catalog",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8081",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "configuration",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8082",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "customer",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8085",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "fulfillment-simulator",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8088",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "grafana",
+      "profiles": [
+        "observability"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "3001",
+          "target": 3000
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": [
+        {
+          "name": "grafana-data",
+          "target": "/var/lib/grafana"
+        }
+      ]
+    },
+    {
+      "service": "health-exporter",
+      "profiles": [
+        "observability"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [],
+      "memoryLimitMiB": 128.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "identity",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8180",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 768.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "inventory",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8084",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "kafka",
+      "profiles": [
+        "streaming"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "9092",
+          "target": 9092
+        }
+      ],
+      "memoryLimitMiB": 1024.0,
+      "persistentVolumes": [
+        {
+          "name": "kafka-data",
+          "target": "/var/lib/kafka/data"
+        }
+      ]
+    },
+    {
+      "service": "kafka-connect",
+      "profiles": [
+        "streaming"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8090",
+          "target": 8083
+        }
+      ],
+      "memoryLimitMiB": 1024.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "kafka-ui",
+      "profiles": [
+        "streaming"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8091",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "lakehouse-init",
+      "profiles": [
+        "analytics-job"
+      ],
+      "runtimeState": "exited",
+      "hostPorts": [],
+      "memoryLimitMiB": 64.0,
+      "persistentVolumes": [
+        {
+          "name": "lakehouse-data",
+          "target": "/warehouse"
+        },
+        {
+          "name": "analytics-ivy",
+          "target": "/ivy"
+        }
+      ]
+    },
+    {
+      "service": "loki",
+      "profiles": [
+        "observability"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [],
+      "memoryLimitMiB": 256.0,
+      "persistentVolumes": [
+        {
+          "name": "loki-data",
+          "target": "/loki"
+        }
+      ]
+    },
+    {
+      "service": "neo4j",
+      "profiles": [
+        "graph"
+      ],
+      "runtimeState": "exited",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "7474",
+          "target": 7474
+        },
+        {
+          "host_ip": "127.0.0.1",
+          "published": "7687",
+          "target": 7687
+        }
+      ],
+      "memoryLimitMiB": 1536.0,
+      "persistentVolumes": [
+        {
+          "name": "graph-data",
+          "target": "/data"
+        }
+      ]
+    },
+    {
+      "service": "order-history",
+      "profiles": [
+        "streaming"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8089",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 768.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "orders",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8086",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "otel-collector",
+      "profiles": [
+        "observability"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [],
+      "memoryLimitMiB": 192.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "payment-simulator",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8087",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "postgres",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "15432",
+          "target": 5432
+        }
+      ],
+      "memoryLimitMiB": 384.0,
+      "persistentVolumes": [
+        {
+          "name": "postgres-data",
+          "target": "/var/lib/postgresql"
+        }
+      ]
+    },
+    {
+      "service": "pricing",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8083",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "prometheus",
+      "profiles": [
+        "observability"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [],
+      "memoryLimitMiB": 384.0,
+      "persistentVolumes": [
+        {
+          "name": "prometheus-data",
+          "target": "/prometheus"
+        }
+      ]
+    },
+    {
+      "service": "prometheus-ui",
+      "profiles": [
+        "observability"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "9090",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 64.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "relationship-graph",
+      "profiles": [
+        "graph"
+      ],
+      "runtimeState": "exited",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8094",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 384.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "restore-postgres",
+      "profiles": [
+        "restore-drill"
+      ],
+      "runtimeState": "not-present",
+      "hostPorts": [],
+      "memoryLimitMiB": 384.0,
+      "persistentVolumes": [
+        {
+          "name": "restore-drill-data",
+          "target": "/var/lib/postgresql"
+        }
+      ]
+    },
+    {
+      "service": "reviews",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8092",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "spark-ingest",
+      "profiles": [
+        "analytics-job"
+      ],
+      "runtimeState": "not-present",
+      "hostPorts": [],
+      "memoryLimitMiB": 1536.0,
+      "persistentVolumes": [
+        {
+          "name": "lakehouse-data",
+          "target": "/warehouse"
+        },
+        {
+          "name": "analytics-ivy",
+          "target": "/tmp/ivy"
+        }
+      ]
+    },
+    {
+      "service": "storefront",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "3000",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 128.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "superset",
+      "profiles": [
+        "dashboards"
+      ],
+      "runtimeState": "exited",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8095",
+          "target": 8088
+        }
+      ],
+      "memoryLimitMiB": 1536.0,
+      "persistentVolumes": [
+        {
+          "name": "superset-home",
+          "target": "/app/superset_home"
+        }
+      ]
+    },
+    {
+      "service": "support",
+      "profiles": [],
+      "runtimeState": "running",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8093",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 512.0,
+      "persistentVolumes": []
+    },
+    {
+      "service": "tempo",
+      "profiles": [
+        "observability"
+      ],
+      "runtimeState": "running",
+      "hostPorts": [],
+      "memoryLimitMiB": 384.0,
+      "persistentVolumes": [
+        {
+          "name": "tempo-data",
+          "target": "/var/tempo"
+        }
+      ]
+    },
+    {
+      "service": "trino",
+      "profiles": [
+        "analytics"
+      ],
+      "runtimeState": "exited",
+      "hostPorts": [],
+      "memoryLimitMiB": 1024.0,
+      "persistentVolumes": [
+        {
+          "name": "lakehouse-data",
+          "target": "/warehouse"
+        }
+      ]
+    },
+    {
+      "service": "trino-ui",
+      "profiles": [
+        "analytics"
+      ],
+      "runtimeState": "exited",
+      "hostPorts": [
+        {
+          "host_ip": "127.0.0.1",
+          "published": "8096",
+          "target": 8080
+        }
+      ],
+      "memoryLimitMiB": 64.0,
+      "persistentVolumes": []
+    }
+  ]
+}

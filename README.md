@@ -6,6 +6,8 @@ Start with [project context](docs/context/project-context.md), [accepted require
 See the [design index for all Stage 1 milestones](design/README.md), [current architecture](design/S1-M01/architecture.md), [editable ownership diagram](design/S1-M01/ownership.excalidraw), [SVG preview](design/S1-M01/ownership.svg), [decision record](docs/decisions/0001-local-first-monorepo.md), [test strategy](docs/testing/strategy.md), and [traceability](docs/traceability.md).
 The [original architecture gallery](architecture/index.html) is preserved as historical planning input; current decisions supersede its cloud and Rufus terminology.
 
+The [Stage 1 knowledge-transfer guide](docs/explainers/supersports-stage1-kt.md) maps every service, API, infrastructure component, URL/login and overall flow. Its sanitized runtime inventory distinguishes running services from optional profiles.
+
 ## Current state
 Stage 1 implementation through M12 is delivered: sourced catalog/reviews, separate frontends, simulated commerce, CDC/history, analytics/recovery and local OpenTelemetry. The finite local engineering release gate is complete; Nova remains Stage 2. Owner manual sign-off and independent-review limitations are recorded separately. See [current status](docs/context/status.md) for measured results and limitations.
 

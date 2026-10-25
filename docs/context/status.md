@@ -27,3 +27,5 @@ Final restored runtime has 25 running containers, configured healthchecks health
 Final retained-history reconciliation: 36,537 events /18,077 orders, ok=true and zero errors. Grafana's post-restart SQL dashboard stall was corrected with supported SQLite WAL storage; native login/dashboard/Explore Selenium passed. Keycloak login passed after identity restart. Consolidated [release evidence and limitations](stage1-completion.md) distinguish explicit fixture/profile skips from separately executed live gates and retain earlier failed diagnostics.
 
 Earlier dated status is preserved in [the pre-closure history](status-before-stage1-close-2026-10-25.md). Original planning inputs and their historical meanings remain unchanged.
+
+Knowledge-transfer handover: [service/API/infra/access and overall-flow guide](../explainers/supersports-stage1-kt.md), with the sanitized 34-definition/25-running inventory and editable diagrams (2026-10-26). It describes the release baseline; future catalog additions must update the dated counts/provenance separately.

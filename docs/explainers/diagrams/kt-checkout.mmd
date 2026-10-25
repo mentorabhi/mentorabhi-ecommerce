@@ -1,0 +1,26 @@
+sequenceDiagram
+  actor Customer
+  participant UI as Storefront
+  participant O as Orders
+  participant Facts as Customer / Catalog / Pricing / Configuration
+  participant I as Inventory
+  participant P as Pricing coupon holds
+  participant Pay as Payment simulator
+  participant F as Fulfillment simulator
+  Customer->>UI: Confirm exact SKU quantities and checkout
+  UI->>O: POST checkout + customer JWT + Idempotency-Key
+  O->>Facts: Validate owned address, active SKUs, quote, settings
+  O->>O: Persist accepted order, snapshots, Saga and outbox
+  O-->>UI: Request/order identity; poll durable status
+  O->>I: Reserve stock
+  O->>P: Hold coupon eligibility/limit
+  O->>Pay: Authorize simulated payment
+  O->>I: Protect stock hold
+  O->>P: Protect applicable coupon hold
+  O->>Pay: Capture payment
+  O->>I: Commit reservation
+  O->>P: Commit applicable coupon hold
+  O->>O: Confirm order + outbox fact
+  O->>F: Schedule shipment
+  O->>O: Fulfillment scheduled + outbox fact
+  UI->>O: Read order/tracking

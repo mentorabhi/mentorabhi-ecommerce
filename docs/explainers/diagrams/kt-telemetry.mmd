@@ -1,0 +1,9 @@
+flowchart LR
+  Java[11 Java services: agent + safe HTTP logger] -->|OTLP HTTP 4318| Collector[Collector: privacy / batch / bounded export]
+  Collector -->|request metrics scrape| Prom[Prometheus]
+  Collector -->|traces| Tempo[Tempo]
+  Collector -->|safe request logs| Loki[Loki]
+  Exporter[Health exporter: configured HTTP/TCP probes] --> Prom
+  Prom --> Grafana[Grafana health/request dashboards]
+  Tempo --> Grafana
+  Loki --> Grafana

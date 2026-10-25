@@ -1,0 +1,31 @@
+flowchart TB
+  Buyer[Customer browser] --> Store[Storefront / Nginx :3000]
+  Operator[Operator browser] --> Admin[Admin / Nginx :3002]
+  Store --> Identity[Keycloak :8180]
+  Admin --> Identity
+  Store --> Commerce[Catalog, Pricing, Inventory, Customer, Orders, Reviews, Support]
+  Admin --> Commerce
+  Admin --> Fulfill[Fulfillment simulator]
+  Commerce --> PG[(PostgreSQL: owned databases)]
+  Commerce --> Payment[Payment simulator]
+  Commerce --> Fulfill
+  Commerce --> Config[Configuration]
+  Config --> PG
+  Payment --> PG
+  Fulfill --> PG
+  PG --> CDC[Debezium / Kafka Connect]
+  CDC --> Kafka[Kafka lifecycle events]
+  Kafka --> History[Order History]
+  History --> PG
+  Store --> History
+  Kafka --> Graph[Relationship graph API]
+  Graph --> Neo4j[(Neo4j)]
+  Kafka --> Spark[Spark batch job]
+  Spark --> Iceberg[(Iceberg / local warehouse)]
+  Iceberg --> Trino[Trino]
+  Trino --> Reports[Analytics API]
+  Reports --> Admin
+  Trino --> Superset[Superset]
+  Commerce -. OTLP .-> Collector[OpenTelemetry Collector]
+  Collector --> Signals[Prometheus / Tempo / Loki]
+  Signals --> Grafana[Grafana :3001]
