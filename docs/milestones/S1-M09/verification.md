@@ -28,3 +28,7 @@ Repository `devops/scripts/supersports unit` passed after the graph-down depende
 OpenTelemetry distributed request traces/latency and centralized searchable logs remain unimplemented. Prometheus/Grafana currently expose local health/readiness metrics. Owner-run Grafana/backup/restore manual acceptance remains pending; this is not a multi-node HA or off-host recovery claim.
 
 A fresh profile-start check later on 2026-10-25 found Grafana's first navigation intermittently returned an empty response during startup. After startup, `/api/health` returned version 13.2.2 and `/api/search?query=SuperSports` returned the provisioned dashboard UID, but the Selenium dashboard navigation timed out twice under the current combined local profile load. This is recorded as an inconclusive fresh rerun; the earlier isolated Selenium pass remains the positive browser evidence. Profile-start latency/responsiveness needs another low-load owner or automated check.
+
+## Low-load Grafana browser recheck — 2026-10-25 03:47 UTC
+
+After the M06 snapshot probe, graph/analytics profiles remained stopped and only the observability profile was brought up. Grafana health returned version 13.2.2, the provisioned dashboard API returned its expected UID, and `SUPERSPORTS_M09_LIVE_ACCEPTANCE=true SE_OFFLINE=true .venv/bin/python -m unittest discover -s apps/storefront/tests -p test_ops_ui.py -v` passed 1/1 in 34.164 seconds. The prior combined-profile timeout is therefore resolved for the isolated low-load profile. Dashboard/backup owner manual checks remain pending.
