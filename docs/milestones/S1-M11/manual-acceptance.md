@@ -21,3 +21,10 @@ Date/operator: __________  Outcome: __________  Issues: __________
 - [ ] Follow [UI access](../../setup/ui-access.md); use admin/admin for enabled operations interfaces and a separate customer account for shopping. Start heavy graph/dashboard-studio profiles selectively.
 - [ ] In the identity database, inspect the master admin account and operator client callback configuration using DBeaver or the Keycloak console. Confirm both new and legacy callbacks exist and customer-realm accounts remain separate. Do not copy service passwords into tracked files.
 - [ ] Restart a selected profile and repeat login. Confirm Prometheus/Trino reject anonymous/wrong-password requests and backend containers have no host publication bypass.
+
+## Card layout and banner revision (R29)
+
+- [ ] Confirm Storefront container is healthy, then open http://localhost:3000 and refresh to load the latest build.
+- [ ] Check home, Cricket/Football categories and a search for `pads`: the large promotional banner is absent and the small header logo remains.
+- [ ] On desktop and a 390px mobile viewport, inspect pads and other tall photos: the full photo stays inside its image panel, with brand, title, rating and price below it. Click the photo/title and navigate Similar Products.
+- [ ] Database: no migration/data change is expected from this presentation revision. If checking the Catalog owner database, compare existing active product/SKU counts with the sourced-catalog evidence; do not alter rows to test a layout change.

@@ -26,3 +26,5 @@ Canonical designs and editable diagrams are linked below. They remain with the d
 - [Automated verification and limitations](../../docs/milestones/S1-M11/verification.md)
 - [Manual end-user checks](../../docs/milestones/S1-M11/manual-acceptance.md)
 - [Current project status](../../docs/context/status.md)
+
+User layout revision: [card image containment/banner design](../../docs/milestones/S1-M11/card-layout-refinement.md), [editable layout](../../docs/milestones/S1-M11/card-layout.mmd).

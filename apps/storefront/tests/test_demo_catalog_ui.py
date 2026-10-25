@@ -20,6 +20,44 @@ class DemoCatalogUiTests(unittest.TestCase):
         self.addCleanup(self.driver.quit)
         self.wait = WebDriverWait(self.driver, 30)
 
+    def test_tall_pad_photos_stay_inside_cards_on_desktop_and_mobile(self):
+        for width, height in ((1440, 1000), (390, 844)):
+            with self.subTest(width=width):
+                self.driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {
+                    "width": width, "height": height, "deviceScaleFactor": 1, "mobile": width < 600})
+                self.driver.get("http://localhost:3000/?q=pads")
+                self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".store-product-grid .store-card")))
+                cards = self.driver.find_elements(By.CSS_SELECTOR, ".store-product-grid .store-card")
+                tall = 0
+                for card in cards:
+                    image = card.find_element(By.CSS_SELECTOR, ".store-card-image img")
+                    self.driver.execute_script("arguments[0].scrollIntoView({block:'center'})", image)
+                    self.wait.until(lambda _: self.driver.execute_script("return arguments[0].complete && arguments[0].naturalWidth > 0", image))
+                    bounds = self.driver.execute_script("""
+                        const card = arguments[0], img = card.querySelector('img');
+                        const rect = node => {const r=node.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}};
+                        return {image:rect(img),frame:rect(card.querySelector('.store-card-image')),
+                            body:rect(card.querySelector('.store-card-body')),tall:img.naturalHeight>img.naturalWidth,
+                            fit:getComputedStyle(img).objectFit};
+                    """, card)
+                    tall += int(bounds["tall"])
+                    self.assertEqual(bounds["fit"], "contain")
+                    for lower in ("top", "left"):
+                        self.assertGreaterEqual(bounds["image"][lower], bounds["frame"][lower] - 1)
+                    for upper in ("bottom", "right"):
+                        self.assertLessEqual(bounds["image"][upper], bounds["frame"][upper] + 1)
+                    self.assertLessEqual(bounds["image"]["bottom"], bounds["body"]["top"] + 1,
+                                         "Product photograph must not overlap card text")
+                self.assertGreater(tall, 0, "The regression must exercise real portrait-shaped pad photos")
+
+    def test_promo_banner_is_absent_from_home_category_and_search(self):
+        for suffix in ("/", "/?category=cricket-equipment", "/?q=pads"):
+            with self.subTest(route=suffix):
+                self.driver.get("http://localhost:3000" + suffix)
+                self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".store-product-grid .store-card")))
+                self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, ".store-hero, img[src*='supersports-banner']"))
+                self.assertGreater(self.driver.execute_script("return document.querySelector('.shop-brand img').naturalWidth"), 0)
+
     def test_demo_products_render_local_images_prices_and_variants_with_bounded_requests(self):
         self.driver.get("http://localhost:3000/")
         self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".store-product-grid")))

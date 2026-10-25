@@ -1,0 +1,8 @@
+flowchart TB
+    Card[Shared product card] --> Frame[Fixed-height image button]
+    Frame --> Photo[Bounded block photograph, object-fit contain]
+    Card --> Body[Normal-flow text body below image frame]
+    Body --> Content[Brand, title, rating, description and price]
+    Page[Storefront page] --> Header[Small header logo and navigation]
+    Header --> Grid[Product grid without promotional banner]
+    Grid --> Card

@@ -1,5 +1,5 @@
 # Accepted requirements
-Revision 4 · 2026-10-25. User decisions override the original planning baseline. IDs are stable; append or supersede rather than silently renumber.
+Revision 5 · 2026-10-25. User decisions override the original planning baseline. IDs are stable; append or supersede rather than silently renumber.
 
 | ID | Requirement | Delivery / acceptance |
 |---|---|---|
@@ -31,6 +31,7 @@ Revision 4 · 2026-10-25. User decisions override the original planning baseline
 | R26 | Product pages include a responsive Similar Products section with clickable cards, photographs, prices, rating summaries and working keyboard/arrow navigation, informed by the user's supplied reference. | S1-M11; AE26 |
 | R27 | Storefront and Admin run as separate frontend projects, containers and host URLs with different UX themes. Use Amazon India/Flipkart shopping patterns as inspiration while retaining SuperSports branding. | S1-M11; AE27 |
 | R28 | Add local OpenTelemetry integration with request response-time/error metrics, distributed trace visualization and searchable application logs through open-source tooling. The user's updated requirement file reaffirms this earlier request; it supersedes ADR 0009's health-only scope for the follow-up implementation. | S1-M12; AE28 |
+| R29 | Keep all storefront card photographs, especially tall pads, contained above card text on desktop/mobile. Remove the large promotional banner from storefront pages while retaining the header logo. | 2026-10-25 user revision; S1-M11 follow-up; AE29 |
 
 ## Actors and initial journeys
 Customer: browse → compare → cart → quote → approve purchase → track → review/return.
@@ -70,6 +71,8 @@ Nova: delegated caller scoped to a signed-in actor, never a privileged bypass.
 - AE26: Similar cards exclude the current/retired product, link to valid detail pages, and render consistent prices/ratings on desktop and mobile.
 - AE27: Storefront localhost:3000 and Admin localhost:3002 serve separate applications/themes. Legacy /admin links redirect to the Admin origin. Direct links, customer/operator callbacks and API proxying work independently.
 - AE28: A local service request produces queryable response-time/error metrics, linked trace spans and searchable structured logs. Grafana visualizes the locally stored data; credentials follow R23. Exporters do not require a hosted endpoint, and telemetry excludes credentials and personal order/address payloads. Record actual memory and retention bounds.
+
+- AE29: Real portrait-shaped pad photos fit within their image frames without intersecting card text at desktop and 390px mobile widths. Home/category/search have no promotional banner; the header logo and product navigation remain.
 
 ## Non-goals and deferred choices
 
