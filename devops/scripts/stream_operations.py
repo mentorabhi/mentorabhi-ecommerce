@@ -12,7 +12,7 @@ from uuid import UUID
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
 
-def operator(manage, request, *, project="supersports", version="s1-m06", token=None, target=None):
+def operator(manage, request, *, project="supersports", version=None, token=None, target=None):
     """Use stdin for the token/payload; return only the structured operator receipt."""
     if token is None:
         token = manage.token_for("admin", manage.configure_admin_login(manage.ROOT))
@@ -59,7 +59,7 @@ def exclusive(manage, project="supersports"):
         os.close(descriptor)
 
 
-def demo(manage, *, project="supersports", version="s1-m06"):
+def demo(manage, *, project="supersports", version=None):
     receipt = operator(manage, {"action": "demo-poison"}, project=project, version=version)
     descriptor, filename = tempfile.mkstemp(prefix="supersports-replay-", suffix=".json", dir="/tmp")
     with os.fdopen(descriptor, "w") as handle:
@@ -67,7 +67,7 @@ def demo(manage, *, project="supersports", version="s1-m06"):
     return {**receipt, "correctedPayloadFile": filename}
 
 
-def arm_dlq_fault(manage,boundary,*,project="supersports",version="s1-m06"):
+def arm_dlq_fault(manage,boundary,*,project="supersports",version=None):
     if boundary not in {"before-commit","after-commit"}:
         raise ValueError("DLQ crash injection supports only before-commit or after-commit.")
     marker="/tmp/order-history-fault/dlq-armed/"+boundary
@@ -79,7 +79,7 @@ def arm_dlq_fault(manage,boundary,*,project="supersports",version="s1-m06"):
     return {"armed":True,"boundary":boundary,"marker":marker}
 
 
-def replay(manage, coordinate, payload_file, operation_id, reason, *, project="supersports", version="s1-m06"):
+def replay(manage, coordinate, payload_file, operation_id, reason, *, project="supersports", version=None):
     if not isinstance(coordinate, str) or not re.fullmatch(r"commerce\.order\.events\.v1:[0-9]+:[0-9]+", coordinate):
         raise ValueError("Replay requires --source-coordinate <topic:partition:offset> from the Orders DLQ.")
     try:
@@ -95,10 +95,11 @@ def replay(manage, coordinate, payload_file, operation_id, reason, *, project="s
         raise ValueError("Correction must be an ordinary JSON file no larger than 256 KiB.")
     payload = path.read_text()
     try:
-        version=json.loads(payload).get("eventVersion")
-        if version not in (1,2):raise ValueError("unsupported event version")
-        schema = json.loads((manage.ROOT / f"contracts/orders/order-lifecycle-v{version}.schema.json").read_text())
-        Draft202012Validator(schema, format_checker=FormatChecker()).validate(json.loads(payload))
+        event = json.loads(payload)
+        event_version=event.get("eventVersion")
+        if event_version not in (1,2):raise ValueError("unsupported event version")
+        schema = json.loads((manage.ROOT / f"contracts/orders/order-lifecycle-v{event_version}.schema.json").read_text())
+        Draft202012Validator(schema, format_checker=FormatChecker()).validate(event)
     except (ValidationError, json.JSONDecodeError) as error:
         raise ValueError("Correction does not satisfy its versioned order-lifecycle event contract.") from error
     return operator(manage, {"action": "replay", "sourceCoordinate": coordinate,

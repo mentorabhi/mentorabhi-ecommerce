@@ -93,24 +93,36 @@ def compare_snapshot(source, inspection, expected_audit=None):
             "limitation":"Historical reconciliation covers retained outbox and Kafka records; current order rows alone do not prove historical transitions."}
 
 
-def source_snapshot(manage, *, project="supersports", version="s1-m06"):
+def source_snapshot(manage, *, project="supersports", version=None):
     # Explicit local owner/admin diagnostic, never a service's cross-database query.
-    query="""SELECT json_build_object(
-      'events',(SELECT coalesce(json_agg(payload ORDER BY id),'[]') FROM order_outbox),
-      'orders',(SELECT coalesce(json_agg(row_to_json(facts) ORDER BY facts.\"orderId\"),'[]') FROM (
-        SELECT o.id AS \"orderId\",o.state,o.currency,o.total_minor AS \"totalMinor\",
-          (SELECT customer_key FROM order_outbox WHERE aggregate_id=o.id ORDER BY aggregate_sequence DESC LIMIT 1) AS \"customerKey\",
-          (SELECT max(aggregate_sequence) FROM order_outbox WHERE aggregate_id=o.id) AS \"lastSequence\",
-          (SELECT coalesce(json_agg(json_build_object('skuId',sku_id,'productId',product_id,'productTitle',product_title,
-             'quantity',quantity,'unitPriceMinor',unit_price_minor,'discountMinor',discount_minor,
-             'lineTotalMinor',line_total_minor,'currency',currency) ORDER BY sku_id),'[]')
-           FROM customer_order_line WHERE order_id=o.id) AS lines FROM customer_order o) facts))::text"""
-    result=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","orders","-tA","-v","ON_ERROR_STOP=1","-c",query],
-                          project=project,version=version,capture=True)
-    return json.loads(result.stdout.strip())
+    # Return one compact JSON row per fact rather than json_agg-ing the full
+    # 35k+ event history in PostgreSQL. The latter exceeds the baseline 384 MiB
+    # container under the generated 1,000-customer dataset.
+    event_query="SELECT payload::text FROM order_outbox ORDER BY id"
+    events_result=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","orders","-tA","-v","ON_ERROR_STOP=1","-c",event_query],
+                                 project=project,version=version,capture=True)
+    order_query="""WITH order_meta AS (
+        SELECT aggregate_id, max(aggregate_sequence) AS last_sequence,
+          (array_agg(customer_key ORDER BY aggregate_sequence DESC))[1] AS customer_key
+        FROM order_outbox GROUP BY aggregate_id
+      ), order_lines AS (
+        SELECT order_id, json_agg(json_build_object('skuId',sku_id,'productId',product_id,'productTitle',product_title,
+          'quantity',quantity,'unitPriceMinor',unit_price_minor,'discountMinor',discount_minor,
+          'lineTotalMinor',line_total_minor,'currency',currency) ORDER BY sku_id) AS lines
+        FROM customer_order_line GROUP BY order_id
+      )
+      SELECT json_build_object('orderId',o.id,'state',o.state,'currency',o.currency,
+      'totalMinor',o.total_minor,'customerKey',m.customer_key,'lastSequence',m.last_sequence,
+      'lines',coalesce(l.lines,'[]'::json))::text
+      FROM customer_order o JOIN order_meta m ON m.aggregate_id=o.id
+      LEFT JOIN order_lines l ON l.order_id=o.id ORDER BY o.id"""
+    orders_result=manage.compose(["exec","-T","postgres","psql","-X","-U","postgres","-d","orders","-tA","-v","ON_ERROR_STOP=1","-c",order_query],
+                                 project=project,version=version,capture=True)
+    return {"events":[json.loads(line) for line in events_result.stdout.splitlines() if line.strip()],
+            "orders":[json.loads(line) for line in orders_result.stdout.splitlines() if line.strip()]}
 
 
-def reconcile(manage, *, project="supersports", version="s1-m06"):
+def reconcile(manage, *, project="supersports", version=None):
     import stream_operations
     for attempt in range(3):
         before=source_snapshot(manage,project=project,version=version)
@@ -131,7 +143,7 @@ def _copy_replay_audit(manage, old, candidate, project, version):
                    project=project,version=version,capture=True,input_text=dump.stdout)
 
 
-def activate(manage, candidate, *, project="supersports", version="s1-m06"):
+def activate(manage, candidate, *, project="supersports", version=None):
     old=manage.history_target(project=project)
     command=["--profile","streaming","up","-d","--no-deps","--force-recreate","--wait","--wait-timeout","120","order-history"]
     try:
@@ -143,7 +155,7 @@ def activate(manage, candidate, *, project="supersports", version="s1-m06"):
         raise RuntimeError("CUTOVER_FAILED_OLD_TARGET_RESTORED") from error
 
 
-def rebuild(manage, *, project="supersports", version="s1-m06", dry_run=False, inject_mismatch=False):
+def rebuild(manage, *, project="supersports", version=None, dry_run=False, inject_mismatch=False):
     import stream_operations
     if dry_run and inject_mismatch:raise ValueError("Choose either --dry-run or --inject-reconciliation-mismatch.")
     operation=uuid4().hex

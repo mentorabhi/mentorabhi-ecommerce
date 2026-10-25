@@ -14,6 +14,18 @@ spec.loader.exec_module(stream)
 
 
 class OperatorCommandTests(unittest.TestCase):
+    def test_replay_contract_version_does_not_replace_deployment_release(self):
+        event={"eventId":"00000000-0000-4000-8000-000000000001","aggregateType":"Order",
+               "aggregateId":"00000000-0000-4000-8000-000000000002","aggregateSequence":2,
+               "occurredAt":"2026-10-24T12:00:00Z","customerKey":"a"*64,"eventVersion":1,
+               "eventType":"OrderConfirmed","data":{"orderId":"00000000-0000-4000-8000-000000000002","state":"CONFIRMED"}}
+        with tempfile.TemporaryDirectory() as directory:
+            payload=Path(directory)/"event.json"
+            payload.write_text(json.dumps(event))
+            with patch.object(stream,"operator",return_value={"status":"PUBLISHED"}) as operation:
+                stream.replay(SimpleNamespace(ROOT=ROOT),"commerce.order.events.v1:0:1",payload,
+                              "00000000-0000-4000-8000-000000000003","test",version="s1-m07")
+            self.assertEqual(operation.call_args.kwargs["version"],"s1-m07")
     def test_rebuild_refuses_the_active_target_before_launching_a_container(self):
         active={"database":"order_history","group":"order-history-v1"}
         fake=SimpleNamespace(history_target=lambda **kwargs:active)

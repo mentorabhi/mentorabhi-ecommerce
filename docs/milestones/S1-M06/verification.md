@@ -1,5 +1,17 @@
 # S1-M06 verification record
 
+## Full 1,000-customer history regression — 2026-10-25
+
+The confirmed synthetic dataset exposed two scale/timing defects in the previously written live probes: the PostgreSQL aggregate snapshot exceeded the 384 MiB database limit, and the Order History inspection operator was killed with exit 137 at its 512 MiB container limit. The snapshot now emits one JSON row per source event/order. The selective streaming Order History cap/heap are 768/512 MiB, with the remaining 256 MiB reserved for JVM native memory. A sampled operator run used about 370 MiB; the resident consumer peaked at about 487 MiB of 768 MiB. These are point samples, not load/peak measurements.
+
+- `stream-reconcile`: PASS against 35,830 retained outbox/Kafka/inbox/timeline events and 17,855 Orders rows; 20 quarantined poison coordinates had matching retained DLQ evidence and 36 replay audits/deliveries; zero reconciliation errors. The report explicitly limits conclusions to retained history and current order facts.
+- `test_cdc_projection_and_tenant_scoped_read_api`: PASS after correcting its poll predicate to wait for all three checkout lifecycle events before asserting sequence deduplication.
+- `test_z_isolated_rebuild_failure_dry_run_cutover_and_new_event_delivery`: PASS in 375.057 seconds with the full dataset; dry-run and injected mismatch preserved the active target, then the candidate rebuilt, reconciled, cut over and received a new checkout.
+- Full `devops/scripts/supersports test` rerun: 25 core integration tests PASS; all six streaming tests PASS in 807.392 seconds. The first attempt's gap scenario failed only after the class-level JWT expired late in the 15-minute suite; the scenario now refreshes both identities at entry, and both blocked/unavailable Selenium paths passed in the rerun.
+- One-shot DB-commit-before-offset redelivery did not create duplicate per-order sequence facts. CDC broker+Connect outage, both transactional DLQ crash boundaries, sequence gap isolation/ownership, poison replay audit/idempotency, and post-rebuild delivery all passed.
+
+The separate `test --recovery` command performs a further application restart, PostgreSQL outage/readiness drill and a second full integration run. Its final log is in `/tmp/supersports-stage1-final2.log`; append its terminal result before treating the recovery rerun as complete. Snapshot/WAL overlap, sustained throughput/concurrency, longer Kafka/WAL retention, and owner manual acceptance remain distinct acceptance gates.
+
 ## Isolated ordering, timed-gap, ownership and UI fallback probe · 2026-10-24
 
 - The existing reviewed [`freshness-and-ordering.md`](freshness-and-ordering.md) design was implemented as one serialized live integration scenario. It creates an owner B synthetic checkout if necessary, copies retained synthetic event envelopes into a disposable one-partition topic, starts an isolated Order History consumer/database with an 8-second gap threshold, and restores the normal service in `finally` while deleting only UUID-scoped probe resources.
@@ -127,3 +139,10 @@ After the last full CI, the replay slice added operator authentication, append-o
 - Compose validation and `git diff --check` passed. No dependency version was added or changed.
 
 This replay-only evidence predates the latest full CI at the top of this record. [Implementation review and coverage limits](replay-review.md) record the manual scan and unavailable independent review capability. Operator manual acceptance remains separate.
+
+## Consolidated Stage 1 rerun — 2026-10-25 02:50 UTC
+
+- `devops/scripts/supersports test --recovery` had completed earlier in this verification pass: two full integration runs, each 25/25 core and 6/6 streaming tests; PostgreSQL outage/reconnect readiness and liveness, application restart persistence, and Keycloak token recovery passed. Full terminal log: `/tmp/supersports-stage1-final2.log` (local evidence, not committed).
+- Final `stream-reconcile` after storefront and data milestones: 35,973 retained events; 17,896 Orders; INR total 16,533,201,681 minor units; USD total 23,078,898 minor units; 29 poison coordinates; 48 replay audits; zero errors. The reconciliation is bounded to retained local Kafka/WAL and current source records.
+- Live Kafka topic has three partitions; Order History offsets equal high-water marks 12,159 / 11,840 / 12,062 (zero lag). Debezium connector and task report RUNNING. Broker count remains one.
+- Full automated test inventory and M06 live probes are recorded above. Snapshot/WAL overlap, sustained concurrent checkout/throughput, extended WAL/offset retention, and human owner acceptance are still open. The `test --recovery` result supersedes the earlier note that its terminal outcome awaited append.

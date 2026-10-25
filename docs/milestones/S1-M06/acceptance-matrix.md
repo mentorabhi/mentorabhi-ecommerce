@@ -16,3 +16,9 @@
 | Separate manual acceptance and milestone checkpoint | `manual-acceptance.md`, verification/revisions/context, Git push | Guide and checkpoints maintained; human results remain pending |
 
 Next implementation work must close these remaining gates without relabeling them as passed. Later Stage 1 milestones and final reliability work may share test orchestration, but this matrix remains the M06 traceability record.
+
+## Consolidated disposition — 2026-10-25
+
+Final retained-source reconciliation passed with 35,973 events, 17,896 Orders, 29 quarantined poison coordinates, 48 replay audits and zero reconciliation errors; three History partitions were caught up. The full two-pass recovery integration also passed (25 core + 6 streaming checks per pass). These results close the earlier pending reconciliation/recovery entries above.
+
+Still open by design: a dedicated Debezium consistent-snapshot/WAL-overlap probe, sustained throughput/concurrent-checkout and extended retention measurements, plus the owner-run manual checklist. Current one-broker runtime does not establish broker HA. See [verification](verification.md) for the dated evidence and limits.

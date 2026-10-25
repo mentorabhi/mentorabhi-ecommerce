@@ -108,7 +108,10 @@ class StreamingIntegrationTests(unittest.TestCase):
         projected = None
         while time.monotonic() < deadline:
             projected_status, projected = manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{accepted['orderId']}", token=self.customer)
-            if projected_status == 200 and projected["lastSequence"] >= 1:
+            # The checkout saga emits accepted, confirmed and scheduled events;
+            # wait until the complete aggregate has been projected before
+            # comparing inbox rows with the API snapshot.
+            if projected_status == 200 and projected["lastSequence"] >= 3:
                 break
             time.sleep(0.5)
         self.assertEqual(projected_status, 200, "CDC event did not reach the owner-scoped projection")
@@ -189,6 +192,11 @@ class StreamingIntegrationTests(unittest.TestCase):
 
     def test_isolated_gap_parking_owner_freshness_and_browser_fallback(self):
         """Exercise real History/HTTP/UI behavior using disposable topic, DB and consumer."""
+        # Full Stage 1 runs can reach this scenario after the local access
+        # token lifetime. Refresh identities so late assertions measure the
+        # ownership behavior under test, not token age.
+        self.customer=manage.customer_token_for("checkout-test-customer",self.credentials["DEMO_CUSTOMER_PASSWORD"])
+        self.other=manage.customer_token_for("checkout-test-customer-b",self.credentials["DEMO_CUSTOMER_PASSWORD"])
         def pick_order(token,minimum_sequence):
             status,body=manage.request_json("http://127.0.0.1:8089/api/v1/order-history",token=token)
             self.assertEqual(status,200)

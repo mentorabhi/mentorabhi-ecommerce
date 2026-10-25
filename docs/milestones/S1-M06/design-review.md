@@ -1,5 +1,7 @@
 # S1-M06 design review
 
+Revision 3 · 2026-10-25 · Full synthetic-data reconciliation review is recorded in [rebuild review](rebuild-review.md); the 35,830-event run showed the prior 512 MiB Order History cap was insufficient for the in-memory operator snapshot. The reviewed selective-profile adjustment is 768 MiB with 512 MiB Java heap, and owner facts are emitted row-wise to keep PostgreSQL within its 384 MiB cap. Runtime rebuild and resource peak remain unverified until live recheck.
+
 ## Transactional DLQ crash boundary addendum — 2026-10-24
 
 The previous matrix left pre/post Kafka transaction commit crash probes open. The reviewed [fault design](dlq-crash-design.md) adds one-shot local markers, poison event flow, before/after commit process halts, exact broker-visible DLQ count/source offsets, and restart proof. It uses the real source and DLQ topics with a single broker; this establishes transaction behavior only for the local profile, not replicated durability. No blocker remains for implementation.
