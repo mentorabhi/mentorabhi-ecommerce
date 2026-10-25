@@ -38,7 +38,7 @@ PRE_M07_SECRET_KEYS = (*LEGACY_SECRET_KEYS, "CDC_DB_PASSWORD", "ORDER_HISTORY_DB
 PRE_M08_SECRET_KEYS = (*PRE_M07_SECRET_KEYS, "REVIEWS_DB_PASSWORD", "SUPPORT_DB_PASSWORD")
 SERVICES = ("catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator", "reviews", "support")
 STREAMING_SERVICES = ("order-history",)
-DEPLOYABLES = (*SERVICES, *STREAMING_SERVICES, "storefront")
+DEPLOYABLES = (*SERVICES, *STREAMING_SERVICES, "storefront", "admin")
 SERVICE_PORTS = (8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 8092, 8093)
 DEFAULT_VERSION = "s1-m07"
 TOKEN_URL = "http://127.0.0.1:8180/realms/supersports/protocol/openid-connect/token"
@@ -161,6 +161,8 @@ def configure(root: Path = ROOT) -> Path:
             load_credentials(path)
         path.chmod(0o600)
         configure_admin_login(root)
+        from ui_access import basic_auth_file
+        basic_auth_file(root)
         return path
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(descriptor, "w") as handle:
@@ -168,6 +170,8 @@ def configure(root: Path = ROOT) -> Path:
         for key in SECRET_KEYS:
             handle.write(f"{key}={secrets.token_hex(24)}\n")
     configure_admin_login(root)
+    from ui_access import basic_auth_file
+    basic_auth_file(root)
     return path
 
 
@@ -241,6 +245,8 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
     environment["ORDER_HISTORY_DATABASE_NAME"] = target["database"]
     environment["ORDER_HISTORY_CONSUMER_GROUP"] = target["group"]
     environment["POSTGRES_HOST_PORT"] = str(configuration(root,project)["port"])
+    environment["UI_PROXY_UID"] = str(os.getuid())
+    environment["UI_PROXY_GID"] = str(os.getgid())
     for service in DEPLOYABLES:
         environment[f"{service.upper().replace('-', '_')}_IMAGE"] = (
             images[service] if images else f"supersports/{service}:{version}"
@@ -460,6 +466,13 @@ def provision_local_identity(root=ROOT):
         if status != 200 or not clients:
             raise RuntimeError(f"Could not inspect local Keycloak client {client_id}.")
         client = clients[0]
+        # Retain legacy callbacks so a recorded pre-split storefront image can
+        # still authenticate after rollback. New Admin uses only port 3002.
+        if client_id == "supersports-web" and (client.get("redirectUris") != ["http://localhost:3002/*", "http://localhost:3000/*"] or client.get("webOrigins") != ["http://localhost:3002", "http://localhost:3000"]):
+            client.update(name="SuperSports Admin PKCE client", redirectUris=["http://localhost:3002/*", "http://localhost:3000/*"], webOrigins=["http://localhost:3002", "http://localhost:3000"])
+            status, _ = admin("PUT", f"/clients/{client['id']}", client)
+            if status not in (200, 204):
+                raise RuntimeError("Could not update the separate Admin identity callbacks.")
         if "basic" not in client.get("defaultClientScopes", []):
             status, _ = admin("PUT", f"/clients/{client['id']}/default-client-scopes/{basic['id']}")
             if status not in (201, 204):
@@ -590,6 +603,8 @@ def provision_local_identity(root=ROOT):
         })
         if status != 204:
             raise RuntimeError("Could not synchronize a local checkout test customer password.")
+    from ui_access import keycloak
+    keycloak(credentials["KEYCLOAK_ADMIN_PASSWORD"])
 
 
 def request_json(url: str, *, token: str | None = None, method: str = "GET", data=None, headers=None):
@@ -662,8 +677,9 @@ def ui_test(root=ROOT):
                 raise RuntimeError("Storefront health check returned an unexpected response.")
     except (URLError, TimeoutError) as error:
         raise RuntimeError("Storefront is not running; start it with devops/scripts/supersports up.") from error
-    run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
-         "-s", "apps/storefront/tests", "-p", "test_*.py", "-v"], cwd=root)
+    for app in ("storefront", "admin"):
+        run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
+             "-s", f"apps/{app}/tests", "-p", "test_*.py", "-v"], cwd=root)
 
 
 def recovery(root=ROOT, project="supersports"):
@@ -740,6 +756,7 @@ def release(root=ROOT, project="supersports", version=None):
     compose(["build"], root=root, project=project, version=version)
     compose(["up", "-d", "--no-build", "--wait", "--wait-timeout", "180"],
             root=root, project=project, version=version)
+    provision_local_identity(root)
     integration(root, project)
     images = {}
     for service in DEPLOYABLES:
@@ -755,11 +772,20 @@ def rollback(root=ROOT, project="supersports", version=None):
     releases = read_releases(root, project)
     if version not in releases:
         raise ValueError("Rollback requires a recorded, previously verified local release.")
-    images = releases[version]
+    images = dict(releases[version])
+    if "admin" not in images:
+        current = compose(["ps", "-q", "admin"], root=root, project=project, capture=True).stdout.strip()
+        if not current or len(current.splitlines()) != 1:
+            raise RuntimeError("Legacy rollback requires the current separate Admin container; deploy the new release first.")
+        image = run(["docker", "container", "inspect", "--format", "{{.Image}}", current], capture=True).stdout.strip()
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", image):
+            raise RuntimeError("Cannot identify the current Admin image for legacy rollback.")
+        images["admin"] = image
     for image in images.values():
         run(["docker", "image", "inspect", image], capture=True)
     compose(["up", "-d", "--no-build", "--wait", "--wait-timeout", "180"],
             root=root, project=project, version=version, images=images)
+    provision_local_identity(root)
     integration(root, project)
     print(f"Rolled back to recorded image IDs for {version}; schema/data were not reverted.")
 
@@ -838,23 +864,29 @@ def main(argv=None):
         elif action == "streaming-up":
             streaming_up(project=project, version=version)
         elif action == "analytics-up":
-            compose(["--profile", "analytics", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "trino", "analytics-api"], project=project, version=version)
+            compose(["--profile", "analytics", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "trino", "trino-ui", "analytics-api"], project=project, version=version)
         elif action == "analytics-run":
             compose(["--profile", "streaming", "--profile", "analytics-job", "run", "--rm", "spark-ingest"], project=project, version=version)
         elif action == "analytics-down":
-            compose(["--profile", "analytics", "stop", "trino", "analytics-api"], project=project, version=version)
+            compose(["--profile", "analytics", "stop", "trino-ui", "trino", "analytics-api"], project=project, version=version)
         elif action == "graph-up":
             compose(["--profile", "graph", "--profile", "streaming", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "neo4j", "relationship-graph"], project=project, version=version)
+            from ui_access import neo4j
+            neo4j(load_credentials(ROOT / "devops/.local/bootstrap.env")["GRAPH_DB_PASSWORD"])
         elif action == "graph-down":
             compose(["--profile", "graph", "--profile", "streaming", "stop", "neo4j", "relationship-graph"], project=project, version=version)
         elif action == "dashboard-studio-up":
-            compose(["--profile", "analytics", "--profile", "dashboards", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "trino", "superset"], project=project, version=version)
+            compose(["--profile", "analytics", "--profile", "dashboards", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "trino", "trino-ui", "superset"], project=project, version=version)
+            from ui_access import running_container, superset
+            superset(running_container("superset"))
         elif action == "dashboard-studio-down":
             compose(["--profile", "dashboards", "stop", "superset"], project=project, version=version)
         elif action == "observability-up":
-            compose(["--profile", "observability", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "health-exporter", "prometheus", "grafana"], project=project, version=version)
+            compose(["--profile", "observability", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "health-exporter", "prometheus", "prometheus-ui", "grafana"], project=project, version=version)
+            from ui_access import grafana, running_container
+            grafana(running_container("grafana"))
         elif action == "observability-down":
-            compose(["--profile", "observability", "stop", "health-exporter", "prometheus", "grafana"], project=project, version=version)
+            compose(["--profile", "observability", "stop", "health-exporter", "prometheus", "prometheus-ui", "grafana"], project=project, version=version)
         elif action == "backup":
             import recovery_operations
             print(json.dumps(recovery_operations.backup(sys.modules[__name__], root=ROOT, project=project), indent=2))

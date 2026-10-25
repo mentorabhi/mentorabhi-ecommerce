@@ -20,7 +20,6 @@ services:
     profiles: ["observability"]
     image: "${PROMETHEUS_IMAGE:?Use devops/scripts/supersports configure}"
     command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--storage.tsdb.retention.time=7d", "--storage.tsdb.retention.size=512MB", "--web.enable-lifecycle"]
-    ports: ["127.0.0.1:9090:9090"]
     volumes: ["./devops/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro", "prometheus-data:/prometheus"]
     mem_limit: 384m
     cpus: 0.5
@@ -28,6 +27,23 @@ services:
     security_opt: ["no-new-privileges:true"]
     depends_on:
       health-exporter: {condition: service_started}
+    restart: unless-stopped
+  prometheus-ui:
+    profiles: ["observability"]
+    image: "${STOREFRONT_NGINX_IMAGE:?Use devops/scripts/supersports configure}"
+    user: "${UI_PROXY_UID:-10001}:${UI_PROXY_GID:-10001}"
+    entrypoint: [nginx]
+    command: [-g, "daemon off;"]
+    ports: ["127.0.0.1:9090:8080"]
+    volumes:
+      - ./devops/nginx/prometheus-ui.conf:/etc/nginx/nginx.conf:ro
+      - ./devops/.local/ui.htpasswd:/etc/nginx/ui.htpasswd:ro
+    tmpfs: [/tmp]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 64m
+    depends_on: {prometheus: {condition: service_started}}
     restart: unless-stopped
   grafana:
     profiles: ["observability"]

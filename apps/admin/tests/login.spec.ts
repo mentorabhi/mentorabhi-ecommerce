@@ -34,7 +34,7 @@ test('catalog admin stays rendered after local Keycloak login', async ({ page })
 })
 
 test('customer can browse, search and open a product without signing in', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('http://localhost:3000/')
   await expect(page.getByRole('navigation', { name: 'Shopping' })).toBeVisible()
   await expect.poll(async () => page.locator('.store-card').count(), { timeout: 15_000 }).toBeGreaterThanOrEqual(6)
   await page.getByLabel('Search sports gear').fill('football')
@@ -47,7 +47,7 @@ test('customer can browse, search and open a product without signing in', async 
 })
 
 test('football category deep links resolve slugs to the matching products', async ({ page }) => {
-  await page.goto('/?category=football-equipment')
+  await page.goto('http://localhost:3000/?category=football-equipment')
   await expect(page.getByRole('heading', { name: 'Football Equipment' })).toBeVisible()
   await expect(page.locator('.store-card')).toHaveCount(3)
   await expect(page.getByRole('link', { name: 'Football Equipment', exact: true })).toHaveClass(/active/)

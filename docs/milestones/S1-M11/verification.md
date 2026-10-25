@@ -1,0 +1,31 @@
+# S1-M11 verification
+
+2026-10-25 · Incremental evidence; M11 and Stage 1 remain open.
+
+## U1 — Separate applications and operational access
+
+The independently built `apps/storefront` and `apps/admin` applications are deployed at localhost:3000 and localhost:3002. Admin uses the slate/teal operations theme and `admin/admin`; customer identities remain in their separate realm. Both `/healthz` routes returned 200, and the former storefront `/admin` returned 308 to localhost:3002/admin. The pinned Node/Nginx images built both projects successfully, including TypeScript checks. No dependency version was changed.
+
+Executed checks:
+
+- `.venv/bin/python -m unittest discover -s devops/tests -p 'test_*.py' -v`: 129 discovered, 95 executed successfully, 34 explicit live-only skips before the final profile provisioning additions. The final rerun is recorded below.
+- `.venv/bin/python -m unittest devops.tests.test_manage.ReleaseRegistryTests -v`: six passed. New regressions failed first, then passed after release/rollback identity provisioning and preserving the actual running Admin image ID were fixed. Legacy callback compatibility retains localhost:3000 alongside the new port 3002. These are management unit checks, not a fresh full-release/rollback runtime exercise.
+- `SE_OFFLINE=true .venv/bin/python -m unittest discover -s apps/admin/tests -p test_admin_ui.py -v`: the first run had seven passes, two fixture skips and one analytics-period timeout. The isolated analytics rerun passed both journeys in 18.012 seconds after Trino startup. A later combined run overlapped an optional-profile stop and is invalid as consolidated evidence; do not count it as a passing run.
+- `SUPERSPORTS_OPERATIONS_UI=1 SE_OFFLINE=true .venv/bin/python -m unittest discover -s apps/admin/tests -p test_operational_ui.py -v`: Keycloak master console and Prometheus/Trino browser checks passed, two tests in 8.589 seconds before adding optional-profile cases. Anonymous and wrong-password HTTP calls returned 401 on both proxies; valid credentials reached the UIs. Trino initially rejected `X-Forwarded-Proto` with 406; removing that unnecessary forwarded header resolved it.
+- `SUPERSPORTS_KAFKA_UI_BROWSER=1 SE_OFFLINE=true .venv/bin/python -m unittest discover -s apps/storefront/tests -p test_kafka_ui_browser.py -v`: native form login and cluster overview passed, 1/1 in 11.292 seconds.
+- `SUPERSPORTS_KAFKA_UI_INTEGRATION=1 .venv/bin/python -m unittest discover -s devops/tests -p test_kafka_ui_runtime.py -v`: authenticated broker/topic/partition/messages/group/connector checks passed, 2/2 in 11.312 seconds.
+- Native provisioning verified Keycloak master, Grafana and Neo4j as `admin/admin`. Neo4j's service identity was preserved. The browser connection also passed on the diagnostic rerun after startup; the opt-in reproducible test must be rerun before closing this profile gate.
+
+An idle memory sample measured Admin 3.527 MiB, Prometheus proxy 2.766 MiB and Trino proxy 2.344 MiB. These are individual idle observations, not peaks or a new whole-system load result. Graph and dashboard-studio profiles are checked selectively on the 16 GB host.
+
+The original read-only session review found four release/callback/test-origin defects, all fixed and confirmed by a follow-up source review. The subsequent top-level Compound Engineering review worker terminated at the session usage limit without a completed receipt. **Code review: skipped (ce-code-review unavailable)** — that terminal worker failure prevented a formal receipt; the host performed the explicit final diff scan, and the earlier focused review findings were resolved. No external model CLI was used. Simplification was performed inline because parallel workers were unavailable: retained separate authentication boundaries and proof tests; removed one redundant branch and an unused import.
+
+Final Devops rerun passed 129 discovered / 95 executed / 34 explicit skips in 1.292 seconds. After restoring profiles, all eight enabled Admin journeys passed (two fixture skips), including both analytics checks. In the combined 14-test discovery, the separate Keycloak console test lost its Chrome session; that run exited nonzero and is not represented as a clean consolidated pass. The corrected isolated operations run passed both enabled checks (4 discovered, 2 passed, 2 optional-profile skips) in 6.158 seconds. Trino now completes its native username-only sign-in after Basic authentication; the initial branded-body assertion was invalid for its installed login form and has been replaced with actual login/query UI assertions. Superset native API and browser login passed (browser 1/1 in 7.197 seconds); its initial browser attempt used obsolete name locators and was corrected to the installed form IDs. The rebuilt image verifies the Trino driver in `/app/.venv` with SQLAlchemy 1.4.54, retaining base constraints. Additional driver packages are pinned to the measured lz4 4.4.5, orjson 3.13.0 and tzlocal 5.4.5 versions, checked against official PyPI metadata.
+
+Remaining U1 evidence: profile credential persistence across the final normal-restart exercise and checkpoint push. Owner manual acceptance stays unchecked in the separate guide.
+
+## U2 — Backend work in progress
+
+Catalog Maven verify passed: 20 discovered, 14 executed successfully and six explicit database-only skips. The opt-in PostgreSQL boundary run then passed all six tests in 22.520 seconds, including migrations in isolated random schemas, pagination/direct detail, literal filters, similar ranking/exclusion, revision/concurrency/replay and historical SKU preservation on retirement. The first connection attempt used the wrong role name and failed before creating schemas; rerunning as the existing `supersports_catalog` owner corrected the harness configuration. Production Catalog is not yet migrated/deployed. A subsequent saved-SKU batch lookup regression returned the expected 404 before implementation; its green rerun is pending.
+
+Reviews worker verification reports Maven verify 17/17 passed. Host migration/concurrency/runtime and frontend composition checks remain pending; unit evidence does not close those gates. Catalog/Reviews source remains separate from the U1 checkpoint until its own verification is complete.

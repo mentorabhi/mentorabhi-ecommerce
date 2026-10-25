@@ -330,6 +330,31 @@ services:
       identity: {condition: service_healthy}
     ports: ["127.0.0.1:3000:8080"]
 
+  admin:
+    restart: unless-stopped
+    image: "${ADMIN_IMAGE:?Use devops/scripts/supersports}"
+    build:
+      context: .
+      dockerfile: devops/docker/admin.Dockerfile
+      args:
+        NODE_IMAGE: "${STOREFRONT_NODE_IMAGE:?Use devops/scripts/supersports}"
+        NGINX_IMAGE: "${STOREFRONT_NGINX_IMAGE:?Use devops/scripts/supersports}"
+    mem_limit: 128m
+    cpus: 0.5
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16777216"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      catalog: {condition: service_healthy}
+      pricing: {condition: service_healthy}
+      inventory: {condition: service_healthy}
+      configuration: {condition: service_healthy}
+      reviews: {condition: service_healthy}
+      support: {condition: service_healthy}
+      identity: {condition: service_healthy}
+    ports: ["127.0.0.1:3002:8080"]
+
   kafka:
     profiles: ["streaming"]
     image: "${KAFKA_IMAGE:?Use devops/scripts/supersports}"
@@ -372,6 +397,9 @@ services:
     security_opt: ["no-new-privileges:true"]
     environment:
       JAVA_OPTS: "-Xms64m -Xmx256m"
+      AUTH_TYPE: LOGIN_FORM
+      SPRING_SECURITY_USER_NAME: admin
+      SPRING_SECURITY_USER_PASSWORD: admin
       KAFKA_CLUSTERS_0_NAME: supersports
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       KAFKA_CLUSTERS_0_READONLY: "true"

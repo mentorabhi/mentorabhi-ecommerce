@@ -265,6 +265,23 @@ class HttpProbeTests(unittest.TestCase):
 
 
 class ReleaseRegistryTests(unittest.TestCase):
+    def test_legacy_rollback_preserves_the_running_admin_image_id(self):
+        from unittest.mock import patch
+        from subprocess import CompletedProcess
+        images = {service: "sha256:" + "a" * 64 for service in manage.DEPLOYABLES if service != "admin"}
+        current_admin = "sha256:" + "b" * 64
+        with patch.object(manage, "read_releases", return_value={"legacy": images}), \
+             patch.object(manage, "compose") as compose, \
+             patch.object(manage, "run", return_value=CompletedProcess([], 0, current_admin+"\n")) as run, \
+             patch.object(manage, "provision_local_identity") as identity, \
+             patch.object(manage, "integration"):
+            compose.return_value = CompletedProcess([], 0, "admin-container-id\n")
+            manage.rollback(version="legacy")
+        self.assertEqual(compose.call_args.kwargs["images"]["admin"], current_admin)
+        self.assertEqual(compose.call_args.kwargs["images"]["catalog"], images["catalog"])
+        self.assertTrue(any("container" in c.args[0] for c in run.call_args_list))
+        identity.assert_called_once_with(manage.ROOT)
+
     def test_records_exact_image_ids_and_does_not_overwrite_a_release(self):
         images = {service: "sha256:" + f"{i:064x}" for i, service in enumerate(manage.DEPLOYABLES, 1)}
         with tempfile.TemporaryDirectory() as directory:
@@ -291,6 +308,7 @@ class ReleaseRegistryTests(unittest.TestCase):
                  patch.object(manage, "integration", side_effect=RuntimeError("failed")):
                 with self.assertRaises(RuntimeError):
                     manage.release(root=root, project="supersports", version="v2")
+                manage.provision_local_identity.assert_called_once_with(root)
             self.assertEqual(manage.read_releases(root, "supersports"), {})
             self.assertEqual(compose.call_count, 2)
 
@@ -310,7 +328,8 @@ class ReleaseRegistryTests(unittest.TestCase):
             manage.record_release(root, "supersports", "v1", images)
             with patch.object(manage, "run") as run, \
                  patch.object(manage, "compose") as compose, \
-                 patch.object(manage, "integration") as integration:
+                 patch.object(manage, "integration") as integration, \
+                 patch.object(manage, "provision_local_identity"):
                 manage.rollback(root=root, project="supersports", version="v1")
             self.assertEqual(run.call_args_list, [
                 *[call(["docker", "image", "inspect", images[service]], capture=True) for service in manage.DEPLOYABLES],

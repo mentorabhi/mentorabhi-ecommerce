@@ -33,6 +33,9 @@ class KafkaUiConfigurationTests(unittest.TestCase):
     def test_inspection_preserves_cluster_and_stays_resource_bounded(self):
         service = self.service
         env = service["environment"]
+        self.assertEqual(env["AUTH_TYPE"], "LOGIN_FORM")
+        self.assertEqual(env["SPRING_SECURITY_USER_NAME"], "admin")
+        self.assertEqual(env["SPRING_SECURITY_USER_PASSWORD"], "admin")
         self.assertEqual(env["KAFKA_CLUSTERS_0_READONLY"], "true")
         self.assertEqual(env["KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS"], "kafka:9092")
         self.assertEqual(env["KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS"], "http://kafka-connect:8083")

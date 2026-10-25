@@ -25,11 +25,17 @@
 !apps/storefront/**
 apps/storefront/node_modules/
 apps/storefront/dist/
+!apps/admin/
+!apps/admin/**
+apps/admin/node_modules/
+apps/admin/dist/
 !devops/
 !devops/docker/
 !devops/docker/commerce.Dockerfile
 !devops/docker/healthcheck.sh
 !devops/docker/storefront.Dockerfile
+!devops/docker/admin.Dockerfile
 !devops/docker/storefront-entrypoint.sh
 !devops/nginx/
 !devops/nginx/storefront.conf
+!devops/nginx/admin.conf

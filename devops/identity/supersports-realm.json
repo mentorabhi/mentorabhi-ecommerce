@@ -69,16 +69,18 @@
     },
     {
       "clientId": "supersports-web",
-      "name": "Future storefront PKCE client",
+      "name": "SuperSports Admin PKCE client",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": [
+        "http://localhost:3002/*",
         "http://localhost:3000/*"
       ],
       "webOrigins": [
+        "http://localhost:3002",
         "http://localhost:3000"
       ],
       "attributes": {

@@ -13,6 +13,10 @@ services:
     profiles: ["graph"]
     environment:
       NEO4J_AUTH: "neo4j/${GRAPH_DB_PASSWORD:?Run configure}"
+      NEO4J_dbms_security_auth__minimum__password__length: "5"
+      NEO4J_dbms_usage__report_enabled: "false"
+      NEO4J_dbms_fleet__manager_enabled: "false"
+      NEO4J_server_fleet__discovery_enabled: "false"
       GRAPH_DB_PASSWORD: "${GRAPH_DB_PASSWORD:?Run configure}"
       NEO4J_server_memory_heap_initial__size: 128m
       NEO4J_server_memory_heap_max__size: 512m
@@ -30,7 +34,6 @@ services:
   trino:
     image: "${TRINO_IMAGE:?Use devops/scripts/supersports configure}"
     profiles: ["analytics"]
-    ports: ["127.0.0.1:8096:8080"]
     volumes:
       - ./devops/trino:/etc/trino:ro
       - lakehouse-data:/warehouse:ro
@@ -40,6 +43,23 @@ services:
       LAKEHOUSE_DB_PASSWORD: "${LAKEHOUSE_DB_PASSWORD:?Run configure}"
     depends_on:
       postgres: {condition: service_healthy}
+    restart: unless-stopped
+  trino-ui:
+    profiles: ["analytics"]
+    image: "${STOREFRONT_NGINX_IMAGE:?Use devops/scripts/supersports configure}"
+    user: "${UI_PROXY_UID:-10001}:${UI_PROXY_GID:-10001}"
+    entrypoint: [nginx]
+    command: [-g, "daemon off;"]
+    ports: ["127.0.0.1:8096:8080"]
+    volumes:
+      - ./devops/nginx/trino-ui.conf:/etc/nginx/nginx.conf:ro
+      - ./devops/.local/ui.htpasswd:/etc/nginx/ui.htpasswd:ro
+    tmpfs: [/tmp]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 64m
+    depends_on: {trino: {condition: service_started}}
     restart: unless-stopped
   analytics-api:
     profiles: ["analytics"]

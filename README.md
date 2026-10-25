@@ -7,15 +7,18 @@ See the [current architecture](design/S1-M01/architecture.md), [editable ownersh
 The [original architecture gallery](architecture/index.html) is preserved as historical planning input; current decisions supersede its cloud and Rufus terminology.
 
 ## Current state
-S1-M02 runnable local bootstrap: independent Catalog and Configuration Java projects, private PostgreSQL, local Keycloak and Docker/operational tooling. Customer storefront and Nova are later milestones.
-Read [bootstrap operations](devops/README.md), [setup prerequisites](docs/setup/prerequisites.md), and [S1-M02 evidence](docs/milestones/S1-M02/README.md).
+Stage 1 commerce, simulated checkout/post-purchase, CDC/history, reporting and recovery have recorded automated evidence through M10. M11 catalog/review enhancements and M12 OpenTelemetry are in progress; Nova remains later. See [current status](docs/context/status.md) for measured results and limitations.
+
+Storefront: http://localhost:3000. Separate Admin: http://localhost:3002/admin, using the requested local demo login **admin / admin**. Customer accounts remain separate. Operational UI URLs, credentials and optional profiles are in the [access guide](docs/setup/ui-access.md).
+
+Read [operations](devops/README.md), [setup prerequisites](docs/setup/prerequisites.md), and [original bootstrap evidence](docs/milestones/S1-M02/README.md).
 Start with devops/scripts/supersports doctor, configure, validate and up; then run devops/scripts/supersports test. No host Java or cloud account is needed.
 Existing host-installed Ollama is a Nova prerequisite only; no Ollama container is used.
 
 ## Python environment
 Use the local virtual environment for every Python command. Activate with source .venv/bin/activate, or invoke .venv/bin/python directly; install dependencies through .venv/bin/python -m pip.
 Current verified local interpreter: Python 3.14.7. A fresh checkout must create .venv with a compatible installed interpreter; it is intentionally ignored by Git.
-No application dependencies have been installed. Runtime dependencies and exact compatible version pins are selected and verified in S1-M02; this documentation interpreter does not settle all future service runtime versions.
+Runtime dependencies and tested image pins are recorded in their owning projects and devops/images.lock.json. The host documentation/test interpreter is separate from container service runtimes.
 
 ## Delivery sequence
 1. Stage 1: SuperSports commerce, customer/admin UI, simulations, events, data/reporting and operations.

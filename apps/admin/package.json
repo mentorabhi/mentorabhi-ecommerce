@@ -1,0 +1,25 @@
+{
+  "name": "supersports-admin",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "test:e2e": "playwright test",
+    "test:ui": "../../.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v"
+  },
+  "dependencies": {
+    "oidc-client-ts": "3.5.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@vitejs/plugin-react": "6.1.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
+  }
+}

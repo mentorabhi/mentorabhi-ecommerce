@@ -5,6 +5,8 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 BASE = os.environ.get("KAFKA_UI_URL", "http://localhost:8091")
@@ -23,6 +25,9 @@ class KafkaUiBrowserTests(unittest.TestCase):
         driver = webdriver.Chrome(options=options)
         self.addCleanup(driver.quit)
         driver.get(BASE)
+        wait = WebDriverWait(driver, 30)
+        wait.until(EC.presence_of_element_located((By.NAME, "username"))).send_keys("admin")
+        driver.find_element(By.NAME, "password").send_keys("admin\n")
         WebDriverWait(driver, 20).until(lambda browser: "supersports" in browser.page_source.lower())
         self.assertIn("supersports", driver.page_source.lower())
 

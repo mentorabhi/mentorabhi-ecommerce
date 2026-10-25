@@ -1,12 +1,12 @@
 {
-  "name": "supersports-admin",
+  "name": "supersports-storefront",
   "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
-    "test:e2e": "playwright test"
+    "test:ui": "../../.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v"
   },
   "dependencies": {
     "oidc-client-ts": "3.5.0",

@@ -20,7 +20,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 ROOT = Path(__file__).resolve().parents[3]
-BASE_URL = os.environ.get("SUPERSPORTS_UI_URL", "http://localhost:3000")
+BASE_URL = os.environ.get("SUPERSPORTS_ADMIN_UI_URL", "http://localhost:3002")
+STORE_URL = os.environ.get("SUPERSPORTS_UI_URL", "http://localhost:3000")
 BOOTSTRAP_FILE = ROOT / "devops/.local/bootstrap.env"
 TEST_PRODUCT_TITLE = "Selenium UI Regression Item"
 TEST_PRODUCT_SLUG = "selenium-ui-regression-item"
@@ -121,6 +122,9 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.assertFalse(any("Minified React error #310" in message for message in messages), messages)
 
     def test_local_admin_mobile_navigation_and_sign_out(self):
+        self.driver.get(STORE_URL + "/admin")
+        self.wait.until(lambda driver: driver.current_url.startswith(BASE_URL + "/admin"))
+        self.assertEqual(self.driver.execute_script("return location.origin"), BASE_URL)
         self.driver.set_window_size(390, 844)
         self.login("admin", "ADMIN_PASSWORD")
         for section in ("Prices & coupons", "Inventory", "Shipments", "Reviews", "Support", "Catalog"):
@@ -398,7 +402,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
 
     def register_customer(self, username: str, email: str):
         password = f"SS-{uuid.uuid4().hex}Aa!"
-        self.driver.get(BASE_URL + "/account")
+        self.driver.get(STORE_URL + "/account")
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".profile-prompt")))
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, "//button[contains(., 'Sign in or create account')]"))).click()
@@ -414,7 +418,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
     def test_customer_self_registration_browse_profile_cart_and_isolation(self):
         suffix = uuid.uuid4().hex[:10]
         first = f"shopper-{suffix}"
-        self.driver.get(BASE_URL)
+        self.driver.get(STORE_URL)
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".store-product-grid")))
         self.assertGreaterEqual(len(self.driver.find_elements(By.CSS_SELECTOR, ".store-card")), 6)
         self.driver.find_element(By.ID, "store-search").send_keys("football")
@@ -440,7 +444,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.assertNotIn("supersports-api", customer_auth.get("aud", []), customer_auth)
         self.assertEqual(customer_auth.get("statuses"), [200, 401, 401, 401], customer_auth)
 
-        self.driver.get(BASE_URL)
+        self.driver.get(STORE_URL)
         first_card = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".store-card-image")))
         first_card.click()
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".detail-layout")))
@@ -456,7 +460,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.assertIn("Your cart", self.driver.find_element(By.CSS_SELECTOR, ".customer-page").text)
         self.assertEqual(self.driver.find_element(By.CSS_SELECTOR, ".saved-row input[type='number']").get_attribute("value"), "2")
 
-        self.driver.get(BASE_URL + "/account")
+        self.driver.get(STORE_URL + "/account")
         fields = {"fullName": "UI Customer", "phone": "9876543210", "line1": "18 Race Course Road",
                   "line2": "", "city": "Bengaluru", "state": "Karnataka", "postalCode": "560001"}
         for name, value in fields.items():
@@ -470,7 +474,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, ".collection-heading h1").text == 'Results for “football”')
         self.wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, ".store-card")) >= 3)
 
-        self.driver.get(BASE_URL + "/cart")
+        self.driver.get(STORE_URL + "/cart")
         self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Place simulated order')]"))).click()
         self.wait.until(lambda driver: driver.find_elements(By.CSS_SELECTOR, ".order-row") or driver.find_elements(By.CSS_SELECTOR, ".store-alert.error"))
         if not self.driver.find_elements(By.CSS_SELECTOR, ".order-row"):
@@ -483,17 +487,17 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.assertIn("India", self.driver.find_element(By.CSS_SELECTOR, ".order-detail").text)
         self.assertIn("Simulated tax", self.driver.find_element(By.CSS_SELECTOR, ".order-detail").text)
 
-        self.driver.get(BASE_URL + "/account")
+        self.driver.get(STORE_URL + "/account")
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".address-form")))
         self.driver.find_element(By.XPATH, "//button[contains(., 'Sign out')]").click()
-        self.wait.until(lambda driver: driver.current_url.rstrip("/") == BASE_URL)
+        self.wait.until(lambda driver: driver.current_url.rstrip("/") == STORE_URL)
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".shop-shell")))
         second = f"shopper-{uuid.uuid4().hex[:10]}"
         self.register_customer(second, f"{second}@example.local")
-        self.driver.get(BASE_URL + "/cart")
+        self.driver.get(STORE_URL + "/cart")
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-page")))
         self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, ".saved-row"), "Second customer inherited the first customer's cart")
-        self.driver.get(BASE_URL + "/wishlist")
+        self.driver.get(STORE_URL + "/wishlist")
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-page")))
         self.assertFalse(self.driver.find_elements(By.CSS_SELECTOR, ".store-card"), "Second customer inherited the first customer's wishlist")
         self.assert_no_react_hook_order_error()

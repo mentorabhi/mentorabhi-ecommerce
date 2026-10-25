@@ -13,3 +13,10 @@
 - [ ] Reopen an older order created before catalog replacement; historical items, currency and money remain unchanged.
 
 Date/operator: __________  Outcome: __________  Issues: __________
+
+## U1 operations checkpoint
+
+- [ ] Open http://localhost:3000 and http://localhost:3002/admin side by side. Verify storefront/Admin themes differ and an old http://localhost:3000/admin bookmark redirects.
+- [ ] Follow [UI access](../../setup/ui-access.md); use admin/admin for enabled operations interfaces and a separate customer account for shopping. Start heavy graph/dashboard-studio profiles selectively.
+- [ ] In the identity database, inspect the master admin account and operator client callback configuration using DBeaver or the Keycloak console. Confirm both new and legacy callbacks exist and customer-realm accounts remain separate. Do not copy service passwords into tracked files.
+- [ ] Restart a selected profile and repeat login. Confirm Prometheus/Trino reject anonymous/wrong-password requests and backend containers have no host publication bypass.
