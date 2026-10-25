@@ -1,5 +1,17 @@
 # S1-M07 verification record
 
+## Selenium lifecycle journeys — 2026-10-25
+
+The default storefront discovery run passed 11 executed journeys; its nine skips were fixture/profile guards, not counted as passes. Each guarded journey was then exercised separately with the required local synthetic data/profile:
+
+- Admin shipment progression, `SUPERSPORTS_SCHEDULED_ORDER_ID=<scheduled synthetic order>` with `-k prepared_synthetic_shipment`: passed 1/1; shipment moved from SCHEDULED to HANDED_OFF.
+- Customer cancellation, `SUPERSPORTS_CANCELLABLE_ORDER_ID=<separate scheduled synthetic order>` with `-k cancel_a_synthetic_order`: passed 1/1; cancellation completed before handoff.
+- Customer partial return/refund, `SUPERSPORTS_RETURNABLE_ORDER_ID=<delivered synthetic order>` with `-k partial_return`: passed 1/1; simulated refund completed.
+- Verified purchase review submission, `SUPERSPORTS_REVIEWABLE_ORDER_ID=<delivered synthetic order>` with `-k submit_review`: passed 1/1; review was accepted for moderation.
+- Operator return inspection/restock, `SUPERSPORTS_INSPECTABLE_RETURN_ID=<refunded return awaiting inspection>` with `-k return_inspection_operator_queue`: passed 1/1; sellable item inspection was recorded and the queue row cleared.
+
+Fixture orders were created with the existing post-purchase integration helper and local payment/fulfillment simulators. No real payment or fulfillment was invoked. The M06 blocked/unavailable freshness Selenium journeys, Kafka UI and Grafana were separately exercised and passed; see [M06 verification](../S1-M06/verification.md) and [M09 verification](../S1-M09/verification.md). The remaining unchecked items in [manual acceptance](manual-acceptance.md) are owner-run end-user checks.
+
 2026-10-24 · Implementation units are recorded independently; M07 remains incomplete until all post-purchase journeys are delivered.
 
 ## Unit 2 development checkpoint — tracking and handoff
