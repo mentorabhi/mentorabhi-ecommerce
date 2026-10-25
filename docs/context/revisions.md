@@ -244,3 +244,7 @@ Added paginated/direct/related/saved-variant Catalog queries and structured sour
 ## 2026-10-25 — Coding before data and tests
 
 Applied the user's latest coding → data → testing sequence. Authored U3 deterministic sourced-model/variant/photo tooling and owner-API import with replay-safe stock, both currencies, DEMO reviews, selected-product coupons and historical retirement. Preserved Inventory's active-SKU gate through activation-before-stock ordering. Added optional product allowlists to Pricing's deterministic coupon eligibility. Authored M12 reviewed design/diagram/ADR, exact release/digest/ARM64 metadata, checksum-pinned agent integration, safe Java request filters, internal telemetry stores/pipeline and Grafana/lifecycle source. Maintained unit/integration/Selenium cases and manual guides, but executed no tests/builds. All new behavior remains unverified and data population pending.
+
+## 2026-10-25 — Design-folder discovery
+
+The user observed that design/ stopped at S1-M04. Later canonical designs existed under docs/milestones but lacked design-folder entry points. Added design/README.md and S1-M05–M12 folder indexes linking all main/supplemental designs, editable Mermaid diagrams, design reviews and acceptance records. Linked the index from the repository and milestone READMEs. Historical originals stay in place to avoid duplicate design copies or broken prior references. No application behavior or acceptance status changes.

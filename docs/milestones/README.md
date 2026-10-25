@@ -1,5 +1,7 @@
 # Milestone evidence convention
 
+Find all Stage 1 designs and editable diagrams through the [design index](../../design/README.md). M01–M04 use their original files under design/; M05–M12 have design-folder entry points linking to canonical documents and diagrams alongside their milestone evidence. Keep one maintained copy of each design.
+
 Every milestone must have its own `manual-acceptance.md`, separate from its design and automated test records. Write the guide before asking the user to review the milestone. It is a practical end-user checklist, not a copy of automated test cases.
 
 Each checklist covers:

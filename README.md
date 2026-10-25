@@ -3,7 +3,7 @@
 A local ecommerce platform and, later, an Ollama-powered shopping assistant built as a reproducible learning project.
 
 Start with [project context](docs/context/project-context.md), [accepted requirements](requirements/accepted-requirements.md), and the [S1-M01 milestone](docs/milestones/S1-M01/README.md).
-See the [current architecture](design/S1-M01/architecture.md), [editable ownership diagram](design/S1-M01/ownership.excalidraw), [SVG preview](design/S1-M01/ownership.svg), [decision record](docs/decisions/0001-local-first-monorepo.md), [test strategy](docs/testing/strategy.md), and [traceability](docs/traceability.md).
+See the [design index for all Stage 1 milestones](design/README.md), [current architecture](design/S1-M01/architecture.md), [editable ownership diagram](design/S1-M01/ownership.excalidraw), [SVG preview](design/S1-M01/ownership.svg), [decision record](docs/decisions/0001-local-first-monorepo.md), [test strategy](docs/testing/strategy.md), and [traceability](docs/traceability.md).
 The [original architecture gallery](architecture/index.html) is preserved as historical planning input; current decisions supersede its cloud and Rufus terminology.
 
 ## Current state
