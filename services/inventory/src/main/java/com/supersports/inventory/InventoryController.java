@@ -4,6 +4,10 @@ import java.util.*;import org.springframework.beans.factory.annotation.Value;imp
  private final InventoryRepository repo;private final RestClient catalog;InventoryController(InventoryRepository repo,@Value("${catalog.base-url}")String catalogUrl){this.repo=repo;catalog=RestClient.builder().baseUrl(catalogUrl).build();}
  @GetMapping("/warehouses") List<Map<String,Object>> warehouses(){return List.of(Map.of("id",InventoryRepository.WAREHOUSE,"name","Main warehouse","active",true));}
  @GetMapping("/availability/{skuId}") Map<String,Object> availability(@PathVariable UUID skuId){return Map.of("skuId",skuId,"available",Math.max(0,repo.availability(skuId)),"reserved",0,"snapshot",true);}
+ @GetMapping("/availability") List<Map<String,Object>> availabilityBatch(@RequestParam List<UUID> skuIds){
+  if(skuIds==null||skuIds.isEmpty()||skuIds.size()>100)throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,"Snapshot batch requires 1 to 100 SKU IDs");
+  return skuIds.stream().map(this::availability).toList();
+ }
  @GetMapping("/balances") List<Map<String,Object>> balances(){return repo.balances();}
  @GetMapping("/movements") List<Map<String,Object>> movements(@RequestParam(required=false)UUID skuId){return repo.movements(skuId);}
  @GetMapping("/returns/pending") List<Map<String,Object>> pendingReturns(){return repo.pendingReturns();}

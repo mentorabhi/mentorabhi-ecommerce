@@ -11,6 +11,10 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController @RequestMapping("/api/v1/pricing") class PricingController {
  private final PricingRepository repo;PricingController(PricingRepository repo){this.repo=repo;}
  @GetMapping("/currency") Map<String,Object> currency(){return repo.currency();}
+ @GetMapping("/public/skus") List<Map<String,Object>> publicSkuPrices(@RequestParam List<UUID> skuIds){
+  if(skuIds==null||skuIds.isEmpty()||skuIds.size()>100)throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,"Snapshot batch requires 1 to 100 SKU IDs");
+  try{return skuIds.stream().map(repo::publicSkuPrice).toList();}catch(org.springframework.dao.EmptyResultDataAccessException e){throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Price unavailable");}
+ }
  @GetMapping("/public/skus/{skuId}") Map<String,Object> publicSkuPrice(@PathVariable UUID skuId){try{return repo.publicSkuPrice(skuId);}catch(org.springframework.dao.EmptyResultDataAccessException e){throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Price unavailable");}}
  @GetMapping("/prices") List<Map<String,Object>> prices(){return repo.prices();}
  @PutMapping("/prices/{skuId}/{currency}") Map<String,Object> price(@PathVariable UUID skuId,@PathVariable String currency,@RequestBody PriceInput input,@AuthenticationPrincipal Jwt jwt){try{int revision=repo.setPrice(skuId,currency.toUpperCase(),input.amountMinor(),input.expectedRevision(),jwt.getSubject());return Map.of("skuId",skuId,"currency",currency.toUpperCase(),"amountMinor",input.amountMinor(),"revision",revision);}catch(StalePriceException e){throw new ResponseStatusException(HttpStatus.CONFLICT,"Price revision is stale");}catch(IllegalArgumentException e){throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,e.getMessage());}}

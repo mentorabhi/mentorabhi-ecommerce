@@ -99,15 +99,19 @@ export default function CustomerStore() {
     ])
     setProducts(items); setCategories(cats); setCurrency(active.code)
     const skuIds = items.flatMap((product) => product.skus.map((sku) => sku.id))
-    const snapshots = await Promise.all(skuIds.map(async (skuId) => {
-      const [price, stock] = await Promise.all([
-        request<{ amountMinor: number; currency: Currency }>(`/api/pricing/public/skus/${skuId}`),
-        request<{ available: number }>(`/api/inventory/availability/${skuId}`),
+    const priceSnapshots: { skuId: string; amountMinor: number; currency: Currency }[] = []
+    const stockSnapshots: { skuId: string; available: number }[] = []
+    for (let offset = 0; offset < skuIds.length; offset += 100) {
+      const ids = encodeURIComponent(skuIds.slice(offset, offset + 100).join(','))
+      const [batchPrices, batchStock] = await Promise.all([
+        request<typeof priceSnapshots>(`/api/pricing/public/skus?skuIds=${ids}`),
+        request<typeof stockSnapshots>(`/api/inventory/availability?skuIds=${ids}`),
       ])
-      return [skuId, price.amountMinor, stock.available] as const
-    }))
-    setPrices(Object.fromEntries(snapshots.map(([id, amount]) => [id, amount])))
-    setAvailability(Object.fromEntries(snapshots.map(([id, , available]) => [id, available])))
+      if (batchPrices.some((price) => price.currency !== active.code)) throw new Error('Store currency changed. Refresh to see current prices.')
+      priceSnapshots.push(...batchPrices); stockSnapshots.push(...batchStock)
+    }
+    setPrices(Object.fromEntries(priceSnapshots.map((price) => [price.skuId, price.amountMinor])))
+    setAvailability(Object.fromEntries(stockSnapshots.map((stock) => [stock.skuId, stock.available])))
   }
 
   const refreshCustomer = async (accessToken = token) => {
@@ -250,7 +254,7 @@ export default function CustomerStore() {
 }
 
 function ShipmentTimeline({tracking}:{tracking:ShipmentTracking}){
- return <section className="customer-page"><span className="store-kicker">LOCAL DELIVERY SIMULATION</span><h2>Shipment tracking</h2><p>{tracking.trackingId??'Shipment pending'} · {tracking.state.replaceAll('_',' ')}</p>{tracking.estimatedDeliveryAt&&<p>Estimated delivery · {new Date(tracking.estimatedDeliveryAt).toLocaleString('en-IN')}</p>}<ol>{(tracking.transitions??[]).map((transition,index)=><li key={`${transition.state}-${index}`}><strong>{transition.state.replaceAll('_',' ')}</strong>{transition.createdAt&&<span> · {new Date(transition.createdAt).toLocaleString('en-IN')}</span>{transition.reason&&<p>{transition.reason}</p>}</li>)}</ol></section>
+ return <section className="customer-page"><span className="store-kicker">LOCAL DELIVERY SIMULATION</span><h2>Shipment tracking</h2><p>{tracking.trackingId??'Shipment pending'} · {tracking.state.replaceAll('_',' ')}</p>{tracking.estimatedDeliveryAt&&<p>Estimated delivery · {new Date(tracking.estimatedDeliveryAt).toLocaleString('en-IN')}</p>}<ol>{(tracking.transitions??[]).map((transition,index)=><li key={`${transition.state}-${index}`}><strong>{transition.state.replaceAll('_',' ')}</strong>{transition.createdAt&&<span> · {new Date(transition.createdAt).toLocaleString('en-IN')}</span>}{transition.reason&&<p>{transition.reason}</p>}</li>)}</ol></section>
 }
 
 function ReviewSubmission({order,token,act,busy}:{order:OrderDetail;token:string;act:(work:()=>Promise<void>,success?:string)=>Promise<void>;busy:boolean}){

@@ -51,7 +51,7 @@ class InventorySecurity {
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/inventory/availability/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/inventory/availability", "/api/v1/inventory/availability/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/internal/checkout/inventory/reservations").access(checkoutScope("checkout:inventory.reserve"))
                         .requestMatchers(HttpMethod.POST, "/api/v1/internal/checkout/inventory/reservations/*/protect").access(checkoutScope("checkout:inventory.protect"))
                         .requestMatchers(HttpMethod.POST, "/api/v1/internal/checkout/inventory/reservations/*/commit").access(checkoutScope("checkout:inventory.commit"))

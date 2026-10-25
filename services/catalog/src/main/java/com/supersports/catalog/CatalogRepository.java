@@ -74,8 +74,8 @@ class CatalogRepository {
     }
 
     UUID createSku(UUID productId, String code, Object attributes, String assetKey, String altText, String actor) {
-        if (!assetKey.matches("[a-zA-Z0-9/_-]+\\.svg") || assetKey.startsWith("/") || assetKey.contains(".."))
-            throw new IllegalArgumentException("assetKey must be a relative local SVG key");
+        if (!assetKey.matches("[a-zA-Z0-9/_-]+\\.(svg|jpg|jpeg|png|webp)") || assetKey.startsWith("/") || assetKey.contains(".."))
+            throw new IllegalArgumentException("assetKey must be a relative local image key");
         if (jdbc.queryForObject("SELECT count(*) FROM products WHERE id=? AND status='draft'", Integer.class, productId) != 1)
             throw new IllegalArgumentException("SKUs can only be added to draft products");
         UUID id=jdbc.queryForObject("INSERT INTO skus(id,product_id,code,attributes,asset_key,alt_text) VALUES (?,?,?,?::jsonb,?,?) ON CONFLICT(code) DO UPDATE SET attributes=excluded.attributes,asset_key=excluded.asset_key,alt_text=excluded.alt_text,revision=skus.revision+CASE WHEN (skus.attributes,skus.asset_key,skus.alt_text) IS DISTINCT FROM (excluded.attributes,excluded.asset_key,excluded.alt_text) THEN 1 ELSE 0 END WHERE skus.product_id=excluded.product_id RETURNING id",UUID.class,UUID.randomUUID(),productId,code,Json.write(attributes),assetKey,altText);

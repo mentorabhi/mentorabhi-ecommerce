@@ -16,6 +16,10 @@
 !services/inventory/pom.xml
 !services/inventory/src/
 !services/inventory/src/**
+!services/relationship-graph/
+!services/relationship-graph/**
+!contracts/
+!contracts/order_events.py
 !apps/
 !apps/storefront/
 !apps/storefront/**

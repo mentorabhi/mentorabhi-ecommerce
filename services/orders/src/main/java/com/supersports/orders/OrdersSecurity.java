@@ -18,7 +18,7 @@ class OrdersSecurity {
     @Bean OAuth2TokenValidator<Jwt> requiredAudience(){return new JwtClaimValidator<List<String>>(JwtClaimNames.AUD,aud->aud!=null&&aud.contains("supersports-customer-api"));}
     @Bean SecurityFilterChain securityFilterChain(HttpSecurity http)throws Exception{
         return http.csrf(AbstractHttpConfigurer::disable).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(a->a.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll().requestMatchers("/actuator/health/liveness","/actuator/health/readiness").permitAll().requestMatchers("/api/v1/orders/**").authenticated().anyRequest().denyAll())
+                .authorizeHttpRequests(a->a.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll().requestMatchers("/actuator/health/liveness","/actuator/health/readiness").permitAll().requestMatchers("/api/v1/orders/**","/api/v1/admin/synthetic-orders/**").authenticated().anyRequest().denyAll())
                 .oauth2ResourceServer(o->o.jwt(Customizer.withDefaults())).build();
     }
 }

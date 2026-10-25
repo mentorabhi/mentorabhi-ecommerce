@@ -41,7 +41,7 @@ class PricingSecurity {
                         .requestMatchers(HttpMethod.POST,"/api/v1/internal/checkout/pricing/coupon-holds/*/commit").access(checkoutScope("checkout:pricing.coupon.commit"))
                         .requestMatchers(HttpMethod.POST,"/api/v1/internal/checkout/pricing/coupon-holds/*/release").access(checkoutScope("checkout:pricing.coupon.release"))
                         .requestMatchers("/api/v1/internal/checkout/**").denyAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/pricing/currency", "/api/v1/pricing/public/skus/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/pricing/currency", "/api/v1/pricing/public/skus", "/api/v1/pricing/public/skus/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/pricing/prices", "/api/v1/pricing/coupons").access(operatorAudience())
                         .requestMatchers(HttpMethod.POST, "/api/v1/pricing/**").access(operatorAudience())
                         .requestMatchers(HttpMethod.PUT, "/api/v1/pricing/**").access(operatorAudience())

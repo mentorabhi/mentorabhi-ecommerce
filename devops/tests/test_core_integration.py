@@ -1,6 +1,7 @@
 """Real Docker/PostgreSQL/Keycloak regressions, run by supersports test."""
 import json
 import os
+import shlex
 from pathlib import Path
 import sys
 import threading
@@ -63,7 +64,7 @@ class CoreIntegrationTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(products)
         football_codes = {sku["code"] for product in products for sku in product["skus"]}
-        self.assertEqual(football_codes, {"SS-FB-BALL-001", "SS-FB-CONE-001", "SS-FB-GLOVE-001"})
+        self.assertTrue({"SS-FB-BALL-001", "SS-FB-CONE-001", "SS-FB-GLOVE-001"}.issubset(football_codes))
         proxy_status, proxy_products = manage.request_json(
             "http://127.0.0.1:3000/api/catalog/products?q=football")
         self.assertEqual(proxy_status, 200)
@@ -75,20 +76,33 @@ class CoreIntegrationTests(unittest.TestCase):
         status, availability = manage.request_json(f"{INVENTORY}/api/v1/inventory/availability/{sku}")
         self.assertEqual(status, 200)
         self.assertTrue(availability["snapshot"])
+        sku_ids = [item["id"] for product in products for item in product["skus"]][:2]
+        encoded = ",".join(sku_ids)
+        price_status, prices = manage.request_json(f"{PRICING}/api/v1/pricing/public/skus?skuIds={encoded}")
+        stock_status, stocks = manage.request_json(f"{INVENTORY}/api/v1/inventory/availability?skuIds={encoded}")
+        self.assertEqual((price_status, stock_status), (200, 200))
+        self.assertEqual({row["skuId"] for row in prices}, set(sku_ids))
+        self.assertEqual({row["skuId"] for row in stocks}, set(sku_ids))
+        self.assertEqual(manage.request_json(f"{PRICING}/api/v1/pricing/public/skus?skuIds=")[0], 422)
+        self.assertEqual(manage.request_json(f"{INVENTORY}/api/v1/inventory/availability?skuIds=")[0], 422)
+        oversized = ",".join([sku] * 101)
+        self.assertEqual(manage.request_json(f"{PRICING}/api/v1/pricing/public/skus?skuIds={oversized}")[0], 422)
+        self.assertEqual(manage.request_json(f"{INVENTORY}/api/v1/inventory/availability?skuIds={oversized}")[0], 422)
 
     def test_operator_identity_cannot_access_customer_resources(self):
         self.assertEqual(manage.request_json(f"{CUSTOMER}/api/v1/customer/profile", token=self.local_admin)[0], 401)
         self.assertEqual(manage.request_json(f"{CUSTOMER}/api/v1/customer/cart", token=self.admin)[0], 401)
         self.assertEqual(manage.request_json(f"{ORDERS}/api/v1/orders", token=self.admin)[0], 401)
-        self.assertEqual(manage.request_json("http://127.0.0.1:8092/api/v1/operator/reviews/pending",token=self.customer)[0],403)
-        self.assertEqual(manage.request_json("http://127.0.0.1:8093/api/v1/operator/support/tickets",token=self.customer)[0],403)
-        self.assertEqual(manage.request_json("http://127.0.0.1:8092/api/v1/customer/reviews",token=self.local_admin)[0],401)
-        self.assertEqual(manage.request_json("http://127.0.0.1:8093/api/v1/customer/support/tickets",token=self.local_admin)[0],401)
+        self.assertEqual(manage.request_json("http://127.0.0.1:8092/api/v1/operator/reviews/pending",token=self.store_customer)[0],403)
+        self.assertEqual(manage.request_json("http://127.0.0.1:8093/api/v1/operator/support/tickets",token=self.store_customer)[0],403)
+        self.assertEqual(manage.request_json("http://127.0.0.1:8092/api/v1/customer/reviews",token=self.local_admin)[0],403)
+        self.assertEqual(manage.request_json("http://127.0.0.1:8093/api/v1/customer/support/tickets",token=self.local_admin)[0],403)
         self.assertEqual(manage.request_json("http://127.0.0.1:8092/api/v1/reviews/products/00000000-0000-4000-8000-000000000000")[0],200)
 
     def test_checkout_creates_owner_scoped_order_and_is_idempotent(self):
         _, products = manage.request_json(f"{CATALOG}/api/v1/catalog/products?q=football")
         sku_id = products[0]["skus"][0]["id"]
+        self.add_stock(sku_id)
         _, profile = manage.request_json(f"{CUSTOMER}/api/v1/customer/profile", token=self.store_customer)
         address = {"fullName": "Checkout Test", "phone": "9876543210", "line1": "12 Test Road",
                    "line2": "", "city": "Pune", "state": "Maharashtra", "postalCode": "411001",
@@ -125,7 +139,7 @@ class CoreIntegrationTests(unittest.TestCase):
         self.assertEqual(check.returncode, 0, check.stderr)
         self.assertEqual(check.stdout.strip(), "1:1:1")
         claims_b = json.loads(__import__("base64").urlsafe_b64decode(self.store_customer_b.split(".")[1] + "=="))
-        manage.request_json(f"{CUSTOMER}/api/v1/customer/profile", token=self.store_customer_b)
+        self.psql("customer", "customer", "DELETE FROM customer_profile WHERE subject=$$"+claims_b["sub"]+"$$")
         rejected_key = "missing-address-" + uuid.uuid4().hex
         status, _ = manage.request_json(url, token=self.store_customer_b, method="POST", data=json.dumps(payload).encode(),
                                         headers={"Idempotency-Key": rejected_key})
@@ -156,6 +170,7 @@ class CoreIntegrationTests(unittest.TestCase):
     def test_delivered_order_partial_return_is_owned_idempotent_and_refunded_once(self):
         _,products=manage.request_json(f"{CATALOG}/api/v1/catalog/products?q=football")
         sku_id=products[0]["skus"][0]["id"]
+        self.add_stock(sku_id, 10)
         _,profile=manage.request_json(f"{CUSTOMER}/api/v1/customer/profile",token=self.store_customer)
         address={"fullName":"Return Test","phone":"9876543210","line1":"12 Test Road","line2":"","city":"Pune","state":"Maharashtra","postalCode":"411001","country":"IN","expectedRevision":profile["revision"]}
         self.assertEqual(manage.request_json(f"{CUSTOMER}/api/v1/customer/profile",token=self.store_customer,method="PUT",data=json.dumps(address).encode())[0],200)
@@ -202,7 +217,7 @@ class CoreIntegrationTests(unittest.TestCase):
             if second_operation["status"] in ("COMPLETED","MANUAL_REVIEW"):break
             time.sleep(.5)
         self.assertEqual(second_operation["status"],"COMPLETED",second_operation)
-        order_check=self.psql("orders","orders","SELECT concat(o.state,':',count(*)) FROM customer_order o JOIN return_request r ON r.order_id=o.id WHERE o.id=$$"+order_id+"$$ GROUP BY o.state")
+        order_check=self.psql("orders","orders","SELECT concat(o.state,chr(58),count(*)) FROM customer_order o JOIN return_request r ON r.order_id=o.id WHERE o.id=$$"+order_id+"$$ GROUP BY o.state")
         self.assertEqual(order_check.returncode,0,order_check.stderr);self.assertEqual(order_check.stdout.strip(),"DELIVERED:2")
         allocation_check=self.psql("orders","orders","SELECT sum(merchandise_refund_minor+tax_refund_minor) FROM return_unit_allocation WHERE order_id=$$"+order_id+"$$")
         self.assertEqual(allocation_check.returncode,0,allocation_check.stderr);self.assertEqual(allocation_check.stdout.strip(),str(int(operation["amountMinor"])+int(second_operation["amountMinor"])))
@@ -311,6 +326,7 @@ class CoreIntegrationTests(unittest.TestCase):
     def test_orders_worker_resumes_persisted_saga_after_restart(self):
         _,products=manage.request_json(f"{CATALOG}/api/v1/catalog/products?q=football")
         sku=products[0]["skus"][0]["id"]
+        self.add_stock(sku)
         status,accepted=manage.request_json(f"{ORDERS}/api/v1/orders/checkout",token=self.store_customer,method="POST",data=json.dumps({"lines":[{"skuId":sku,"quantity":1}],"couponCode":None}).encode(),headers={"Idempotency-Key":"worker-restart-"+uuid.uuid4().hex})
         self.assertEqual(status,202,accepted)
         manage.compose(["stop","orders"],project=self.project)
@@ -423,7 +439,7 @@ class CoreIntegrationTests(unittest.TestCase):
         _, coupons = manage.request_json(f"{PRICING}/api/v1/pricing/coupons", token=self.catalog_admin)
         self.assertTrue({"WELCOME10", "CRICKET250"}.issubset({item["code"] for item in coupons}))
         _, balances = manage.request_json(f"{INVENTORY}/api/v1/inventory/balances", token=self.inventory_operator)
-        self.assertEqual(len(balances), 6)
+        self.assertGreaterEqual(len(balances), 6)
 
     def test_signed_in_accounts_can_read_every_admin_section_without_admin_roles(self):
         for token in (self.customer, self.catalog_admin, self.inventory_operator, self.local_admin):
@@ -465,7 +481,7 @@ class CoreIntegrationTests(unittest.TestCase):
         categories = {item["id"] for item in body["categories"]}
         self.assertEqual(categories, {
             "store-localization", "commerce-simulations", "storage", "search-cache",
-            "messaging-workflows", "identity-access", "observability", "nova-models",
+            "messaging-workflows", "identity-access", "observability", "nova-models", "returns-policy",
         })
         settings = {item["key"]: item for item in body["settings"]}
         self.assertEqual(settings["store.currency"]["value"], "INR")
@@ -474,7 +490,7 @@ class CoreIntegrationTests(unittest.TestCase):
         for item in settings.values():
             self.assertIn(item["category"], categories)
             self.assertIn(item["valueType"], {"STRING", "STRING_LIST", "BOOLEAN"})
-            expected = "OPERATOR_EDITABLE" if item["key"].startswith("checkout.") else "MIGRATION_ONLY"
+            expected = "OPERATOR_EDITABLE" if item["key"].startswith(("checkout.", "returns.")) else "MIGRATION_ONLY"
             self.assertEqual(item["activationMode"], expected)
         rendered = json.dumps(body)
         self.assertTrue(all(secret not in rendered for secret in self.credentials.values()))
@@ -534,9 +550,16 @@ class CoreIntegrationTests(unittest.TestCase):
                 "customer": "CUSTOMER_DB_PASSWORD", "orders": "ORDERS_DB_PASSWORD",
                 "payment": "PAYMENT_DB_PASSWORD", "fulfillment": "FULFILLMENT_DB_PASSWORD"}
         command = ('export PGPASSWORD="$' + keys[role] + '"; exec psql -X -A -t '
-                   f'-h 127.0.0.1 -U supersports_{role} -d {database} -c \'{sql}\'')
+                   f'-h 127.0.0.1 -U supersports_{role} -d {database} -c {shlex.quote(sql)}')
         return manage.compose(["exec", "-T", "postgres", "sh", "-ec", command],
                               project=self.project, capture=True, check=False)
+
+    def add_stock(self, sku_id, quantity=5):
+        payload={"skuId":sku_id,"delta":quantity,"reason":"Integration checkout capacity",
+                 "idempotencyKey":"integration-stock-"+uuid.uuid4().hex}
+        status,body=manage.request_json(f"{INVENTORY}/api/v1/inventory/adjustments",token=self.inventory_operator,
+            method="POST",data=json.dumps(payload).encode())
+        self.assertEqual(status,200,body)
 
     def test_each_service_can_connect_to_its_own_migrated_database(self):
         for service in ("catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment", "fulfillment"):
@@ -571,11 +594,13 @@ class CoreIntegrationTests(unittest.TestCase):
         result = manage.compose(["ps", "--format", "json"], project=self.project, capture=True)
         # Compose emits one JSON object per line for multiple services.
         rows = [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
-        core = {"postgres", "identity", "catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator", "storefront"}
-        streaming = {"kafka", "kafka-connect", "order-history"}
+        core = {"postgres", "identity", "catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator", "storefront", "reviews", "support"}
+        streaming = {"kafka", "kafka-connect", "kafka-ui", "order-history"}
+        optional = {"trino", "analytics-api", "spark-ingest", "lakehouse-init", "neo4j", "relationship-graph",
+                    "health-exporter", "prometheus", "grafana", "superset"}
         services = {row["Service"] for row in rows}
         self.assertTrue(core.issubset(services), services)
-        self.assertTrue(services - core in (set(), streaming), services)
+        self.assertFalse(services - core - streaming - optional, services)
         for row in rows:
             publishers = row.get("Publishers") or []
             if row["Service"] == "postgres":

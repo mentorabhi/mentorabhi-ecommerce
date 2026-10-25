@@ -1,5 +1,21 @@
 # Project status
-Updated: 2026-10-24.
+Updated: 2026-10-25 02:10 UTC.
+
+## Current measured state — Stage 1 consolidated acceptance
+
+Implementation across S1-M01–M10 is present on local branch `stage1`; release/push still needs the milestone checkpoint commits after verification. Stage 1 is **not yet closed**: automated service, M06 stream/recovery, M07 live post-purchase, M09 restore/ingress and dashboard Selenium checks have passed; M08 reconciliation is still being finished, the broad UI suite still needs fixture-backed execution, and all owner-run manual acceptance checklists remain unchecked.
+
+- `devops/scripts/supersports unit`: full repository unit/build verification passed before the final small regression additions; rerun the focused updated tests and final gate before commit.
+- `devops/scripts/supersports test --recovery`: two full integrations passed, each with 25 core + 6 streaming checks. Recovery checked restart persistence, DB outage readiness/liveness, DB reconnection and identity recovery. M06 details/evidence: [S1-M06 verification](../milestones/S1-M06/verification.md).
+- M07 live post-purchase: 3/3 journeys passed; Selenium cancellation/return/review/support/inspection/shipment workflows still need prepared local fixtures. Evidence: [S1-M07 verification](../milestones/S1-M07/verification.md).
+- M09 isolated backup restore (13 databases), Nginx 429/413 and Grafana Selenium: passed. Evidence: [S1-M09 verification](../milestones/S1-M09/verification.md).
+- M10 seed: 1,000 synthetic `.invalid` profiles, 100 distinct variant SKUs, 17,730 prior-year orders and 51,725 units; restart-safe replay showed zero newly created records. Generated product photographs are committed; the private seed manifest/credentials are ignored. Evidence: [S1-M10 verification](../milestones/S1-M10/verification.md).
+- M08 Trino report APIs and storefront analytics Selenium passed. A replay of Spark/Iceberg was idempotent for measured table counts; current source/Kafka and Iceberg count reconciliation is being rechecked after the CDC consumer caught up. Graph services are running at `http://localhost:8094` and Neo4j Browser at `http://localhost:7474`; graph consumer reached zero lag. Evidence: [S1-M08 verification](../milestones/S1-M08/verification.md).
+- Observability currently has local Prometheus/Grafana health/readiness metrics only. OpenTelemetry request traces/latency and centralized searchable logs are still not implemented; M09 design/ADR record this limitation. Do not claim that prior observability question is fully satisfied.
+
+Latest operational UI: Storefront `http://localhost:3000`, Admin `http://localhost:3000/admin`, Kafka UI `http://localhost:8091`, Grafana `http://localhost:3001`, Prometheus `http://localhost:9090`, Trino `http://localhost:8096`.
+
+Per-milestone end-user verification lists are maintained as `docs/milestones/S1-Mxx/manual-acceptance.md`. These are owner-run checks and must not be marked passed by this agent.
 
 Current work sequencing (user direction): Stage 1 development is complete; consolidated automated and manual acceptance is now resuming from the open M06 gates. Record measured outcomes separately from proposals and keep remaining owner manual checks explicit. New fixes discovered during verification receive focused regression coverage and a checkpoint commit.
 
@@ -42,3 +58,15 @@ M06 follow-up after rebuild checkpoint `3d84ca5`: fixed tombstone diagnostic has
 
 
 2026-10-24 consolidated verification resumed: active Compose services were healthy. The first management status call found a local credential migration defect for the recognized M06 key set. Fixed the parser allowlist and verified the new regression (`.venv/bin/python -m unittest devops.tests.test_manage.ConfigureTests.test_configure_extends_known_m06_credentials_without_rotating_them -v`, 1 passed). `configure` then preserved existing credentials, appended missing keys, and `status` reported all 15 active services healthy. Broader M06 gates continue.
+
+## Consolidated status refresh — 2026-10-25 02:50 UTC
+
+Automated Stage 1 verification is now green for the exercised local scope: repository unit/build suite (94 Python methods with 34 live-only skips; analytics 6, graph 3, health exporter 2; Java modules and storefront Node checks passed), two core+streaming integration/recovery passes (25 core + 6 streaming each), M07 post-purchase live integration (3/3), M09 restore/ingress (3/3), and the Selenium suite (20 discovered; 16 passed, four profile-isolated skips; isolated Kafka-gap, Kafka UI and Grafana browser checks passed separately). Helm/Terraform validators and M10 data checks passed. M08 final Spark/Iceberg batch and idempotency replay passed with 35,973 events, 29 invalid quarantined coordinates and 17,896 order-sales rows; graph reached zero lag and report routes returned HTTP 200. Detailed dated commands, datasets and limitations are in each milestone verification file.
+
+Stage 1 is **not fully closed**: owner manual acceptance lists remain unchecked; M06's dedicated Debezium consistent-snapshot/WAL-overlap and sustained throughput/concurrency/long-retention measurements remain outstanding; M09 OpenTelemetry traces/latency and centralized searchable logs are not implemented. Therefore this is automated local acceptance, not an owner sign-off or full observability completion.
+
+Current browser endpoints: storefront/Admin `http://localhost:3000` (`/admin`); Kafka UI `http://localhost:8091` when the streaming UI profile is active; Grafana `http://localhost:3001`; Prometheus `http://localhost:9090`; Trino `http://localhost:8096`; relationship graph `http://localhost:8094`; Neo4j Browser `http://localhost:7474`; PostgreSQL `127.0.0.1:15432`. Profile availability is confirmed by `docker compose ps` before use. Local Ollama remains a host prerequisite and is not containerized.
+
+All remaining local runtime changes are being checkpointed to active branch `stage1` and pushed to `origin/stage1` as milestone commits. Owner checklist results are not fabricated; external GitHub push success is reported separately from local tests.
+
+Latest optional-UI refresh nuance: Kafka UI was confirmed healthy and its Selenium overview passed 1/1 after the startup period. Grafana's profile health eventually returned version 13.2.2 and its dashboard UID appeared in the search API, but the current browser navigation timed out during the combined profile run; the prior isolated Grafana Selenium pass is the available positive evidence. Treat fresh-run Grafana responsiveness as inconclusive and recheck at low profile load.
