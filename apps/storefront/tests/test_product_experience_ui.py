@@ -1,5 +1,6 @@
 """Selenium coverage for M11 public shopping, exact variants and review moderation."""
 import json
+from decimal import Decimal, ROUND_HALF_UP
 import os
 from pathlib import Path
 import sys
@@ -22,6 +23,15 @@ import manage
 def public(path):
     with urlopen("http://localhost:3000/api/" + path, timeout=15) as response:
         return json.load(response)
+
+
+def rating_label(summary):
+    if not summary["count"] or summary["mean"] is None:
+        return "No reviews yet"
+    # Match decimal display of the actual binary number, with ties rounded
+    # away from zero as Number.toFixed specifies (Python format uses ties-even).
+    mean = Decimal.from_float(float(summary["mean"])).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+    return f'{mean} out of 5 · {summary["count"]} reviews'
 
 
 class ProductExperienceUiTests(unittest.TestCase):
@@ -65,7 +75,7 @@ class ProductExperienceUiTests(unittest.TestCase):
         product = public("catalog/public/products?pageSize=1")["items"][0]
         summary = public("reviews/reviews/products/summaries?productIds=" + product["id"])[0]
         self.assertGreaterEqual(summary["count"], 3, "Run the M11 demo seed/integration fixture first")
-        expected = f'{summary["mean"]:.1f} out of 5 · {summary["count"]} reviews'
+        expected = rating_label(summary)
         self.driver.get("http://localhost:3000/")
         selector = f'.store-card[data-product-id="{product["id"]}"] .product-rating'
         self.wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, selector).get_attribute("aria-label") == expected)
@@ -183,6 +193,6 @@ class ProductExperienceUiTests(unittest.TestCase):
         self.wait.until(lambda driver: public("reviews/reviews/products/summaries?productIds=" + fixture["productId"])[0]["count"] == before)
         self.open_product({"id": fixture["productId"], "slug": fixture["productSlug"]})
         after = public("reviews/reviews/products/summaries?productIds=" + fixture["productId"])[0]
-        label = f'{after["mean"]:.1f} out of 5 · {after["count"]} reviews' if after["count"] else "No reviews yet"
+        label = rating_label(after)
         self.wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, ".product-reviews .product-rating").get_attribute("aria-label") == label)
         self.assertFalse(self.driver.find_elements(By.XPATH, f"//h3[normalize-space()='{title}']"))

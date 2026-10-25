@@ -13,3 +13,5 @@
 The architecture is ready for U1/U2 implementation. U3 cannot be marked complete until real assets, model/variant counts and provenance are measured. No requirement is silently waived by source unavailability.
 
 U2 moderation refinement: the existing pending-only Admin queue cannot satisfy the documented hide-published-review journey. Add an operator-only bounded state filter and a Hide action for published rows, retaining existing audited transitions and no hidden-row republish. Public summaries remain derived from PUBLISHED rows. Review confirmed the API remains operator-scoped and introduces no new data owner or permission model.
+
+U4 browser review: Admin must serve the same readable local photographic assets as storefront and its product form must accept the backend-supported JPG/JPEG/PNG/WebP keys alongside legacy SVG. Browser fixtures select active sourced products for stock mutations; retired historical SKUs remain read-only evidence. Catalog creation uses a unique test slug and a real existing local photo, followed by owner-API retirement during final cleanup. No new service or architecture boundary is introduced.

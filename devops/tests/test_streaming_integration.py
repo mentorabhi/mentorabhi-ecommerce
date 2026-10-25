@@ -533,7 +533,14 @@ class StreamingIntegrationTests(unittest.TestCase):
             while time.monotonic()<deadline:
                 code_a,history_a=manage.request_json("http://127.0.0.1:8089/api/v1/order-history",token=self.customer)
                 code_b,history_b=manage.request_json("http://127.0.0.1:8089/api/v1/order-history",token=self.other)
-                if code_a==200 and code_b==200 and history_b["orders"]:break
+                # Projection rows can appear before the remaining records and
+                # the periodic broker-lag observation have caught up.
+                if (code_a==200 and code_b==200
+                    and any(order["id"]==owner_b["id"]
+                        and order["lastSequence"]==events_b[-1]["aggregateSequence"]
+                        for order in history_b["orders"])
+                    and history_b["freshness"]["state"]=="CURRENT"
+                    and history_b["freshness"]["pendingOwnEvents"]==0):break
                 time.sleep(.5)
             self.assertEqual(code_a,200);self.assertEqual(code_b,200)
             self.assertEqual(history_a["orders"],[])

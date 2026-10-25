@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+import json
 import os
+import sys
 from pathlib import Path
 import time
 import unittest
@@ -23,9 +25,6 @@ ROOT = Path(__file__).resolve().parents[3]
 BASE_URL = os.environ.get("SUPERSPORTS_ADMIN_UI_URL", "http://localhost:3002")
 STORE_URL = os.environ.get("SUPERSPORTS_UI_URL", "http://localhost:3000")
 BOOTSTRAP_FILE = ROOT / "devops/.local/bootstrap.env"
-TEST_PRODUCT_TITLE = "Selenium UI Regression Item"
-TEST_PRODUCT_SLUG = "selenium-ui-regression-item"
-TEST_SKU_CODE = "SS-SELENIUM-UI-001"
 TEST_COUPON_CODE = "SELENIUMUI"
 
 
@@ -51,6 +50,11 @@ def local_credentials() -> dict[str, str]:
         raise RuntimeError("The ignored local admin login file is missing or invalid.")
     values["ADMIN_PASSWORD"] = admin_value[2]
     return values
+
+
+def active_product(sport="cricket"):
+    with urlopen(f"http://localhost:3000/api/catalog/public/products?category={sport}-equipment&pageSize=1", timeout=15) as response:
+        return json.load(response)["items"][0]
 
 
 class SuperSportsAdminUiTests(unittest.TestCase):
@@ -203,13 +207,37 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         finally:save_window(prior)
         self.assert_no_react_hook_order_error()
 
+    def retire_catalog_fixture(self, slug):
+        # Owner APIs retain the fixture audit without leaving it in active browsing.
+        sys.path.insert(0, str(ROOT / "devops/scripts"))
+        import manage
+        token = manage.token_for("admin", manage.configure_admin_login())
+        status, products = manage.request_json("http://127.0.0.1:8081/api/v1/catalog/admin/products", token=token)
+        self.assertEqual(status, 200)
+        product = next((row for row in products if row["slug"] == slug), None)
+        if product is None or product["status"] == "retired":
+            return
+        status, _ = manage.request_json(f"http://127.0.0.1:8081/api/v1/catalog/products/{product['id']}/retire",
+            token=token, method="POST", data=json.dumps({"expectedRevision": product["revision"],
+                "idempotencyKey": "selenium-retire-" + slug,
+                "reason": "Retire run-owned Selenium catalog fixture; preserve audit"}).encode())
+        self.assertEqual(status, 200)
+
     def test_catalog_login_products_art_and_product_creation(self):
+        cricket, football = active_product(), active_product("football")
+        suffix = uuid.uuid4().hex[:10]
+        test_title = "Selenium UI Regression Item " + suffix
+        test_slug = "selenium-ui-regression-item-" + suffix
+        test_code = "SS-SELENIUM-UI-" + suffix.upper()
+        self.addCleanup(self.retire_catalog_fixture, test_slug)
         self.login("admin", "ADMIN_PASSWORD")
         self.assertEqual(self.driver.find_element(By.TAG_NAME, "h1").text, "Catalog.")
-        for title in ("Pro Willow Cricket Bat", "Control Match Football"):
+        for title in (cricket["title"], football["title"]):
             self.wait.until(EC.visibility_of_element_located(
                 (By.XPATH, f"//article[contains(@class,'product-card')]//h2[normalize-space()='{title}']")))
         self.assertGreaterEqual(len(self.driver.find_elements(By.CSS_SELECTOR, ".product-card")), 6)
+        self.wait.until(lambda driver: driver.execute_script(
+            "return Array.from(document.querySelectorAll('.product-card img')).every(image => image.complete && image.naturalWidth > 0)"))
         image_widths = self.driver.execute_script(
             "return Array.from(document.querySelectorAll('.product-card img')).map(image => image.naturalWidth)")
         self.assertTrue(image_widths and all(width > 0 for width in image_widths), image_widths)
@@ -220,30 +248,38 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         cricket_filter.click()
         self.wait.until(lambda driver: all(
             "Football" not in card.text for card in driver.find_elements(By.CSS_SELECTOR, ".product-card")))
-        self.assertTrue(any("Pro Willow Cricket Bat" in card.text
+        self.assertTrue(any(cricket["title"] in card.text
                             for card in self.driver.find_elements(By.CSS_SELECTOR, ".product-card")))
         self.driver.find_element(By.XPATH,
             "//div[contains(@class,'filter-pills')]//button[normalize-space()='All sports']").click()
         self.wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, ".product-card")) >= 6)
 
         existing = self.driver.find_elements(By.XPATH,
-            f"//article[contains(@class,'product-card')][.//h2[normalize-space()='{TEST_PRODUCT_TITLE}']]")
+            f"//article[contains(@class,'product-card')][.//h2[normalize-space()='{test_title}']]")
         is_live = bool(existing and existing[0].find_element(By.CSS_SELECTOR, ".stock-tag").text == "LIVE")
         if not is_live:
             self.wait.until(EC.element_to_be_clickable(
                 (By.XPATH, "//button[contains(., 'Add product')]"))).click()
-            self.wait.until(EC.visibility_of_element_located((By.NAME, "title"))).send_keys(TEST_PRODUCT_TITLE)
+            self.wait.until(EC.visibility_of_element_located((By.NAME, "title"))).send_keys(test_title)
             self.driver.find_element(By.NAME, "brand").send_keys("SuperSports Test Lab")
-            self.driver.find_element(By.NAME, "slug").send_keys(TEST_PRODUCT_SLUG)
+            self.driver.find_element(By.NAME, "slug").send_keys(test_slug)
             category = Select(self.driver.find_element(By.NAME, "category"))
             category.select_by_index(1)
-            self.driver.find_element(By.NAME, "code").send_keys(TEST_SKU_CODE)
-            self.driver.find_element(By.NAME, "asset").send_keys("products/cricket-bat.svg")
-            self.driver.find_element(By.NAME, "alt").send_keys("Selenium regression product artwork")
+            self.driver.find_element(By.NAME, "code").send_keys(test_code)
+            self.driver.find_element(By.NAME, "asset").send_keys(cricket["skus"][0]["assetKey"])
+            self.driver.find_element(By.NAME, "alt").send_keys("Sourced photograph used by a synthetic Selenium fixture")
             self.driver.find_element(By.NAME, "inr").send_keys("129900")
             self.driver.find_element(By.NAME, "usd").send_keys("1599")
             self.driver.find_element(By.CSS_SELECTOR, "textarea[name='description']").send_keys(
                 "Synthetic product created once by the repeatable Selenium UI suite.")
+            validity = self.driver.execute_script("""
+                const input = document.querySelector('input[name=asset]');
+                const pattern = new RegExp('^(?:' + input.pattern + ')$', 'v');
+                return {valid: input.checkValidity(), traversal: pattern.test('../private.png'),
+                        remote: pattern.test('https://example.invalid/photo.jpg'),
+                        unsupported: pattern.test('catalog-real/photo.gif')};
+            """)
+            self.assertEqual(validity, {"valid": True, "traversal": False, "remote": False, "unsupported": False})
             self.driver.find_element(By.XPATH, "//button[normalize-space()='Save and activate']").click()
             result = self.wait.until(lambda driver: (
                 "saved" if driver.find_elements(By.CSS_SELECTOR, '[role="status"]')
@@ -254,7 +290,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
                 self.fail(f"Product save failed in the UI: {result[1]}")
 
         product_card = self.wait.until(EC.visibility_of_element_located(
-            (By.XPATH, f"//article[contains(@class,'product-card')][.//h2[normalize-space()='{TEST_PRODUCT_TITLE}']]")))
+            (By.XPATH, f"//article[contains(@class,'product-card')][.//h2[normalize-space()='{test_title}']]")))
         self.assertEqual(product_card.find_element(By.CSS_SELECTOR, ".stock-tag").text, "LIVE")
         self.assert_no_react_hook_order_error()
 
@@ -264,7 +300,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.wait.until(EC.visibility_of_element_located(
             (By.XPATH, "//h2[normalize-space()='Products & pricing']")))
         price_table = self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".section-block .table-wrap")))
-        self.assertIn("SS-CR-BAT-001", price_table.text)
+        self.assertIn(active_product()["skus"][0]["code"], price_table.text)
         expected_coupons = {"WELCOME10", "CRICKET250"}
         coupon_codes = lambda driver: {element.text for element in
             driver.find_elements(By.CSS_SELECTOR, ".coupon-card code")}
@@ -345,21 +381,20 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.assert_no_react_hook_order_error()
 
     def test_inventory_adjustment_replay_and_reversal(self):
+        sku = active_product()["skus"][0]
+        code, sku_id = sku["code"], sku["id"]
         self.login("admin", "ADMIN_PASSWORD")
         self.nav("Inventory")
         self.wait.until(EC.visibility_of_element_located(
             (By.XPATH, "//h2[normalize-space()='Warehouse stock']")))
-        row_for_bat = lambda driver: next((row for row in driver.find_elements(By.CSS_SELECTOR, "tbody tr")
-                                           if "SS-CR-BAT-001" in row.text), False)
+        row_for_bat = lambda driver: next(iter(driver.find_elements(
+            By.XPATH, f"//tbody/tr[td[contains(.,'{code}')]]")), False)
         try:
             row = self.wait.until(row_for_bat)
         except TimeoutException:
             alerts = [item.text for item in self.driver.find_elements(By.CSS_SELECTOR, '[role="alert"]')]
             self.fail(f"Inventory balances did not render; alerts={alerts}; view={self.driver.find_element(By.CSS_SELECTOR, '.content').text}")
         original = int(row.find_element(By.CSS_SELECTOR, ".quantity-cell").text)
-        sku_select = Select(self.driver.find_element(By.NAME, "skuId"))
-        option = next(option for option in sku_select.options if "SS-CR-BAT-001" in option.text)
-        sku_id = option.get_attribute("value")
         suffix = uuid.uuid4().hex[:12]
         first_key = f"selenium-ui-{suffix}"
         reverse_key = f"selenium-ui-reverse-{suffix}"
