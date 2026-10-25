@@ -625,7 +625,11 @@ def request_json(url: str, *, token: str | None = None, method: str = "GET", dat
     except HTTPError as error:
         with error:
             body = error.read()
-            return error.code, json.loads(body) if body else {}
+            try:
+                result = json.loads(body) if body else {}
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                result = {}
+            return error.code, result
     except (URLError, ConnectionError, TimeoutError, json.JSONDecodeError):
         return 0, {}
 

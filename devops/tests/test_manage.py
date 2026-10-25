@@ -272,6 +272,19 @@ class HttpProbeTests(unittest.TestCase):
         self.assertTrue(body.closed)
 
 
+    def test_http_error_non_json_preserves_status_and_closes_body(self):
+        from io import BytesIO
+        from urllib.error import HTTPError
+        from unittest.mock import patch
+        for raw in (b"backend starting private-sentinel", b"<html>Bad Gateway</html>", b"\xff"):
+            with self.subTest(raw=raw):
+                body = BytesIO(raw)
+                error = HTTPError("http://127.0.0.1", 503, "unavailable", {}, body)
+                with patch.object(manage, "urlopen", side_effect=error):
+                    self.assertEqual(manage.request_json("http://127.0.0.1"), (503, {}))
+                self.assertTrue(body.closed)
+
+
 class ReleaseRegistryTests(unittest.TestCase):
     def test_legacy_rollback_preserves_the_running_admin_image_id(self):
         from unittest.mock import patch

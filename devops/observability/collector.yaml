@@ -30,8 +30,9 @@ processors:
           - set(name, attributes["http.route"]) where attributes["http.route"] != nil
           - set(name, attributes["db.operation.name"]) where attributes["db.operation.name"] != nil
           - set(status.message, "")
-          - set(events, [])
-          - set(links, [])
+          - set(trace_state, "")
+          - set(events, nil)
+          - set(links, nil)
     metric_statements:
       - context: resource
         statements:

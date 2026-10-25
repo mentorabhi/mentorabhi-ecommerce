@@ -2,7 +2,7 @@ flowchart LR
     Customer[Storefront or API caller] --> Commerce[Independent Java services]
     Commerce -->|HTTP W3C context| Commerce
     Commerce -->|JDBC spans| OwnerDB[(Service-owned PostgreSQL)]
-    Commerce -->|OTLP internal HTTP| Collector[Collector allowlists and bounded queues]
+    Commerce -->|OTLP internal HTTP| Collector["Collector allowlists, cleared events/links/tracestate and bounded queues"]
     Collector -->|Request metrics| Prometheus[(Prometheus local)]
     Collector -->|Sanitized spans| Tempo[(Tempo local 24h)]
     Collector -->|Safe request logger only| Loki[(Loki local 24h)]

@@ -601,7 +601,7 @@ class CoreIntegrationTests(unittest.TestCase):
         core = {"postgres", "identity", "catalog", "configuration", "pricing", "inventory", "customer", "orders", "payment-simulator", "fulfillment-simulator", "storefront", "admin", "reviews", "support"}
         streaming = {"kafka", "kafka-connect", "kafka-ui", "order-history"}
         optional = {"trino-ui", "prometheus-ui", "trino", "analytics-api", "spark-ingest", "lakehouse-init", "neo4j", "relationship-graph",
-                    "health-exporter", "prometheus", "grafana", "superset"}
+                    "health-exporter", "prometheus", "grafana", "superset", "otel-collector", "tempo", "loki"}
         services = {row["Service"] for row in rows}
         self.assertTrue(core.issubset(services), services)
         self.assertFalse(services - core - streaming - optional, services)
@@ -614,6 +614,9 @@ class CoreIntegrationTests(unittest.TestCase):
                     self.assertEqual(published[0]["URL"],"127.0.0.1")
                     self.assertEqual(published[0]["PublishedPort"],host_access["port"])
                 else:self.assertFalse(published)
+            elif row["Service"] in {"otel-collector", "tempo", "loki"}:
+                self.assertFalse(any(port.get("PublishedPort", 0) for port in publishers),
+                                 "Telemetry ingestion/storage must remain private")
             else:
                 self.assertTrue(publishers)
                 for port in publishers:

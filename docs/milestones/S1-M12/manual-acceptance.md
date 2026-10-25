@@ -1,6 +1,6 @@
 # End-user manual acceptance — request telemetry
 
-These checks are separate from automated tests. Leave unchecked until a person performs them. Runtime setup/instructions and exact measured scope will be added with implementation evidence.
+These checks are separate from automated tests. Leave unchecked until a person performs them. Use the [setup guide](../../setup/request-telemetry.md) and [measured scope](verification.md); these automated results do not mark the owner checks below complete.
 
 - [ ] Start the documented telemetry profile. Inspect Docker service state and restarts for Collector, Tempo, Loki, Prometheus, Grafana and commerce. Confirm optional graph/analytics are not required.
 - [ ] Open http://localhost:3001 and sign in with admin/admin. Open the SuperSports request dashboard and select a Java service/time range.
