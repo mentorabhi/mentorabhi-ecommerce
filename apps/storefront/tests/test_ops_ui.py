@@ -16,6 +16,9 @@ class OperationsDashboardUiTests(unittest.TestCase):
         options = webdriver.ChromeOptions()
         options.add_argument("--headless=new")
         options.add_argument("--window-size=1440,1000")
+        # Grafana dashboard panels initialize asynchronously; page readiness
+        # does not need to wait for every panel request to finish.
+        options.page_load_strategy = "eager"
         driver = webdriver.Chrome(options=options)
         self.addCleanup(driver.quit)
         wait = WebDriverWait(driver, 30)

@@ -9,6 +9,10 @@
 
 M09 code/runtime checks above are green. Human operation of Grafana and the exact owner manual acceptance steps remain pending.
 
+## Browser recheck — 2026-10-25
+
+After stopping Analytics and Kafka UI to lower resource contention, restarted Grafana, waited for its in-container `/api/health` response (13.2.2), and confirmed the host endpoint at `http://127.0.0.1:3001/api/health`. `SUPERSPORTS_M09_LIVE_ACCEPTANCE=true SE_OFFLINE=true .venv/bin/python -m unittest discover -s apps/storefront/tests -p test_ops_ui.py -v` passed 1/1 and rendered the provisioned dashboard. A preceding cold-start attempt failed because the HTTP listener/provisioned dashboard was not ready; it is retained as a startup timing observation, not counted as a pass. The persisted volume prompted the documented first-login password update; the test used Grafana's Skip option and confirmed the provisioned dashboard route.
+
 ## Stage 1 verification restart — 2026-10-24
 
 Before the full M06 acceptance pass, the management status command could not load the local credentials. The file contained the complete recognized `PRE_M07_SECRET_KEYS` set. `configure()` accepted that set in its version check but its per-line allowlist omitted `CDC_DB_PASSWORD`, `ORDER_HISTORY_DB_PASSWORD`, and `ORDER_HISTORY_OWNER_KEY`, so it rejected the migration before appending current keys.
