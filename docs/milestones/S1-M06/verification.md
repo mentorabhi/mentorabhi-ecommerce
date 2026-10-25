@@ -147,6 +147,22 @@ This replay-only evidence predates the latest full CI at the top of this record.
 - Live Kafka topic has three partitions; Order History offsets equal high-water marks 12,159 / 11,840 / 12,062 (zero lag). Debezium connector and task report RUNNING. Broker count remains one.
 - Full automated test inventory and M06 live probes are recorded above. Snapshot/WAL overlap, sustained concurrent checkout/throughput, extended WAL/offset retention, and human owner acceptance are still open. The `test --recovery` result supersedes the earlier note that its terminal outcome awaited append.
 
+## Bounded checkout burst — 2026-10-25 04:01 UTC
+
+Design, editable sequence diagram, and pre-implementation review: [checkout-burst-design](checkout-burst-design.md), [flow](checkout-burst-flow.mmd), and [review](checkout-burst-review.md). Run command: `.venv/bin/python devops/scripts/checkout_burst.py --orders 20 --workers 8` against the full local Commerce + Kafka/Connect/Order History profile on the 16 GiB ARM64 Mac (Docker allocation 7.75 GiB; Docker Engine 29.8.0; Python 3.14.7). The selected synthetic football SKU started with 113 available units; no stock adjustment was needed. Each one-unit checkout used the existing synthetic customer, unique idempotency key, and simulated payment/fulfillment. Kafka 4.3.1, Debezium Connect 3.7.0.Final and PostgreSQL 18.6 used the exact pinned digests in `devops/images.lock.json`; app images were those running on `stage1` at the time.
+
+The corrected run passed all acceptance assertions: 20/20 HTTP 202; all 20 owner-visible orders reached `FULFILLMENT_SCHEDULED`; stock moved from 113 to 93 with no negative balance; Order History reached zero lag. Acceptance elapsed 1,212 ms (p50 309.36 ms, p95 857.20 ms, max 908.49 ms). End-to-end completion p50 158,526 ms, p95 167,858 ms, max 168,873 ms. Sampled SuperSports container memory peaked at 5,694.8 MiB during this run. The ignored, mode-restricted raw report is `devops/.local/load-probes/checkout-burst-20261025T040121Z-42ad29a5.json`.
+
+Two earlier harness attempts each accepted 20 orders but did not produce valid capacity evidence: the first used an inadequate 180-second deadline, and the second exposed a timestamp-parser bug before polling. Those synthetic orders were not rolled back or edited; both batches were observed to drain to `FULFILLMENT_SCHEDULED` before the successful measurement. The parser fix has three focused unit tests. This is a bounded burst result, not a sustained/soak capacity claim, long-retention measurement, multi-broker resilience result, or host-wide memory peak.
+
+The probe's focused test command `.venv/bin/python -m unittest devops.tests.test_checkout_burst -v` passed 3/3; `py_compile` passed; and the live burst above passed end-to-end.
+
+## Consolidated UI/unit refresh — 2026-10-25
+
+`SE_OFFLINE=true .venv/bin/python -m unittest discover -s apps/storefront/tests -p 'test_*.py' -v` passed 11/11 executed journeys (20 discovered, 9 explicitly skipped because they require prepared cancellation/return/review orders, active isolated M06 fault probes, Kafka UI, or Grafana). The two analytics dashboards passed after starting the analytics profile. Kafka UI browser check passed 1/1 at `http://localhost:8091`. Grafana browser check passed 1/1 at `http://localhost:3001` after its internal health endpoint returned 200 and a restart completed the slow cold start. A first Grafana browser attempt failed during startup; a subsequent warmed low-load run passed.
+
+`.venv/bin/python -m unittest discover -s devops/tests -p 'test_*.py' -v` passed: 97 discovered, 34 integration-only skips. The new checkout-probe tests were included. The complete Java, analytics/graph/health-exporter, storefront Node, live core/streaming, M07 post-purchase, M08 data/graph, and M09 restore/ingress results remain in their milestone verification records. This refresh did not rerun all live integrations after the bounded probe; the probe itself is the live checkout integration evidence. Nine Selenium skips remain visible and are not counted as passes.
+
 ## Debezium consistent snapshot/WAL overlap — 2026-10-25 03:46 UTC
 
 The reviewed isolated probe passed on the pinned local PostgreSQL, Kafka 4.3.1 and Debezium 3.7.0.Final stack:

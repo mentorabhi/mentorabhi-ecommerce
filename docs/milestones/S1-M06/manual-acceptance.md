@@ -80,7 +80,7 @@ docker stats --no-stream
 
 ## Scope still pending
 
-Commands above are implemented. Remaining M06 acceptance includes broader source/consumer failure-boundary evidence, sequence-gap demonstrations, sustained load/freshness measurements and owner manual results. The separate acceptance matrix records the open gates; do not treat this guide as a completed human test record.
+Automated source/consumer failure-boundary probes, sequence-gap/freshness demonstrations, snapshot/WAL overlap, and the bounded 20-order checkout probe are recorded in [verification](verification.md). Remaining M06 acceptance includes extended WAL/offset retention, sustained/soak load and freshness measurements, and the owner-run manual results. The separate [acceptance matrix](acceptance-matrix.md) records the open gates; keep this guide unchecked until a person completes it.
 
 ## Human result
 
