@@ -1,0 +1,25 @@
+sequenceDiagram
+    actor Customer
+    participant Storefront
+    participant Catalog
+    participant Pricing
+    participant Inventory
+    participant Reviews
+    participant Orders
+    actor Admin
+    Customer->>Storefront: Browse, search or open direct model URL
+    Storefront->>Catalog: Page (24 models) or direct model + bounded similar row
+    Storefront->>Pricing: SKU price batches (at most 100)
+    Storefront->>Inventory: Availability batches (at most 100)
+    Storefront->>Reviews: Published summary batch + model reviews
+    Storefront-->>Customer: Photos, exact variants, prices, demo/verified badges
+    Customer->>Storefront: Restore cart or wishlist
+    Storefront->>Catalog: Resolve saved SKU batches independently of current page
+    Customer->>Storefront: Choose own order and write a review
+    Storefront->>Orders: Customer-owned order list and selected order
+    Storefront->>Reviews: Customer review submission
+    Reviews->>Orders: Verify owned delivered product/SKU purchase
+    Reviews-->>Storefront: PENDING
+    Admin->>Reviews: Publish or reject with audited operation
+    Storefront->>Reviews: Refresh published list and summaries
+    Reviews-->>Storefront: Consistent published aggregate; private identities omitted

@@ -616,7 +616,8 @@ def request_json(url: str, *, token: str | None = None, method: str = "GET", dat
         request_headers["Content-Type"] = "application/json"
     try:
         with urlopen(Request(url, data=data, headers=request_headers, method=method), timeout=5) as response:
-            return response.status, json.loads(response.read())
+            body = response.read()
+            return response.status, json.loads(body) if body else {}
     except HTTPError as error:
         with error:
             body = error.read()
@@ -646,7 +647,7 @@ def unit(root=ROOT, project="supersports"):
              str(root / "services" / service / "tests"), "-v"], environment=environment, cwd=root)
     node_image=json.loads((root / "devops/images.lock.json").read_text())["STOREFRONT_NODE_IMAGE"]
     run(["docker","run","--rm","--mount",f"type=bind,source={root / 'apps/storefront'},target=/workspace,readonly",
-         "--workdir","/workspace",node_image,"node","--experimental-strip-types","--test","tests/order-freshness.test.ts"],cwd=root)
+         "--workdir","/workspace",node_image,"node","--experimental-strip-types","--test","tests/order-freshness.test.ts","tests/catalog-experience.test.ts"],cwd=root)
     image = json.loads((root / "devops/images.lock.json").read_text())["BUILD_IMAGE"]
     for service in (*SERVICES, *STREAMING_SERVICES):
         run([

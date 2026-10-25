@@ -11,3 +11,5 @@
 - Open implementation constraint: direct retailer/catalog HTTP intake returned rate-limit responses during initial research. No source/photos are accepted yet; select accessible, attributed sources and validate actual photo/model correspondence before activation. Amazon's live page could not be retrieved; Flipkart listing and the attached similar-products reference informed structure only.
 
 The architecture is ready for U1/U2 implementation. U3 cannot be marked complete until real assets, model/variant counts and provenance are measured. No requirement is silently waived by source unavailability.
+
+U2 moderation refinement: the existing pending-only Admin queue cannot satisfy the documented hide-published-review journey. Add an operator-only bounded state filter and a Hide action for published rows, retaining existing audited transitions and no hidden-row republish. Public summaries remain derived from PUBLISHED rows. Review confirmed the API remains operator-scoped and introduces no new data owner or permission model.

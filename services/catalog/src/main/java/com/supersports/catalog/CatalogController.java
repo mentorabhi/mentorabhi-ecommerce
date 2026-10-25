@@ -46,7 +46,11 @@ class CatalogController {
     }
 
     @PostMapping("/products") Map<String,Object> createProduct(@RequestBody ProductInput input, @AuthenticationPrincipal Jwt jwt) {
-        return Map.of("id", repository.createProduct(UUID.fromString(input.categoryId()), required(input.slug(), "slug"), required(input.brand(), "brand"), required(input.title(), "title"), required(input.description(), "description"), actor(jwt)));
+        try {
+            return Map.of("id", repository.createProduct(UUID.fromString(input.categoryId()), required(input.slug(), "slug"), required(input.brand(), "brand"), required(input.title(), "title"), required(input.description(), "description"), actor(jwt)));
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Changed active/retired facts require the revisioned product update API; retired products are immutable");
+        }
     }
 
     @PostMapping("/products/{productId}/skus") Map<String,Object> createSku(@PathVariable UUID productId, @RequestBody SkuInput input, @AuthenticationPrincipal Jwt jwt) {

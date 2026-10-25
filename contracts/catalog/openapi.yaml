@@ -1,15 +1,61 @@
 openapi: 3.1.0
 info:
   title: SuperSports Catalog API
-  version: 1.0.0
+  version: 1.1.0
 servers: [{url: /api/v1/catalog}]
 security: [{bearerAuth: []}]
 paths:
+  /public/products:
+    get:
+      security: []
+      summary: Paginated active model and variant browsing
+      parameters:
+        - {in: query, name: page, schema: {type: integer, minimum: 1, maximum: 10000, default: 1}}
+        - {in: query, name: pageSize, schema: {type: integer, minimum: 1, maximum: 48, default: 24}}
+        - {in: query, name: q, schema: {type: string, maxLength: 100}}
+        - {in: query, name: category, schema: {type: string, maxLength: 64}}
+        - {in: query, name: sport, schema: {type: string, maxLength: 64}}
+      responses:
+        '200': {description: Active models, content: {application/json: {schema: {$ref: './storefront.schema.json#/$defs/CatalogPage'}}}}
+        '400': {description: Invalid bounds or filters}
+  /public/products/by-skus:
+    get:
+      security: []
+      parameters: [{in: query, name: skuIds, required: true, style: form, explode: false, schema: {type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: {type: string, format: uuid}}}]
+      responses:
+        '200': {description: Distinct active models for saved variants, content: {application/json: {schema: {$ref: './storefront.schema.json#/$defs/SavedProducts'}}}}
+        '400': {description: Invalid or duplicate SKU list}
+  /public/products/{slug}:
+    get:
+      security: []
+      parameters: [{in: path, name: slug, required: true, schema: {type: string, maxLength: 100}}]
+      responses:
+        '200': {description: Active model, content: {application/json: {schema: {$ref: './storefront.schema.json#/$defs/Product'}}}}
+        '404': {description: Model is not visible}
+  /public/products/{slug}/similar:
+    get:
+      security: []
+      parameters:
+        - {in: path, name: slug, required: true, schema: {type: string, maxLength: 100}}
+        - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 12, default: 8}}
+      responses:
+        '200': {description: Deterministic related models excluding source, content: {application/json: {schema: {$ref: './storefront.schema.json#/$defs/SimilarProducts'}}}}
+        '404': {description: Source model is not visible}
+  /products/{productId}:
+    put:
+      summary: Revisioned and replay-safe model facts update
+      parameters: [{in: path, name: productId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Original mutation receipt}, '409': {description: Revision or operation conflict}, '422': {description: Invalid facts}}
+  /products/{productId}/retire:
+    post:
+      summary: Retire without deleting historical identities
+      parameters: [{in: path, name: productId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Original mutation receipt}, '409': {description: Revision or operation conflict}}
   /sports:
-    get: {summary: List active sports, responses: {'200': {description: Sports}}}
+    get: {summary: List active sports, security: [], responses: {'200': {description: Sports}}}
     post: {summary: Create or reconcile a sport by slug, responses: {'200': {description: Sport identifier}}}
   /categories:
-    get: {summary: List active categories and attribute schemas, responses: {'200': {description: Categories}}}
+    get: {summary: List active categories and attribute schemas, security: [], responses: {'200': {description: Categories}}}
     post: {summary: Create or reconcile a category, responses: {'200': {description: Category identifier}}}
   /products:
     get:
@@ -23,12 +69,16 @@ paths:
   /admin/products:
     get: {summary: List draft and active products for catalog operators, responses: {'200': {description: Products including revisions}}}
   /products/{productId}/skus:
+    parameters: [{in: path, name: productId, required: true, schema: {type: string, format: uuid}}]
     post: {summary: Add a SKU to a draft product, responses: {'200': {description: SKU identifier}}}
   /products/{productId}/activate:
+    parameters: [{in: path, name: productId, required: true, schema: {type: string, format: uuid}}]
     post: {summary: Activate after Pricing confirms INR and USD prices, responses: {'200': {description: Active product}, '409': {description: Stale revision or incomplete books}}}
   /skus/{skuId}/status:
+    parameters: [{in: path, name: skuId, required: true, schema: {type: string, format: uuid}}]
     get: {summary: Scoped SKU status for Inventory validation, responses: {'200': {description: SKU ID and active status}}}
   /public/skus/{skuId}:
+    parameters: [{in: path, name: skuId, required: true, schema: {type: string, format: uuid}}]
     get: {summary: Check whether a SKU is active for customer cart/wishlist mutations, security: [], responses: {'200': {description: Public SKU ID and active flag}}}
 components:
   securitySchemes:

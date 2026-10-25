@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "PublishedReview": {
+      "type": "object",
+      "required": [
+        "reviewId",
+        "rating",
+        "title",
+        "body",
+        "createdAt",
+        "origin",
+        "verifiedDelivered"
+      ],
+      "properties": {
+        "reviewId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "rating": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "origin": {
+          "enum": [
+            "CUSTOMER",
+            "DEMO"
+          ]
+        },
+        "verifiedDelivered": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "origin": {
+                "const": "DEMO"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "verifiedDelivered": {
+                "const": false
+              },
+              "rating": {
+                "minimum": 3
+              }
+            }
+          }
+        }
+      ]
+    },
+    "PublishedReviews": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/PublishedReview"
+      }
+    },
+    "RatingSummary": {
+      "type": "object",
+      "required": [
+        "productId",
+        "mean",
+        "count",
+        "histogram"
+      ],
+      "properties": {
+        "productId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "mean": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 5
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "histogram": {
+          "type": "object",
+          "required": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "properties": {
+            "1": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "2": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "3": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "4": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "5": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "count": {
+                "const": 0
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "mean": {
+                "const": null
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "mean": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "RatingSummaries": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/RatingSummary"
+      }
+    },
+    "DemoSeed": {
+      "type": "object",
+      "required": [
+        "operationId",
+        "productIds",
+        "reviewsPerProduct"
+      ],
+      "properties": {
+        "operationId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "productIds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "reviewsPerProduct": {
+          "enum": [
+            3,
+            4
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

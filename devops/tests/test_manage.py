@@ -235,6 +235,14 @@ class CommandTests(unittest.TestCase):
 
 
 class HttpProbeTests(unittest.TestCase):
+    def test_empty_success_response_preserves_http_status(self):
+        from io import BytesIO
+        from unittest.mock import patch
+        class Response(BytesIO):
+            status = 204
+        with patch.object(manage, "urlopen", return_value=Response(b"")):
+            self.assertEqual(manage.request_json("http://127.0.0.1", method="DELETE"), (204, {}))
+
     def test_request_json_preserves_custom_idempotency_header(self):
         from io import BytesIO
         from unittest.mock import patch

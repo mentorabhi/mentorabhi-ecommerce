@@ -57,7 +57,7 @@ class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/catalog/sports", "/api/v1/catalog/categories", "/api/v1/catalog/products", "/api/v1/catalog/public/skus/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/catalog/sports", "/api/v1/catalog/categories", "/api/v1/catalog/products", "/api/v1/catalog/public/skus/**", "/api/v1/catalog/public/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/internal/checkout/catalog/skus/**").access(checkoutCatalogRead())
                         .requestMatchers("/api/v1/internal/checkout/**").denyAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/catalog/status", "/api/v1/catalog/skus/*/status", "/api/v1/catalog/admin/**").access(operatorAudience())
