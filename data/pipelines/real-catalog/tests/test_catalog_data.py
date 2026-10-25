@@ -9,6 +9,23 @@ from catalog_data import equipment, prepare_model, source_key, validate_manifest
 
 
 class CatalogDataTest(unittest.TestCase):
+    def test_distinct_pdf_models_have_distinct_stable_source_keys(self):
+        url = "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=19"
+        first = source_key(url, "batting-gloves:krunch-1000")
+        self.assertNotEqual(first, source_key(url, "batting-gloves:krunch-3000"))
+        self.assertEqual(first, source_key(url.split("#")[0], "batting-gloves:krunch-1000"))
+
+    def test_missing_manufacturer_price_remains_unknown_when_fixture_price_is_explicit(self):
+        source = {"sport": "Cricket", "brand": "DSC", "title": "DSC Krunch 1000 Batting Gloves",
+                  "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=19",
+                  "recordId": "batting-gloves:krunch-1000", "catalogYear": 2023,
+                  "pdfImage": {"page": 19}, "fixtureBaseMinor": 349900, "fixtureCurrency": "INR",
+                  "capturedOn": "2026-10-25"}
+        model = prepare_model(source, {"sha256": "a" * 64, "assetKey": "catalog-real/a.png"})
+        self.assertIsNone(model["source"]["priceMinor"])
+        self.assertIsNone(model["source"]["currency"])
+        self.assertEqual(349900, model["variants"][0]["prices"]["INR"])
+
     def test_football_apparel_is_not_classified_as_a_ball(self):
         self.assertEqual("jersey", equipment("Nike Football Home Jersey", "equipment"))
         self.assertEqual("boots", equipment("Puma Football Cleats", "equipment"))
@@ -30,6 +47,14 @@ class CatalogDataTest(unittest.TestCase):
         self.assertEqual(10, len({v["code"] for v in options}))
         self.assertEqual({"INR": 100000, "USD": 1176}, options[0]["prices"])
         self.assertTrue(all(v["simulated"] for v in options))
+
+    def test_goalkeeper_pairs_and_bag_bundle_options_match_equipment(self):
+        gloves = variants("a" * 64, "football", "gloves", 2000, "USD")
+        self.assertEqual([str(n) for n in range(4, 14)], [v["attributes"]["size"] for v in gloves])
+        self.assertTrue(all(v["attributes"]["pack"] == "Pair" for v in gloves))
+        bags = variants("b" * 64, "cricket", "bag", 100000, "INR")
+        self.assertEqual({"1", "2", "3", "4", "5"}, {v["attributes"]["pack"] for v in bags})
+        self.assertNotIn("size", bags[0]["attributes"])
 
     def test_default_scale_rejects_small_dataset(self):
         with self.assertRaisesRegex(ValueError, "100 genuine"):

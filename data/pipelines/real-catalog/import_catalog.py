@@ -21,7 +21,7 @@ REASON = "S1-M11 sourced catalog simulated initial stock"
 
 
 def facts(model):
-    return {"model": model["model"], "equipmentType": model["equipmentType"],
+    details = {"model": model["model"], "equipmentType": model["equipmentType"],
             "highlights": [f"{model['brand']} model: {model['model']}",
                            "Genuine sourced model photograph; local simulated commerce options"],
             "material": "See the linked source for manufacturer material specifications.",
@@ -33,6 +33,12 @@ def facts(model):
                            "rightsStatement": "Photograph and trademarks belong to their respective owners. Attributed local educational demonstration; no open licence is asserted."},
             "gallery": [{key: model["image"][key] for key in ("assetKey", "altText", "kind")}],
             "commerceProvenance": "Prices, stock, option ranges and DEMO reviews are simulated. INR/USD fixture conversion is 85.00 INR per USD, not a live exchange rate."}
+    for field in ("material", "highlights", "intendedUse", "fit", "care", "packageContents"):
+        if model.get("sourcedFacts", {}).get(field):
+            details[field] = model["sourcedFacts"][field]
+    if model["source"].get("catalogYear"):
+        details["highlights"] = [*details["highlights"], f"Historical manufacturer catalog range {model['source']['catalogYear']}, page {model['source']['page']}; current availability is not asserted."]
+    return details
 
 
 def coupon_fixtures(manifest, completed):

@@ -12,18 +12,23 @@ DEMO_INR_PER_USD = Decimal("85.00")
 MINIMUMS = {"cricket": (100, 1000), "football": (100, 1000)}
 
 
-def source_key(url):
+def source_key(url, record_id=None):
     parsed = urlsplit(url)
     if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
         raise ValueError("Model source must be an attributed HTTPS URL without credentials")
     path = parsed.path.split("/products/")[-1] if "/products/" in parsed.path else parsed.path
-    return hashlib.sha256((parsed.hostname.lower() + "/products/" + path).encode()).hexdigest()
+    identity = parsed.hostname.lower() + "/products/" + path.rstrip("/")
+    if record_id is not None:
+        if not parsed.path.lower().endswith(".pdf") or not re.fullmatch(r"[a-z0-9][a-z0-9:-]{2,160}", record_id):
+            raise ValueError("PDF records need a bounded explicit manufacturer/model identity")
+        identity += "|record:" + record_id
+    return hashlib.sha256(identity.encode()).hexdigest()
 
 
 def equipment(title, fallback):
     lower = title.lower()
     for word, kind in (("helmet", "helmet"), ("glove", "gloves"), ("pad", "pads"), ("leg guard", "pads"),
-                       ("kit bag", "bag"), ("kitbag", "bag"), ("duffle", "bag"), ("backpack", "bag"),
+                       ("kit bag", "bag"), ("kitbag", "bag"), ("duffle", "bag"), ("backpack", "bag"), ("gym sack", "bag"), ("gymsack", "bag"),
                        ("jacket", "jacket"), ("hood", "hoodie"),
                        ("jersey", "jersey"), ("shirt", "shirt"), ("tee", "shirt"), ("sleeve", "sleeves"),
                        ("sock", "socks"), ("cleat", "boots"), ("shoe", "boots"), ("ball", "ball"), ("bat", "bat")):
@@ -42,13 +47,17 @@ def variants(key, sport, kind, base_minor, source_currency):
     inr = Decimal(base_minor) if source_currency == "INR" else Decimal(base_minor) * DEMO_INR_PER_USD
     if kind == "ball":
         options = [(dict(pack=str(pack), size=size), pack) for pack in (1, 3, 6, 12, 24) for size in ("Adult", "Youth")]
+    elif kind == "gloves" and sport == "football":
+        options = [(dict(size=str(size), colour="Source colourway", pack="Pair"), 1) for size in range(4, 14)]
     elif kind in ("gloves", "pads"):
         options = [(dict(size=size, hand=hand), 1) for size in ("Junior", "Youth", "Small adult", "Adult", "Large adult") for hand in ("Right", "Left")]
     elif kind == "bat":
         options = [(dict(size=size, grip=grip), 1) for size in ("4", "5", "6", "Harrow", "Short handle") for grip in ("Source finish", "Black")]
     elif kind == "boots":
         options = [(dict(size=f"UK {size}", colour="Source colourway"), 1) for size in range(4, 14)]
-    elif kind in ("helmet", "bag"):
+    elif kind == "bag":
+        options = [(dict(pack=str(pack), colour=colour), pack) for pack in (1, 2, 3, 4, 5) for colour in ("Source colourway", "Navy")]
+    elif kind == "helmet":
         options = [(dict(size=size, colour=colour), 1) for size in ("XS", "S", "M", "L", "XL") for colour in ("Source colourway", "Navy")]
     else:
         options = [(dict(size=size, colour="Source colourway"), 1) for size in ("XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL")]
@@ -62,14 +71,14 @@ def variants(key, sport, kind, base_minor, source_currency):
 
 
 def prepare_model(source, image):
-    required = ("sport", "brand", "title", "sourceUrl", "imageUrl", "capturedOn", "sourcePriceMinor", "sourceCurrency")
+    required = ("sport", "brand", "title", "sourceUrl", "capturedOn")
     if any(not source.get(field) for field in required):
         raise ValueError("Incomplete genuine model source")
     sport = source["sport"].casefold()
     if sport not in MINIMUMS:
         raise ValueError("Initial catalog supports cricket and football")
     date.fromisoformat(source["capturedOn"])
-    key = source_key(source["sourceUrl"])
+    key = source_key(source["sourceUrl"], source.get("recordId"))
     title = source["title"].strip()
     if len(title) > 200 or len(source["brand"]) > 120:
         raise ValueError("Source name exceeds catalog bounds")
@@ -79,9 +88,11 @@ def prepare_model(source, image):
     return {"sourceKey": key, "sport": sport, "slug": name[:78] + "-" + key[:12], "brand": source["brand"],
             "model": model, "title": title, "equipmentType": kind,
             "description": f"{title} from {source['brand']}, listed for {sport} practice and play. Model and photograph are sourced; shop prices, stock and option ranges are simulated for this local learning store.",
-            "source": {"url": source["sourceUrl"], "capturedOn": source["capturedOn"], "priceMinor": source["sourcePriceMinor"], "currency": source["sourceCurrency"]},
-            "image": {**image, "url": source["imageUrl"], "altText": title},
-            "variants": variants(key, sport, kind, source["sourcePriceMinor"], source["sourceCurrency"]),
+            "source": {"url": source["sourceUrl"], "capturedOn": source["capturedOn"], "priceMinor": source.get("sourcePriceMinor"), "currency": source.get("sourceCurrency"),
+                       **({"recordId": source["recordId"], "catalogYear": source["catalogYear"], "page": source["pdfImage"]["page"]} if source.get("recordId") else {})},
+            "image": {**image, **({"pdfImage": source["pdfImage"]} if source.get("pdfImage") else {"url": source["imageUrl"]}), "altText": title},
+            "sourcedFacts": source.get("sourcedFacts", {}),
+            "variants": variants(key, sport, kind, source.get("fixtureBaseMinor", source.get("sourcePriceMinor")), source.get("fixtureCurrency", source.get("sourceCurrency"))),
             "reviewsPerProduct": 3 + int(key[0], 16) % 2}
 
 
@@ -102,7 +113,7 @@ def validate_manifest(manifest, minimums=None):
     counts = Counter(p["sport"] for p in products)
     sku_counts = Counter()
     for product in products:
-        if product["sourceKey"] != source_key(product["source"]["url"]):
+        if product["sourceKey"] != source_key(product["source"]["url"], product["source"].get("recordId")):
             raise ValueError("Source identity changed")
         if product["reviewsPerProduct"] not in (3, 4):
             raise ValueError("Each model needs three or four demo reviews")

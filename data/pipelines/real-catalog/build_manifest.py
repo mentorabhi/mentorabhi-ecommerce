@@ -12,8 +12,12 @@ def build(candidates):
     products = []
     for source in candidates:
         # Sources must be curated before acquisition; failures stop this batch.
-        data, metadata = download(source["imageUrl"])
-        image = store(data, source_key(source["sourceUrl"]), metadata)
+        if source.get("pdfImage"):
+            from pdf_assets import extract_photo
+            data, metadata = extract_photo(source["pdfImage"])
+        else:
+            data, metadata = download(source["imageUrl"])
+        image = store(data, source_key(source["sourceUrl"], source.get("recordId")), metadata)
         products.append(prepare_model(source, image))
     manifest = {"version": 1, "capturedOn": date.today().isoformat(),
                 "fixtureInrPerUsd": "85.00", "products": products}

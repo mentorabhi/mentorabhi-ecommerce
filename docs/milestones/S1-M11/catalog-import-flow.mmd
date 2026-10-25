@@ -1,5 +1,8 @@
 flowchart LR
     A[Attributed real-model candidates] --> B[Decode photographs and record source hashes]
+    A --> P[Reviewed manufacturer PDF hash and model/page/image locator]
+    P --> Q[Extract original photo pixels and alpha losslessly]
+    Q --> B
     B --> C[Accepted public manifest]
     B --> D[Ignored local photo bundle]
     C --> E[Manifest and local asset preflight]

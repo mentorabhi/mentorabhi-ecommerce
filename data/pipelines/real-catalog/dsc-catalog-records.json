@@ -1,0 +1,1397 @@
+[
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "The Bull Autograph Batting Gloves",
+    "title": "DSC The Bull Autograph Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=19",
+    "recordId": "the-bull-autograph-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 349900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 19,
+      "object": "/Im1396"
+    },
+    "sourcedFacts": {
+      "material": "Sheep leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: The Bull Autograph",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Sheep leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Krunch 1000 Batting Gloves",
+    "title": "DSC Krunch 1000 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=19",
+    "recordId": "krunch-1000-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 399900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 19,
+      "object": "/Im1400"
+    },
+    "sourcedFacts": {
+      "material": "Sheep leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: Krunch 1000",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Sheep leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Krunch 3000 Batting Gloves",
+    "title": "DSC Krunch 3000 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=19",
+    "recordId": "krunch-3000-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 19,
+      "object": "/Im1402"
+    },
+    "sourcedFacts": {
+      "material": "Leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: Krunch 3000",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Krunch 5000 Batting Gloves",
+    "title": "DSC Krunch 5000 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=20",
+    "recordId": "krunch-5000-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 349900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 20,
+      "object": "/Im1418"
+    },
+    "sourcedFacts": {
+      "material": "Leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: Krunch 5000",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Krunch 7000 Batting Gloves",
+    "title": "DSC Krunch 7000 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=20",
+    "recordId": "krunch-7000-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 399900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 20,
+      "object": "/Im1436"
+    },
+    "sourcedFacts": {
+      "material": "Leather palm",
+      "highlights": [
+        "Manufacturer model: Krunch 7000",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Leather palm"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit Players Batting Gloves",
+    "title": "DSC Spliit Players Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=20",
+    "recordId": "spliit-players-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 20,
+      "object": "/Im1440"
+    },
+    "sourcedFacts": {
+      "material": "Pittard leather palm and PU",
+      "highlights": [
+        "Manufacturer model: Spliit Players",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Pittard leather palm and PU"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit Pro Batting Gloves",
+    "title": "DSC Spliit Pro Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=21",
+    "recordId": "spliit-pro-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 349900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 21,
+      "object": "/Im1488"
+    },
+    "sourcedFacts": {
+      "material": "Sheep leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: Spliit Pro",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Sheep leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit 2000 Batting Gloves",
+    "title": "DSC Spliit 2000 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=21",
+    "recordId": "spliit-2000-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 399900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 21,
+      "object": "/Im1492"
+    },
+    "sourcedFacts": {
+      "material": "Sheep leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: Spliit 2000",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Sheep leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit 4000 Batting Gloves",
+    "title": "DSC Spliit 4000 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=21",
+    "recordId": "spliit-4000-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 21,
+      "object": "/Im1490"
+    },
+    "sourcedFacts": {
+      "material": "Leather palm, PVC and foam",
+      "highlights": [
+        "Manufacturer model: Spliit 4000",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Leather palm, PVC and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit 5000 Batting Gloves",
+    "title": "DSC Spliit 5000 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=22",
+    "recordId": "spliit-5000-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 349900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 22,
+      "object": "/Im1528"
+    },
+    "sourcedFacts": {
+      "material": "Leather palm and foam",
+      "highlights": [
+        "Manufacturer model: Spliit 5000",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Leather palm and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "XLite L.E. Batting Gloves",
+    "title": "DSC XLite L.E. Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=22",
+    "recordId": "xlite-l-e-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 399900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 22,
+      "object": "/Im1526"
+    },
+    "sourcedFacts": {
+      "material": "Pittard leather palm and PU",
+      "highlights": [
+        "Manufacturer model: XLite L.E.",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Pittard leather palm and PU"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "XLite 1.0 Batting Gloves",
+    "title": "DSC XLite 1.0 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=22",
+    "recordId": "xlite-1-0-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 22,
+      "object": "/Im1524"
+    },
+    "sourcedFacts": {
+      "material": "Sheep leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: XLite 1.0",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Sheep leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "XLite 4.0 Batting Gloves",
+    "title": "DSC XLite 4.0 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=23",
+    "recordId": "xlite-4-0-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 399900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 23,
+      "object": "/Im1567"
+    },
+    "sourcedFacts": {
+      "material": "Leather palm, PVC and foam",
+      "highlights": [
+        "Manufacturer model: XLite 4.0",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Leather palm, PVC and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Flip Players Batting Gloves",
+    "title": "DSC Flip Players Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=23",
+    "recordId": "flip-players-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 23,
+      "object": "/Im1572"
+    },
+    "sourcedFacts": {
+      "material": "Pittard leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: Flip Players",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Pittard leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Flip 1.0 Batting Gloves",
+    "title": "DSC Flip 1.0 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=24",
+    "recordId": "flip-1-0-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 349900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 24,
+      "object": "/Im1602"
+    },
+    "sourcedFacts": {
+      "material": "Sheep leather palm and PU",
+      "highlights": [
+        "Manufacturer model: Flip 1.0",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Sheep leather palm and PU"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Flip 2.0 Batting Gloves",
+    "title": "DSC Flip 2.0 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=24",
+    "recordId": "flip-2-0-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 399900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 24,
+      "object": "/Im1604"
+    },
+    "sourcedFacts": {
+      "material": "Sheep leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: Flip 2.0",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Sheep leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Flip 3.0 Batting Gloves",
+    "title": "DSC Flip 3.0 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=24",
+    "recordId": "flip-3-0-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 24,
+      "object": "/Im1606"
+    },
+    "sourcedFacts": {
+      "material": "Sheep leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: Flip 3.0",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Sheep leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Flip 4.0 Batting Gloves",
+    "title": "DSC Flip 4.0 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=25",
+    "recordId": "flip-4-0-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 349900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 25,
+      "object": "/Im1656"
+    },
+    "sourcedFacts": {
+      "material": "Leather palm, PVC and foam",
+      "highlights": [
+        "Manufacturer model: Flip 4.0",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Leather palm, PVC and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Pearla Players Batting Gloves",
+    "title": "DSC Pearla Players Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=25",
+    "recordId": "pearla-players-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 399900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 25,
+      "object": "/Im1652"
+    },
+    "sourcedFacts": {
+      "material": "Pittard leather palm, PU and foam",
+      "highlights": [
+        "Manufacturer model: Pearla Players",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Pittard leather palm, PU and foam"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Pearla X1 Batting Gloves",
+    "title": "DSC Pearla X1 Batting Gloves",
+    "equipmentType": "gloves",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=25",
+    "recordId": "pearla-x1-batting-gloves",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 25,
+      "object": "/Im1654"
+    },
+    "sourcedFacts": {
+      "material": "Sheep leather palm and PU",
+      "highlights": [
+        "Manufacturer model: Pearla X1",
+        "Equipment: Batting Gloves",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Sheep leather palm and PU"
+      ],
+      "packageContents": [
+        "Batting Gloves in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "The Bull Autograph Batting Pads",
+    "title": "DSC The Bull Autograph Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=28",
+    "recordId": "the-bull-autograph-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 28,
+      "object": "/Im2061"
+    },
+    "sourcedFacts": {
+      "material": "PU facing, cane and foam",
+      "highlights": [
+        "Manufacturer model: The Bull Autograph",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing, cane and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Bull 31 Batting Pads",
+    "title": "DSC Bull 31 Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=28",
+    "recordId": "bull-31-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 499900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 28,
+      "object": "/Im2063"
+    },
+    "sourcedFacts": {
+      "material": "PU facing, cane and foam",
+      "highlights": [
+        "Manufacturer model: Bull 31",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing, cane and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Krunch 3000 Batting Pads",
+    "title": "DSC Krunch 3000 Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=28",
+    "recordId": "krunch-3000-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 549900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 28,
+      "object": "/Im2065"
+    },
+    "sourcedFacts": {
+      "material": "PU facing, cane and foam",
+      "highlights": [
+        "Manufacturer model: Krunch 3000",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing, cane and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit Players Batting Pads",
+    "title": "DSC Spliit Players Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=29",
+    "recordId": "spliit-players-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 29,
+      "object": "/Im2099"
+    },
+    "sourcedFacts": {
+      "material": "PU facing, cane and foam",
+      "highlights": [
+        "Manufacturer model: Spliit Players",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing, cane and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit 1000 Batting Pads",
+    "title": "DSC Spliit 1000 Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=29",
+    "recordId": "spliit-1000-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 499900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 29,
+      "object": "/Im2107"
+    },
+    "sourcedFacts": {
+      "material": "PU facing and foam",
+      "highlights": [
+        "Manufacturer model: Spliit 1000",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit 5000 Batting Pads",
+    "title": "DSC Spliit 5000 Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=29",
+    "recordId": "spliit-5000-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 549900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 29,
+      "object": "/Im2115"
+    },
+    "sourcedFacts": {
+      "material": "PVC facing and foam",
+      "highlights": [
+        "Manufacturer model: Spliit 5000",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PVC facing and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "XLite L.E. Batting Pads",
+    "title": "DSC XLite L.E. Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=30",
+    "recordId": "xlite-l-e-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 30,
+      "object": "/Im2151"
+    },
+    "sourcedFacts": {
+      "material": "PU facing and high-density foam",
+      "highlights": [
+        "Manufacturer model: XLite L.E.",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing and high-density foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "XLite 1.0 Batting Pads",
+    "title": "DSC XLite 1.0 Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=30",
+    "recordId": "xlite-1-0-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 499900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 30,
+      "object": "/Im2153"
+    },
+    "sourcedFacts": {
+      "material": "PU facing and foam",
+      "highlights": [
+        "Manufacturer model: XLite 1.0",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "XLite 4.0 Batting Pads",
+    "title": "DSC XLite 4.0 Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=30",
+    "recordId": "xlite-4-0-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 549900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 30,
+      "object": "/Im2155"
+    },
+    "sourcedFacts": {
+      "material": "PVC facing and foam",
+      "highlights": [
+        "Manufacturer model: XLite 4.0",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PVC facing and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Pearla Players Batting Pads",
+    "title": "DSC Pearla Players Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=31",
+    "recordId": "pearla-players-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 31,
+      "object": "/Im2194"
+    },
+    "sourcedFacts": {
+      "material": "PU facing, cane and foam",
+      "highlights": [
+        "Manufacturer model: Pearla Players",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing, cane and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Pearla X1 Batting Pads",
+    "title": "DSC Pearla X1 Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=31",
+    "recordId": "pearla-x1-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 499900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 31,
+      "object": "/Im2196"
+    },
+    "sourcedFacts": {
+      "material": "PU facing, cane and foam",
+      "highlights": [
+        "Manufacturer model: Pearla X1",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing, cane and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Pearla X4 Batting Pads",
+    "title": "DSC Pearla X4 Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=31",
+    "recordId": "pearla-x4-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 549900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 31,
+      "object": "/Im2198"
+    },
+    "sourcedFacts": {
+      "material": "Cane rods, foam and reinforced instep",
+      "highlights": [
+        "Manufacturer model: Pearla X4",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Cane rods, foam and reinforced instep"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Flip Players Batting Pads",
+    "title": "DSC Flip Players Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=32",
+    "recordId": "flip-players-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 449900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 32,
+      "object": "/Im2230"
+    },
+    "sourcedFacts": {
+      "material": "PU facing, cane and foam",
+      "highlights": [
+        "Manufacturer model: Flip Players",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing, cane and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Flip 2.0 Batting Pads",
+    "title": "DSC Flip 2.0 Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=32",
+    "recordId": "flip-2-0-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 499900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 32,
+      "object": "/Im2232"
+    },
+    "sourcedFacts": {
+      "material": "PU facing, cane and foam",
+      "highlights": [
+        "Manufacturer model: Flip 2.0",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: PU facing, cane and foam"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Flip 5.0 Batting Pads",
+    "title": "DSC Flip 5.0 Batting Pads",
+    "equipmentType": "pads",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=32",
+    "recordId": "flip-5-0-batting-pads",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 549900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 32,
+      "object": "/Im2234"
+    },
+    "sourcedFacts": {
+      "material": "Cane rods, foam and reinforced instep",
+      "highlights": [
+        "Manufacturer model: Flip 5.0",
+        "Equipment: Batting Pads",
+        "Source range: DSC UK 2023",
+        "Catalog materials: Cane rods, foam and reinforced instep"
+      ],
+      "packageContents": [
+        "Batting Pads in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "The Bull 31 Wheelie Cricket Kit Bag",
+    "title": "DSC The Bull 31 Wheelie Cricket Kit Bag",
+    "equipmentType": "bag",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=52",
+    "recordId": "the-bull-31-wheelie-cricket-kit-bag",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 599900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 52,
+      "object": "/Im4389"
+    },
+    "sourcedFacts": {
+      "material": "See manufacturer source for fabric specification.",
+      "highlights": [
+        "Manufacturer model: The Bull 31 Wheelie",
+        "Equipment: Cricket Kit Bag",
+        "Source range: DSC UK 2023",
+        "Catalog dimensions: 100 x 37 x 41 cm"
+      ],
+      "packageContents": [
+        "Cricket Kit Bag in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Krunch Team Duffle Cricket Kit Bag",
+    "title": "DSC Krunch Team Duffle Cricket Kit Bag",
+    "equipmentType": "bag",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=52",
+    "recordId": "krunch-team-duffle-cricket-kit-bag",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 649900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 52,
+      "object": "/Im4397"
+    },
+    "sourcedFacts": {
+      "material": "See manufacturer source for fabric specification.",
+      "highlights": [
+        "Manufacturer model: Krunch Team Duffle",
+        "Equipment: Cricket Kit Bag",
+        "Source range: DSC UK 2023",
+        "Catalog dimensions: 94 x 37 x 41 cm"
+      ],
+      "packageContents": [
+        "Cricket Kit Bag in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Krunch Duffle Cricket Kit Bag",
+    "title": "DSC Krunch Duffle Cricket Kit Bag",
+    "equipmentType": "bag",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=53",
+    "recordId": "krunch-duffle-cricket-kit-bag",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 599900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 53,
+      "object": "/Im4441"
+    },
+    "sourcedFacts": {
+      "material": "See manufacturer source for fabric specification.",
+      "highlights": [
+        "Manufacturer model: Krunch Duffle",
+        "Equipment: Cricket Kit Bag",
+        "Source range: DSC UK 2023",
+        "Catalog dimensions: 89 x 37 x 41 cm"
+      ],
+      "packageContents": [
+        "Cricket Kit Bag in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Krunch Club Cricket Kit Bag",
+    "title": "DSC Krunch Club Cricket Kit Bag",
+    "equipmentType": "bag",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=53",
+    "recordId": "krunch-club-cricket-kit-bag",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 649900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 53,
+      "object": "/Im4445"
+    },
+    "sourcedFacts": {
+      "material": "See manufacturer source for fabric specification.",
+      "highlights": [
+        "Manufacturer model: Krunch Club",
+        "Equipment: Cricket Kit Bag",
+        "Source range: DSC UK 2023",
+        "Catalog dimensions: 71 x 33 x 17 cm"
+      ],
+      "packageContents": [
+        "Cricket Kit Bag in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit Players Wheelie Cricket Kit Bag",
+    "title": "DSC Spliit Players Wheelie Cricket Kit Bag",
+    "equipmentType": "bag",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=54",
+    "recordId": "spliit-players-wheelie-cricket-kit-bag",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 599900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 54,
+      "object": "/Im4479"
+    },
+    "sourcedFacts": {
+      "material": "See manufacturer source for fabric specification.",
+      "highlights": [
+        "Manufacturer model: Spliit Players Wheelie",
+        "Equipment: Cricket Kit Bag",
+        "Source range: DSC UK 2023",
+        "Catalog dimensions: 97 x 42 x 42 cm"
+      ],
+      "packageContents": [
+        "Cricket Kit Bag in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit Premium Duffle Wheelie Cricket Kit Bag",
+    "title": "DSC Spliit Premium Duffle Wheelie Cricket Kit Bag",
+    "equipmentType": "bag",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=54",
+    "recordId": "spliit-premium-duffle-wheelie-cricket-kit-bag",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 649900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 54,
+      "object": "/Im4499"
+    },
+    "sourcedFacts": {
+      "material": "See manufacturer source for fabric specification.",
+      "highlights": [
+        "Manufacturer model: Spliit Premium Duffle Wheelie",
+        "Equipment: Cricket Kit Bag",
+        "Source range: DSC UK 2023",
+        "Catalog dimensions: 100 x 37 x 41 cm"
+      ],
+      "packageContents": [
+        "Cricket Kit Bag in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit Duffle Cricket Kit Bag",
+    "title": "DSC Spliit Duffle Cricket Kit Bag",
+    "equipmentType": "bag",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=55",
+    "recordId": "spliit-duffle-cricket-kit-bag",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 599900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 55,
+      "object": "/Im4555"
+    },
+    "sourcedFacts": {
+      "material": "See manufacturer source for fabric specification.",
+      "highlights": [
+        "Manufacturer model: Spliit Duffle",
+        "Equipment: Cricket Kit Bag",
+        "Source range: DSC UK 2023",
+        "Catalog dimensions: 97 x 37 x 42 cm"
+      ],
+      "packageContents": [
+        "Cricket Kit Bag in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Spliit Pro Duffle Cricket Kit Bag",
+    "title": "DSC Spliit Pro Duffle Cricket Kit Bag",
+    "equipmentType": "bag",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=55",
+    "recordId": "spliit-pro-duffle-cricket-kit-bag",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 649900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 55,
+      "object": "/Im4559"
+    },
+    "sourcedFacts": {
+      "material": "See manufacturer source for fabric specification.",
+      "highlights": [
+        "Manufacturer model: Spliit Pro Duffle",
+        "Equipment: Cricket Kit Bag",
+        "Source range: DSC UK 2023",
+        "Catalog dimensions: 89 x 34 x 34 cm"
+      ],
+      "packageContents": [
+        "Cricket Kit Bag in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Rebels Players Wheelie Cricket Kit Bag",
+    "title": "DSC Rebels Players Wheelie Cricket Kit Bag",
+    "equipmentType": "bag",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=56",
+    "recordId": "rebels-players-wheelie-cricket-kit-bag",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 599900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 56,
+      "object": "/Im4600"
+    },
+    "sourcedFacts": {
+      "material": "See manufacturer source for fabric specification.",
+      "highlights": [
+        "Manufacturer model: Rebels Players Wheelie",
+        "Equipment: Cricket Kit Bag",
+        "Source range: DSC UK 2023",
+        "Catalog dimensions: 97 x 42 x 42 cm"
+      ],
+      "packageContents": [
+        "Cricket Kit Bag in selected simulated option/pack"
+      ]
+    }
+  },
+  {
+    "sport": "Cricket",
+    "brand": "DSC",
+    "model": "Rebel Pro Duffle Cricket Kit Bag",
+    "title": "DSC Rebel Pro Duffle Cricket Kit Bag",
+    "equipmentType": "bag",
+    "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=56",
+    "recordId": "rebel-pro-duffle-cricket-kit-bag",
+    "catalogYear": 2023,
+    "capturedOn": "2026-10-25",
+    "fixtureBaseMinor": 649900,
+    "fixtureCurrency": "INR",
+    "pdfImage": {
+      "url": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf",
+      "sha256": "6f70a08f07b2ad46158817cb83d7774db3ff204139bf60b2bb6515d308e6afcc",
+      "page": 56,
+      "object": "/Im4604"
+    },
+    "sourcedFacts": {
+      "material": "See manufacturer source for fabric specification.",
+      "highlights": [
+        "Manufacturer model: Rebel Pro Duffle",
+        "Equipment: Cricket Kit Bag",
+        "Source range: DSC UK 2023",
+        "Catalog dimensions: 94 x 38 x 41 cm"
+      ],
+      "packageContents": [
+        "Cricket Kit Bag in selected simulated option/pack"
+      ]
+    }
+  }
+]

@@ -78,6 +78,8 @@ The original requirement file was updated by the user during execution; its addi
 
 ## M11 execution checkpoint — 2026-10-25
 
+Newer checkpoint: sourced data is deployed (Cricket 103 models/1,030 SKUs, Football 113/1,130). DSC PDF intake preserves filename-2022/cover-2023 provenance, source photo masks and unknown manufacturer prices. Active old fixtures were retired through Catalog, without deleting historical identities/orders. Coding/data phases are complete for the current scope and consolidated testing is underway. Latest measured results and remaining browser/restart/telemetry gates are in status.md and S1-M11/data-population.md; source-only statements below are historical.
+
 Newest user sequencing supersedes the earlier per-feature execution order for the remaining Stage 1 work: coding first (M11/M12), data second, testing last. Keep test source/design/context current, defer further execution of tests until code and data are ready, then run the complete affected verification pass. Historical measurements remain valid only for the revisions they tested.
 
 U3/M12 coding additions are unverified: real-catalog source/photo preparation, restore and owner import; optional productIds coupon eligibility; eleven Java request filters and pinned agent; internal telemetry pipeline/stores, Grafana request dashboard and lifecycle commands. See S1-M11 catalog-import-design and S1-M12 design/ADR 0011. Only dependency metadata and source inspection occurred during this coding pass. No real catalog replacement, telemetry runtime acceptance or Stage 1 completion is implied.

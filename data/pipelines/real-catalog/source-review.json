@@ -1,0 +1,28 @@
+{
+  "capturedOn": "2026-10-25",
+  "method": "Reviewed original PDF layouts and eight local browser-rendered source-photo sheets covering all 219 prepared models; no storefront acceptance tests executed during data preparation.",
+  "preparedModels": 219,
+  "acceptedModels": 216,
+  "rejected": [
+    {
+      "title": "DSC XLite 2.0 Batting Gloves",
+      "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=23",
+      "reason": "Extracted source object renders as a black silhouette; unsuitable product photograph."
+    },
+    {
+      "title": "Versant Showman Glory Cricket Batting Gloves White Red Golden",
+      "sourceUrl": "https://cricketershop.com/products/versant-showman-cricket-batting-gloves-mens-size",
+      "reason": "Photo shows MRF branding inconsistent with the attributed Versant model."
+    },
+    {
+      "title": "CONTACT OR FOLLOW",
+      "sourceUrl": "https://soccer90.com/products/copa-pure-ii-2-firm-ground-boots",
+      "reason": "Source parser captured a page heading rather than the product model name."
+    }
+  ],
+  "imageRights": "Source owners retain photograph/trademark rights; local educational use and attribution do not assert an open licence.",
+  "limitations": [
+    "Visual review establishes visible model/photo consistency, not manufacturer warranty, stock or current availability.",
+    "Option ranges, prices, stock and DEMO reviews are simulated."
+  ]
+}

@@ -248,3 +248,7 @@ Applied the user's latest coding → data → testing sequence. Authored U3 dete
 ## 2026-10-25 — Design-folder discovery
 
 The user observed that design/ stopped at S1-M04. Later canonical designs existed under docs/milestones but lacked design-folder entry points. Added design/README.md and S1-M05–M12 folder indexes linking all main/supplemental designs, editable Mermaid diagrams, design reviews and acceptance records. Linked the index from the repository and milestone READMEs. Historical originals stay in place to avoid duplicate design copies or broken prior references. No application behavior or acceptance status changes.
+
+## 2026-10-25 — Sourced data deployed and final testing started
+
+Used the user-supplied DSC manufacturer PDF alongside retailer sources. Recorded its 2022 filename/2023 cover discrepancy, exact PDF hash, model/page/image mapping, original transparency and unknown source prices. Photo review excluded three bad records. Owner-API import deployed 103 Cricket and 113 Football models, 2,160 SKUs, INR/USD books, initial stock, 751 DEMO reviews and selected-product coupons; retired 17 old active fixtures without deleting history. Compilation-only preparation kept tests deferred until data was ready. Normal test-enabled builds and the consolidated unit pass then succeeded. The first asset-serving regression exposed 0600 photo files; fixed public mode to 0644 and verified all 216 deployed hashes on rerun. Broader integration, browser, restart and telemetry acceptance continue.

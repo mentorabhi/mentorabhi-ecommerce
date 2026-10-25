@@ -3,10 +3,11 @@ ARG BUILD_IMAGE
 ARG JAVA_IMAGE
 FROM ${BUILD_IMAGE} AS build
 ARG SERVICE_NAME
+ARG SKIP_TESTS=false
 WORKDIR /workspace
 COPY services/${SERVICE_NAME}/pom.xml ./pom.xml
 COPY services/${SERVICE_NAME}/src ./src
-RUN --mount=type=cache,id=supersports-maven,target=/root/.m2,sharing=locked mvn -B -ntp verify
+RUN --mount=type=cache,id=supersports-maven,target=/root/.m2,sharing=locked mvn -B -ntp verify -DskipTests="${SKIP_TESTS}"
 
 FROM scratch AS telemetry-agent
 ADD --checksum=sha256:5f9d1f10056ed2b246fbb19543519b8066cda23d6aff19022dbdb84402d6c3ab https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.33.0/opentelemetry-javaagent.jar /opentelemetry-javaagent.jar

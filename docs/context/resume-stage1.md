@@ -1,5 +1,7 @@
 # Resume Stage 1
 
+Newer checkpoint: the data phase below has since completed. Read status.md and S1-M11/data-population.md first: 216 models/2,160 SKUs are deployed, focused data/contract/commerce/PostgreSQL checks passed, and broader streaming/post-purchase/browser/restart/telemetry verification is underway. Do not resume the old source-acquisition offsets below or reintroduce rejected candidate records. They are preserved as the earlier handoff history.
+
 2026-10-25 · User requested automatic resume at 16:48 Asia/Kolkata today. Scheduling was not created: this session exposes no general scheduling tool, and computer-use access to the Codex application is blocked. This file is a continuation checkpoint, not an active reminder.
 
 Repository: /Users/abhijitkumarsingh/ChatGPT/mentorabhi-ecommerce. Active branch stage1; remote origin https://github.com/mentorabhi/mentorabhi-ecommerce.git. Latest pushed checkpoints: e986aef (remaining catalog/telemetry source, unverified) and ca25a89 (all design-folder indexes). Read project-context.md, status.md, accepted requirements, active M11/M12 designs and AGENTS.md before changes.

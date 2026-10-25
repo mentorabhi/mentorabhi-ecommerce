@@ -61,6 +61,7 @@ def store(data, key, metadata):
     filename = f"{key}.{metadata['extension']}"
     with tempfile.NamedTemporaryFile(dir=ASSETS, delete=False) as handle:
         handle.write(data); temporary = Path(handle.name)
+    temporary.chmod(0o644)
     temporary.replace(ASSETS / filename)
     return {**metadata, "assetKey": "catalog-real/" + filename}
 
@@ -86,11 +87,16 @@ def restore(manifest):
         image = product["image"]
         path = local_path(image)
         if not path.exists():
-            data, metadata = download(image["url"])
+            if image.get("pdfImage"):
+                from pdf_assets import extract_photo
+                data, metadata = extract_photo(image["pdfImage"])
+            else:
+                data, metadata = download(image["url"])
             if metadata["sha256"] != image["sha256"]:
                 raise ValueError("Source photograph changed; re-review it before updating the manifest")
             store(data, product["sourceKey"], metadata)
         verify_local(image)
+        path.chmod(0o644)
 
 
 if __name__ == "__main__":
