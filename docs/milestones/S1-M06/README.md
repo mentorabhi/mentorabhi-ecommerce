@@ -1,6 +1,6 @@
 # S1-M06 — Outbox, Kafka and CQRS projections
 
-Revision 9 · 2026-10-25 · The 1,000-customer retained-history reconciliation and isolated rebuild/cutover now pass on measured local runtime. Full streaming regression: 6/6 passed. Broader acceptance (snapshot/WAL overlap, sustained capacity/retention and owner manual checks) remains tracked in the [completion matrix](acceptance-matrix.md) and [verification record](verification.md).
+Revision 10 · 2026-10-25 · The 1,000-customer retained-history reconciliation, isolated rebuild/cutover, and dedicated consistent-snapshot/WAL-overlap probe pass on measured local runtime. Full streaming regression: 6/6 passed. Sustained capacity/extended retention and owner manual checks remain tracked in the [completion matrix](acceptance-matrix.md) and [verification record](verification.md).
 
 Design: [outbox and projection design](design.md). Review: [design review](design-review.md). Decision: [ADR 0006](../../decisions/0006-orders-outbox-cdc-and-history-projection.md). Editable flow: [event-flow.mmd](event-flow.mmd). Manual checks: [manual acceptance](manual-acceptance.md). Source architecture: [S1-M06 diagram](../../../architecture/stage-1/S1-M06.excalidraw).
 

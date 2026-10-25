@@ -88,3 +88,5 @@ Commands above are implemented. Remaining M06 acceptance includes broader source
 - Core/streaming image revision and Docker allocation: ____________________
 - Outcome: Pass / Fail
 - Notes / issue references: ____________________
+
+Automated snapshot/WAL-overlap status (2026-10-25): the isolated live test passed. Its reproducible command and dataset are in [verification](verification.md). This does not check the owner-run browser/operations steps above, and does not establish extended WAL retention or sustained throughput.

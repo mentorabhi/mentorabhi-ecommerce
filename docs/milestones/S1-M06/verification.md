@@ -146,3 +146,17 @@ This replay-only evidence predates the latest full CI at the top of this record.
 - Final `stream-reconcile` after storefront and data milestones: 35,973 retained events; 17,896 Orders; INR total 16,533,201,681 minor units; USD total 23,078,898 minor units; 29 poison coordinates; 48 replay audits; zero errors. The reconciliation is bounded to retained local Kafka/WAL and current source records.
 - Live Kafka topic has three partitions; Order History offsets equal high-water marks 12,159 / 11,840 / 12,062 (zero lag). Debezium connector and task report RUNNING. Broker count remains one.
 - Full automated test inventory and M06 live probes are recorded above. Snapshot/WAL overlap, sustained concurrent checkout/throughput, extended WAL/offset retention, and human owner acceptance are still open. The `test --recovery` result supersedes the earlier note that its terminal outcome awaited append.
+
+## Debezium consistent snapshot/WAL overlap — 2026-10-25 03:46 UTC
+
+The reviewed isolated probe passed on the pinned local PostgreSQL, Kafka 4.3.1 and Debezium 3.7.0.Final stack:
+
+```sh
+SUPERSPORTS_INTEGRATION=1 SUPERSPORTS_CDC_SNAPSHOT_OVERLAP=1 SUPERSPORTS_PROJECT=supersports \
+  .venv/bin/python -m unittest discover -s devops/tests -p test_streaming_integration.py \
+  -k initial_snapshot_overlaps_concurrent_wal_changes -v
+```
+
+Result: 1 passed in 45.408 seconds. The test seeded 100,000 compact rows, waited until the topic had a nonzero partial snapshot, then concurrently updated 500 existing rows and inserted 500 rows. It consumed and folded 101,000 keyed Kafka records. Each updated key had both an initial `r` and subsequent `u`; each inserted key had a `c`. The final folded 100,500-row state exactly matched the disposable source table, including values and payloads. The test also confirmed the ordinary Orders connector configuration and both Commerce topic high-water marks did not change. UUID-scoped connector, database, publication and topic cleanup completed in the passing run. No production Commerce records were altered.
+
+The full local snapshot run observed 100,000 initial rows and 1,000 concurrent changes; it is not a sustained throughput or long-retention benchmark. Longer WAL/offset retention and sustained concurrent checkout measurements remain open.

@@ -10,7 +10,7 @@ import time
 import unittest
 import uuid
 from urllib.error import HTTPError, URLError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -67,6 +67,190 @@ class StreamingIntegrationTests(unittest.TestCase):
                 return
             time.sleep(1)
         self.fail("Order History consumer did not drain to zero lag before fault injection")
+
+    @unittest.skipUnless(os.environ.get("SUPERSPORTS_CDC_SNAPSHOT_OVERLAP") == "1",
+                         "Enable only for the isolated Debezium snapshot/WAL-overlap acceptance probe")
+    def test_initial_snapshot_overlaps_concurrent_wal_changes(self):
+        """Verify Debezium initial snapshot plus concurrent WAL updates in isolated resources."""
+        prefix = "s1_snapshot_" + uuid.uuid4().hex[:12]
+        database = prefix[:30]
+        publication = prefix + "_pub"
+        slot = prefix + "_slot"
+        connector = prefix
+        topic = prefix + ".public.snapshot_probe"
+        rows, updates, inserts = 100_000, 500, 500
+        base = "http://127.0.0.1:8090/connectors"
+
+        def psql(db, sql, *, check=True):
+            return manage.compose(["--profile", "streaming", "exec", "-T", "postgres", "psql", "-X",
+                "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", db, "-tA", "-c", sql],
+                project=self.project, capture=True, check=check)
+
+        def topic_end(topic_name):
+            result = manage.compose(["--profile", "streaming", "exec", "-T", "kafka",
+                "/opt/kafka/bin/kafka-get-offsets.sh", "--bootstrap-server", "localhost:9092",
+                "--topic", topic_name, "--time", "-1"], project=self.project, capture=True, check=False, timeout=10)
+            if result.returncode != 0 or not result.stdout.strip():
+                return 0
+            return sum(int(line.rsplit(":", 1)[1]) for line in result.stdout.splitlines() if line.strip())
+
+        def connector_status():
+            try:
+                with urlopen(base + "/" + connector + "/status", timeout=5) as response:
+                    return json.loads(response.read())
+            except HTTPError as error:
+                if error.code == 404:
+                    error.close()
+                    return None
+                raise
+
+        def wait_topic_count(expected, timeout=180):
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                count = topic_end(topic)
+                if count >= expected:
+                    return count
+                time.sleep(.5)
+            self.fail(f"Probe topic did not reach {expected} records; last count={topic_end(topic)}")
+
+        main_config = None
+        main_end = None
+        connector_created = False
+        database_created = False
+        publication_created = False
+        try:
+            with urlopen(base + "/supersports-orders-outbox/config", timeout=5) as response:
+                main_config = json.loads(response.read())
+            main_end = {
+                name: topic_end(name) for name in ("commerce.order.events.v1", "commerce.order.events.dlq.v1")
+            }
+            psql("postgres", f"CREATE DATABASE {database}")
+            database_created = True
+            psql(database, "CREATE TABLE public.snapshot_probe (id integer PRIMARY KEY, version integer NOT NULL, payload text NOT NULL)")
+            psql(database, f"INSERT INTO public.snapshot_probe SELECT n,0,repeat(md5(n::text),8) FROM generate_series(1,{rows}) AS n")
+            psql("postgres", f"GRANT CONNECT ON DATABASE {database} TO supersports_cdc")
+            psql(database, f"GRANT USAGE ON SCHEMA public TO supersports_cdc; GRANT SELECT ON public.snapshot_probe TO supersports_cdc")
+            psql(database, f"CREATE PUBLICATION {publication} FOR TABLE public.snapshot_probe")
+            publication_created = True
+            manage.compose(["--profile", "streaming", "exec", "-T", "kafka", "/opt/kafka/bin/kafka-topics.sh",
+                "--bootstrap-server", "localhost:9092", "--create", "--if-not-exists", "--topic", topic,
+                "--partitions", "1", "--replication-factor", "1"], project=self.project)
+
+            credentials = manage.load_credentials(manage.ROOT / "devops/.local/bootstrap.env")
+            config = {
+                "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+                "tasks.max": "1", "database.hostname": "postgres", "database.port": "5432",
+                "database.user": "supersports_cdc", "database.password": credentials["CDC_DB_PASSWORD"],
+                "database.dbname": database, "topic.prefix": prefix, "plugin.name": "pgoutput",
+                "slot.name": slot, "publication.name": publication, "publication.autocreate.mode": "disabled",
+                "table.include.list": "public.snapshot_probe", "snapshot.mode": "initial",
+                "tombstones.on.delete": "false", "snapshot.fetch.size": "1000",
+            }
+            request = Request(base, data=json.dumps({"name": connector, "config": config}).encode(),
+                              headers={"Content-Type": "application/json"}, method="POST")
+            with urlopen(request, timeout=15):
+                connector_created = True
+
+            deadline = time.monotonic() + 120
+            observed_partial_snapshot = 0
+            while time.monotonic() < deadline:
+                state = connector_status()
+                if state is None:
+                    time.sleep(.5)
+                    continue
+                self.assertEqual(state.get("connector", {}).get("state"), "RUNNING", state)
+                task_states = [task.get("state") for task in state.get("tasks", [])]
+                if not task_states:
+                    time.sleep(.5)
+                    continue
+                self.assertTrue(all(item == "RUNNING" for item in task_states), state)
+                observed_partial_snapshot = topic_end(topic)
+                if 0 < observed_partial_snapshot < rows:
+                    break
+                if observed_partial_snapshot >= rows:
+                    self.fail("Initial snapshot completed before concurrent mutations; overlap was not exercised")
+                time.sleep(.5)
+            else:
+                self.fail("Debezium did not begin the snapshot before the bounded deadline")
+
+            psql(database, f"UPDATE public.snapshot_probe SET version=1 WHERE id BETWEEN 1 AND {updates}")
+            psql(database, f"INSERT INTO public.snapshot_probe SELECT n,0,repeat(md5(n::text),8) FROM generate_series({rows+1},{rows+inserts}) AS n")
+            wait_topic_count(rows + updates + inserts)
+            first_end = topic_end(topic)
+            time.sleep(2)
+            self.assertEqual(topic_end(topic), first_end, "Probe topic was not quiescent after snapshot/WAL drain")
+
+            records = manage.compose(["--profile", "streaming", "exec", "-T", "kafka",
+                "/opt/kafka/bin/kafka-console-consumer.sh", "--bootstrap-server", "localhost:9092",
+                "--topic", topic, "--from-beginning", "--max-messages", str(rows + updates + inserts),
+                "--formatter-property", "print.key=true", "--formatter-property", "key.separator=|", "--timeout-ms", "30000"],
+                project=self.project, capture=True, timeout=90)
+            keyed_state = {}
+            operations = {}
+            for line in records.stdout.splitlines():
+                self.assertIn("|", line, f"Kafka formatter did not include the record key: {line[:200]!r}")
+                key, raw = line.split("|", 1)
+                event = json.loads(raw)
+                op = event.get("op")
+                after = event.get("after")
+                self.assertIn(op, {"r", "u", "c"}, f"Unexpected Debezium operation {op!r}")
+                self.assertIsInstance(after, dict, "Expected a row image for snapshot/create/update")
+                key_value = str(after["id"])
+                decoded_key = json.loads(key)
+                if isinstance(decoded_key, dict):
+                    decoded_key = decoded_key.get("payload", decoded_key)
+                    decoded_key = decoded_key.get("id")
+                self.assertEqual(str(decoded_key), key_value, "Kafka key does not match source primary key")
+                keyed_state[key_value] = after
+                operations.setdefault(key_value, []).append(op)
+
+            source = psql(database, "SELECT json_agg(json_build_object('id',id,'version',version,'payload',payload) ORDER BY id) FROM public.snapshot_probe")
+            expected_rows = json.loads(source.stdout.strip())
+            expected = {str(row["id"]): row for row in expected_rows}
+            self.assertEqual(set(keyed_state), set(expected), "Folded Kafka state has missing or unexpected source keys")
+            self.assertEqual(keyed_state, expected, "Folded snapshot/WAL state differs from the authoritative source table")
+            self.assertEqual(len(keyed_state), rows + inserts)
+            for key in (str(index) for index in range(1, updates + 1)):
+                self.assertIn("r", operations[key], f"Updated key {key} did not appear in the initial snapshot")
+                self.assertIn("u", operations[key], f"Updated key {key} did not appear in WAL changes")
+            for key in (str(index) for index in range(rows + 1, rows + inserts + 1)):
+                self.assertIn("c", operations[key], f"Concurrent insert {key} was absent from WAL")
+            self.assertEqual(sum(len(value) for value in operations.values()), rows + updates + inserts)
+
+        finally:
+            if connector_created:
+                try:
+                    request = Request(base + "/" + connector, method="DELETE")
+                    with urlopen(request, timeout=15):
+                        pass
+                except HTTPError as error:
+                    if error.code != 404:
+                        raise
+                deadline = time.monotonic() + 45
+                while time.monotonic() < deadline:
+                    try:
+                        with urlopen(base + "/" + connector + "/status", timeout=3):
+                            time.sleep(.5)
+                    except HTTPError as error:
+                        if error.code == 404:
+                            error.close()
+                            break
+                        raise
+                    except URLError:
+                        time.sleep(.5)
+                psql("postgres", f"SELECT pg_drop_replication_slot(slot_name) FROM pg_replication_slots WHERE slot_name='{slot}' AND NOT active", check=False)
+            if publication_created and database_created:
+                psql(database, f"DROP PUBLICATION IF EXISTS {publication}", check=False)
+            if database_created:
+                psql("postgres", f"DROP DATABASE IF EXISTS {database} WITH (FORCE)", check=False)
+            manage.compose(["--profile", "streaming", "exec", "-T", "kafka", "/opt/kafka/bin/kafka-topics.sh",
+                "--bootstrap-server", "localhost:9092", "--delete", "--topic", topic],
+                project=self.project, capture=True, check=False)
+            if main_config is not None:
+                with urlopen(base + "/supersports-orders-outbox/config", timeout=5) as response:
+                    self.assertEqual(json.loads(response.read()), main_config, "Production Orders connector config changed")
+                self.assertEqual({name: topic_end(name) for name in main_end}, main_end,
+                                 "Production Commerce topic high-water mark changed during isolated probe")
 
     def test_cdc_projection_and_tenant_scoped_read_api(self):
         with urlopen("http://127.0.0.1:8090/connectors/supersports-orders-outbox/status", timeout=5) as response:
