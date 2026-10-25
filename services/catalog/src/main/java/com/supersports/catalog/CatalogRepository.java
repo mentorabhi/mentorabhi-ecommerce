@@ -30,16 +30,35 @@ class CatalogRepository {
     Map<String,Object> browse(int page,int pageSize,String search,String category,String sport) {
         var args=new java.util.ArrayList<Object>();
         StringBuilder where=new StringBuilder(" WHERE "+VISIBLE);
-        if(search!=null) {
-            where.append(" AND (p.title ILIKE ? ESCAPE '!' OR p.brand ILIKE ? ESCAPE '!' OR p.description ILIKE ? ESCAPE '!' OR c.name ILIKE ? ESCAPE '!')");
-            String literal="%"+search.replace("!","!!").replace("%","!%").replace("_","!_")+"%";
-            for(int i=0;i<4;i++) args.add(literal);
+        CatalogSearch query=search==null ? null : CatalogSearch.parse(search);
+        String searchable="to_tsvector('simple',concat_ws(' ',p.title,p.brand,p.details->>'model',p.description,c.name,sp.name))";
+        if(query!=null) {
+            if(query.noMatch()) where.append(" AND false");
+            else if(query.literal()!=null) {
+                where.append(" AND strpos(lower(concat_ws(' ',p.title,p.brand,p.description,c.name)),lower(?))>0");
+                args.add(query.literal());
+            } else {
+                if(query.equipment()!=null) {
+                    where.append(" AND (p.details->>'equipmentType' ~* ? OR (coalesce(p.details->>'equipmentType','')='' AND p.title ~* ?))");
+                    args.add(query.equipmentWords().replace("\\m", "^").replace("\\M", "$")); args.add(query.equipmentWords());
+                }
+                if(!query.terms().isEmpty()) {
+                    where.append(" AND "+searchable+" @@ plainto_tsquery('simple',?)"); args.add(query.terms());
+                }
+            }
         }
         if(category!=null) { where.append(" AND (c.id::text=? OR c.slug=?)"); args.add(category); args.add(category); }
         if(sport!=null) { where.append(" AND (sp.id::text=? OR sp.slug=?)"); args.add(sport); args.add(sport); }
         long total=jdbc.queryForObject("SELECT count(*)"+PUBLIC_FROM+where,Long.class,args.toArray());
+        String order="p.title,p.id";
+        if(query!=null && !query.noMatch()) {
+            order="ts_rank_cd(setweight(to_tsvector('simple',coalesce(p.title,'')),'A') || "
+                    +"setweight(to_tsvector('simple',concat_ws(' ',p.brand,p.details->>'model')),'B') || "
+                    +"setweight(to_tsvector('simple',coalesce(p.description,'')),'D'),plainto_tsquery('simple',?)) DESC,"+order;
+            args.add(query.rankingTerms());
+        }
         args.add(pageSize); args.add((page-1)*pageSize);
-        var items=jdbc.query(PUBLIC_SELECT+PUBLIC_FROM+where+" ORDER BY p.title,p.id LIMIT ? OFFSET ?",PUBLIC_ROW,args.toArray());
+        var items=jdbc.query(PUBLIC_SELECT+PUBLIC_FROM+where+" ORDER BY "+order+" LIMIT ? OFFSET ?",PUBLIC_ROW,args.toArray());
         return Map.of("items",items,"page",page,"pageSize",pageSize,"total",total,"hasNext",(long)page*pageSize<total);
     }
 

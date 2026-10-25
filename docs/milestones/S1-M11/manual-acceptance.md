@@ -28,3 +28,10 @@ Date/operator: __________  Outcome: __________  Issues: __________
 - [ ] Check home, Cricket/Football categories and a search for `pads`: the large promotional banner is absent and the small header logo remains.
 - [ ] On desktop and a 390px mobile viewport, inspect pads and other tall photos: the full photo stays inside its image panel, with brand, title, rating and price below it. Click the photo/title and navigate Similar Products.
 - [ ] Database: no migration/data change is expected from this presentation revision. If checking the Catalog owner database, compare existing active product/SKU counts with the sourced-catalog evidence; do not alter rows to test a layout change.
+
+## Search relevance revision (R30)
+
+- [ ] Confirm Catalog and Storefront containers are healthy. Search `bat`, `bats`, `a bat`, `ball`, `balls` and `pads`; confirm the requested equipment, without kits/batting accessories for bats or football apparel for balls.
+- [ ] Try `SG cricket bat`, reverse the word order, and search a visible brand/model. Compare category filters and subsequent pages; click a result to open its correct product.
+- [ ] Search `football` to retain football gear/apparel; search an unknown model or punctuation-only input and confirm a clear empty state. Clear search to restore browsing.
+- [ ] Database: this change has no migration or data writes. Owner-side Catalog checks may inspect `details.equipmentType`, title, brand and active status of a returned item. Existing product/SKU counts and historical orders must remain unchanged.

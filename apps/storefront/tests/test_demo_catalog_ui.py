@@ -20,6 +20,25 @@ class DemoCatalogUiTests(unittest.TestCase):
         self.addCleanup(self.driver.quit)
         self.wait = WebDriverWait(self.driver, 30)
 
+    def test_equipment_search_returns_the_requested_type_not_accessories(self):
+        for query, equipment in (("bat", "bat"), ("balls", "ball"), ("pads", "pads")):
+            with self.subTest(query=query):
+                with urlopen("http://localhost:3000/api/catalog/public/products?q=" + query, timeout=15) as response:
+                    products = json.load(response)["items"]
+                self.assertTrue(products)
+                self.assertTrue(all(product["details"].get("equipmentType") == equipment for product in products),
+                                "Equipment search must exclude other equipment and substring matches")
+                self.driver.get("http://localhost:3000/")
+                search = self.wait.until(EC.element_to_be_clickable((By.ID, "store-search")))
+                search.send_keys(query)
+                self.driver.find_element(By.CSS_SELECTOR, ".shop-search button").click()
+                self.wait.until(lambda driver: "q=" + query in driver.current_url)
+                self.wait.until(lambda driver: driver.execute_script("return [...document.querySelectorAll('.store-product-grid .store-card')].map(card=>card.dataset.productId)") == [product["id"] for product in products])
+                ids = self.driver.execute_script("return [...document.querySelectorAll('.store-product-grid .store-card')].map(card=>card.dataset.productId)")
+                self.assertEqual(ids, [product["id"] for product in products])
+                self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".store-card-image"))).click()
+                self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".detail-layout")))
+
     def test_tall_pad_photos_stay_inside_cards_on_desktop_and_mobile(self):
         for width, height in ((1440, 1000), (390, 844)):
             with self.subTest(width=width):

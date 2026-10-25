@@ -1,0 +1,7 @@
+flowchart LR
+  Query[Customer search] --> Normalize[Normalize words and equipment aliases]
+  Normalize --> Intent[Unambiguous equipment constraint]
+  Intent --> Filter[Visible products + all remaining terms + category/sport]
+  Filter --> Rank[Title/brand/model relevance + stable title/id]
+  Rank --> Page[Database count and pagination]
+  Page --> Cards[Storefront Featured results]

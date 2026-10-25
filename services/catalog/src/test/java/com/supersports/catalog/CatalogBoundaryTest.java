@@ -88,6 +88,38 @@ class CatalogBoundaryTest {
         assertThat((List<?>)Json.read(response(get("/api/v1/catalog/products")))).hasSize(55);
         assertThat(repository.products(false)).hasSize(55);
     }
+    @Test void searchSeparatesEquipmentFromAccessoriesAndFootballWithStableRelevanceAndPagination() throws Exception {
+        add(category,"kit-with-bat","A cricket kit with bat","active","kit");
+        add(category,"batting-pads","A Batting Pads","active","pads");
+        add(category,"batting-gloves","A Batting Gloves","active","gloves");
+        add(otherCategory,"football-jersey","A football jersey","active","jersey");
+        add(otherCategory,"match-ball","Match football ball","active","ball");
+        UUID model=add(category,"brand-model","Z Brand Pro","active","bat");
+        jdbc.update("UPDATE products SET brand='SG',description='A cricket bat for practice' WHERE id=?",model);
+        for(String q:List.of("bat","bats","a bat","show me a bat")) {
+            var result=body(response(get("/api/v1/catalog/public/products").param("q",q).param("pageSize","48")));
+            assertThat(result.get("total")).isEqualTo(56);
+            @SuppressWarnings("unchecked") var items=(List<Map<String,Object>>)result.get("items");
+            assertThat(items).noneMatch(item->List.of("kit-with-bat","batting-pads","batting-gloves","football-jersey","match-ball").contains(item.get("slug")));
+        }
+        var finalPage=body(response(get("/api/v1/catalog/public/products").param("q","bats").param("page","3")));
+        assertThat((List<?>)finalPage.get("items")).hasSize(8);
+        for(String q:List.of("SG cricket bat","bat SG cricket"))
+            assertThat(body(response(get("/api/v1/catalog/public/products").param("q",q))).get("total")).isEqualTo(1);
+        assertThat(body(response(get("/api/v1/catalog/public/products").param("q","balls"))).get("total")).isEqualTo(1);
+        assertThat(body(response(get("/api/v1/catalog/public/products").param("q","pads"))).get("total")).isEqualTo(1);
+        assertThat(body(response(get("/api/v1/catalog/public/products").param("q","football"))).get("total")).isEqualTo(2);
+        assertThat(body(response(get("/api/v1/catalog/public/products").param("q","bat").param("sport","football"))).get("total")).isEqualTo(0);
+        String query=response(get("/api/v1/catalog/public/products").param("q","practice"));
+        assertThat(query).isEqualTo(response(get("/api/v1/catalog/public/products").param("q","practice")));
+        UUID exact=add(category,"practice-title","Practice","active","bat");
+        @SuppressWarnings("unchecked") var ranked=(List<Map<String,Object>>)body(response(get("/api/v1/catalog/public/products").param("q","practice"))).get("items");
+        assertThat(ranked.getFirst().get("id")).isEqualTo(exact.toString());
+        jdbc.update("UPDATE products SET status='retired' WHERE id=?",exact);
+        assertThat(body(response(get("/api/v1/catalog/public/products").param("q","practice"))).get("total")).isEqualTo(1);
+        for(String q:List.of("%","_","!","show me a","missing-model"))
+            assertThat(body(response(get("/api/v1/catalog/public/products").param("q",q))).get("total")).isEqualTo(0);
+    }
     @Test void similarRanksDeterministicallyAndExcludesCurrentRetiredAndInactiveParents() throws Exception {
         UUID same=add(category,"same-equipment","Z same equipment","active","bat");
         UUID cross=add(otherCategory,"cross-equipment","A cross sport","active","bat");
