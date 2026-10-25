@@ -228,6 +228,7 @@ def set_history_target(value, *, root: Path = ROOT, project="supersports"):
 
 def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | None = None, project="supersports") -> dict:
     from database_access import configuration
+    version = DEFAULT_VERSION if version is None else version
     environment = os.environ.copy()
     environment.update(load_credentials(root / "devops/.local/bootstrap.env"))
     lock = json.loads((root / "devops/images.lock.json").read_text())
@@ -622,6 +623,12 @@ def wait_status(url: str, expected: int = 200, timeout: int = 120):
 def unit(root=ROOT, project="supersports"):
     run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
          "-s", "devops/tests", "-p", "test_*.py", "-v"], cwd=root)
+    for service in ("analytics-api", "relationship-graph", "health-exporter"):
+        environment = os.environ.copy()
+        environment["PYTHONPATH"] = os.pathsep.join((str(root / "services" / service), str(root / "contracts")))
+        environment["GRAPH_DB_PASSWORD"] = "unit-test-only"
+        run([str(root / ".venv/bin/python"), "-m", "unittest", "discover", "-s",
+             str(root / "services" / service / "tests"), "-v"], environment=environment, cwd=root)
     node_image=json.loads((root / "devops/images.lock.json").read_text())["STOREFRONT_NODE_IMAGE"]
     run(["docker","run","--rm","--mount",f"type=bind,source={root / 'apps/storefront'},target=/workspace,readonly",
          "--workdir","/workspace",node_image,"node","--experimental-strip-types","--test","tests/order-freshness.test.ts"],cwd=root)
@@ -839,7 +846,7 @@ def main(argv=None):
         elif action == "graph-up":
             compose(["--profile", "graph", "--profile", "streaming", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "neo4j", "relationship-graph"], project=project, version=version)
         elif action == "graph-down":
-            compose(["--profile", "graph", "stop", "neo4j", "relationship-graph"], project=project, version=version)
+            compose(["--profile", "graph", "--profile", "streaming", "stop", "neo4j", "relationship-graph"], project=project, version=version)
         elif action == "dashboard-studio-up":
             compose(["--profile", "analytics", "--profile", "dashboards", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "trino", "superset"], project=project, version=version)
         elif action == "dashboard-studio-down":

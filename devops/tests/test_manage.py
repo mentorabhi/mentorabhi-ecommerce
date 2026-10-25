@@ -134,6 +134,22 @@ class ConfigureTests(unittest.TestCase):
 
 
 class CommandTests(unittest.TestCase):
+    def test_graph_down_includes_kafka_dependency_profile(self):
+        from unittest.mock import patch
+        with patch.object(manage, "configure"), patch.object(manage, "compose") as compose:
+            self.assertEqual(manage.main(["graph-down"]), 0)
+        arguments = compose.call_args.args[0]
+        self.assertIn("--profile", arguments)
+        self.assertIn("streaming", arguments)
+        self.assertEqual(arguments[-2:], ["neo4j", "relationship-graph"])
+
+    def test_dockerignore_includes_graph_project_and_shared_event_contract(self):
+        dockerignore=(ROOT/".dockerignore").read_text().splitlines()
+        self.assertIn("!services/relationship-graph/",dockerignore)
+        self.assertIn("!services/relationship-graph/**",dockerignore)
+        self.assertIn("!contracts/",dockerignore)
+        self.assertIn("!contracts/order_events.py",dockerignore)
+
     def test_active_history_target_is_persisted_and_validates_database_group_pair(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pyspark.sql import SparkSession, functions as F, types as T
+from order_events import valid_event
 
 DATA_SCHEMA = T.StructType([
     T.StructField("orderId", T.StringType()), T.StructField("currency", T.StringType()),
@@ -9,6 +10,7 @@ DATA_SCHEMA = T.StructType([
     T.StructField("taxMinor", T.LongType()), T.StructField("shippingMinor", T.LongType()),
     T.StructField("totalMinor", T.LongType()), T.StructField("amountMinor", T.LongType()),
     T.StructField("state", T.StringType()),
+    T.StructField("reasonCode", T.StringType()),
     T.StructField("lines", T.ArrayType(T.StructType([
         T.StructField("skuId", T.StringType()), T.StructField("productId", T.StringType()),
         T.StructField("productTitle", T.StringType()), T.StructField("quantity", T.LongType()),
@@ -43,14 +45,14 @@ def ingest(spark: SparkSession, bootstrap: str, topic: str, starting_offsets: st
               .option("subscribe", topic).option("startingOffsets", starting_offsets)
               .option("endingOffsets", "latest").load())
     parsed = (source.selectExpr("CAST(value AS STRING) AS raw", "topic", "partition", "offset", "timestamp AS kafka_timestamp")
-              .withColumn("cdc", F.from_json("raw", CDC_SCHEMA))
-              .withColumn("event", F.from_json("cdc.after.payload", EVENT_SCHEMA)))
-    valid = parsed.filter(F.col("event.eventId").isNotNull()).select(
+              .withColumn("validContract", F.udf(valid_event,T.BooleanType())("raw"))
+              .withColumn("event", F.from_json("raw", EVENT_SCHEMA)))
+    valid = parsed.filter(F.col("validContract")).select(
         F.col("topic").alias("sourceTopic"), F.col("partition").alias("sourcePartition"),
         F.col("offset").alias("sourceOffset"), F.col("kafka_timestamp").alias("kafkaTimestamp"), "event.eventId", "event.eventType",
         "event.eventVersion", "event.aggregateType", "event.aggregateId", "event.aggregateSequence",
-        "event.occurredAt", F.to_json("event.data").alias("dataJson"))
-    invalid = parsed.filter(F.col("event.eventId").isNull()).select(
+        "event.occurredAt", F.to_json("event.data").alias("dataJson")).dropDuplicates(["eventId"])
+    invalid = parsed.filter(~F.col("validContract")).select(
         F.col("topic").alias("sourceTopic"), F.col("partition").alias("sourcePartition"),
         F.col("offset").alias("sourceOffset"), F.col("kafka_timestamp").alias("kafkaTimestamp")) \
         .withColumn("quarantineReason", F.lit("invalid-or-tombstone-envelope"))
@@ -66,13 +68,15 @@ def ingest(spark: SparkSession, bootstrap: str, topic: str, starting_offsets: st
       sourceTopic,sourcePartition,sourceOffset,kafkaTimestamp,current_timestamp() AS ingestedAt FROM incoming_events
     ) s ON t.eventId=s.eventId
     WHEN NOT MATCHED THEN INSERT *""")
-    spark.sql("""CREATE TABLE IF NOT EXISTS local.supersports.quarantined_records (
+    # Quarantine is a replayable projection of the current contract result,
+    # not a permanent record of historical parser decisions. Rebuild it so
+    # repaired validators cannot leave formerly rejected valid coordinates.
+    spark.sql("DROP TABLE IF EXISTS local.supersports.quarantined_records")
+    spark.sql("""CREATE TABLE local.supersports.quarantined_records (
       sourceTopic STRING, sourcePartition INT, sourceOffset BIGINT, kafkaTimestamp TIMESTAMP, quarantineReason STRING
     ) USING iceberg""")
     invalid.createOrReplaceTempView("incoming_quarantine")
-    spark.sql("""MERGE INTO local.supersports.quarantined_records t USING incoming_quarantine s
-      ON t.sourceTopic=s.sourceTopic AND t.sourcePartition=s.sourcePartition AND t.sourceOffset=s.sourceOffset
-      WHEN NOT MATCHED THEN INSERT *""")
+    spark.sql("INSERT INTO local.supersports.quarantined_records SELECT * FROM incoming_quarantine")
     raw = spark.table("local.supersports.raw_lifecycle")
     confirmed_ids = raw.filter(F.col("eventType") == "OrderConfirmed").select("aggregateId").distinct()
     confirmed_ids.createOrReplaceTempView("confirmed_orders")
@@ -109,7 +113,7 @@ if __name__ == "__main__":
     session = build_session()
     try:
         ingest(session, os.getenv("KAFKA_BOOTSTRAP", "kafka:9092"),
-               os.getenv("ORDER_EVENT_TOPIC", "supersports.public.order_outbox"),
+               os.getenv("ORDER_EVENT_TOPIC", "commerce.order.events.v1"),
                os.getenv("STARTING_OFFSETS", "earliest"))
     finally:
         session.stop()

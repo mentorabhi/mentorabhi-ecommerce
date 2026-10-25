@@ -47,6 +47,14 @@ class ReportsTest(unittest.TestCase):
         connect.assert_called_once()
         cursor.execute.assert_called_once_with("SELECT COUNT(*) AS confirmed_orders WHERE currency='INR'")
 
+    @patch("app.query", return_value=[])
+    def test_top_products_qualifies_columns_shared_with_order_sales(self, query):
+        app.top_products("INR", 365, 5)
+        sql, currency = query.call_args.args
+        self.assertEqual(currency, "INR")
+        for column in ("l.productId", "l.productTitle", "l.quantity", "l.lineTotalMinor", "l.discountMinor"):
+            self.assertIn(column, sql)
+
 
 if __name__ == "__main__":
     unittest.main()

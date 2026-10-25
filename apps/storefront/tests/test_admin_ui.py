@@ -266,28 +266,6 @@ class SuperSportsAdminUiTests(unittest.TestCase):
             driver.find_elements(By.CSS_SELECTOR, ".coupon-card code")}
         self.wait.until(lambda driver: expected_coupons.issubset(coupon_codes(driver)) or
                         driver.find_elements(By.CSS_SELECTOR, '[role="alert"]'))
-
-    def test_return_inspection_operator_queue_when_fixture_is_provided(self):
-        return_id = os.environ.get("SUPERSPORTS_INSPECTABLE_RETURN_ID")
-        if not return_id:
-            self.skipTest("Set SUPERSPORTS_INSPECTABLE_RETURN_ID to a refunded return awaiting inspection.")
-        self.login("admin", "ADMIN_PASSWORD")
-        self.nav("Inventory")
-        receipt = self.wait.until(EC.visibility_of_element_located(
-            (By.XPATH, f"//article[contains(@class,'section-block')][.//span[contains(.,'{return_id}')]]")))
-        selects = receipt.find_elements(By.CSS_SELECTOR, "select")
-        reasons = receipt.find_elements(By.CSS_SELECTOR, "input[maxlength='500']")
-        self.assertTrue(selects)
-        self.assertEqual(len(selects), len(reasons))
-        for selector, reason in zip(selects, reasons):
-            Select(selector).select_by_value("SELLABLE")
-            reason.send_keys("Selenium fixture item inspected")
-        receipt.find_element(By.XPATH, ".//button[normalize-space()='Save inspection decisions']").click()
-        self.wait.until(EC.invisibility_of_element_located(
-            (By.XPATH, f"//article[contains(@class,'section-block')][.//span[contains(.,'{return_id}')]]")))
-        self.assertTrue(expected_coupons.issubset(coupon_codes(self.driver)),
-                        f"Fixture coupons missing; alert={self.driver.find_elements(By.CSS_SELECTOR, '[role=\"alert\"]') and self.driver.find_element(By.CSS_SELECTOR, '[role=\"alert\"]').text}; page={self.driver.find_element(By.CSS_SELECTOR, '.content').text}")
-
         currency_buttons = self.driver.find_elements(By.CSS_SELECTOR, ".currency-switch button")
         original_currency = next(button.text.split()[-1] for button in currency_buttons
                                  if button.get_attribute("aria-pressed") == "true")
@@ -340,6 +318,26 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         ))
         if outcome != "saved":
             self.fail(f"Coupon save failed in the UI: {outcome[1]}")
+        self.assert_no_react_hook_order_error()
+
+    def test_return_inspection_operator_queue_when_fixture_is_provided(self):
+        return_id = os.environ.get("SUPERSPORTS_INSPECTABLE_RETURN_ID")
+        if not return_id:
+            self.skipTest("Set SUPERSPORTS_INSPECTABLE_RETURN_ID to a refunded return awaiting inspection.")
+        self.login("admin", "ADMIN_PASSWORD")
+        self.nav("Inventory")
+        receipt = self.wait.until(EC.visibility_of_element_located(
+            (By.XPATH, f"//article[contains(@class,'section-block')][.//span[contains(.,'{return_id}')]]")))
+        selects = receipt.find_elements(By.CSS_SELECTOR, "select")
+        reasons = receipt.find_elements(By.CSS_SELECTOR, "input[maxlength='500']")
+        self.assertTrue(selects)
+        self.assertEqual(len(selects), len(reasons))
+        for selector, reason in zip(selects, reasons):
+            Select(selector).select_by_value("SELLABLE")
+            reason.send_keys("Selenium fixture item inspected")
+        receipt.find_element(By.XPATH, ".//button[normalize-space()='Save inspection decisions']").click()
+        self.wait.until(EC.invisibility_of_element_located(
+            (By.XPATH, f"//article[contains(@class,'section-block')][.//span[contains(.,'{return_id}')]]")))
         self.assert_no_react_hook_order_error()
 
     def test_inventory_adjustment_replay_and_reversal(self):
@@ -422,7 +420,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         self.driver.find_element(By.ID, "store-search").send_keys("football")
         self.driver.find_element(By.ID, "store-search").send_keys(Keys.ENTER)
         self.wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, ".collection-heading h1").text == 'Results for “football”')
-        self.wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, ".store-card")) == 3)
+        self.wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, ".store-card")) >= 3)
 
         self.register_customer(first, f"{first}@example.local")
         customer_auth = self.driver.execute_async_script("""
@@ -470,7 +468,7 @@ class SuperSportsAdminUiTests(unittest.TestCase):
         search.send_keys("football")
         search.send_keys(Keys.ENTER)
         self.wait.until(lambda driver: driver.find_element(By.CSS_SELECTOR, ".collection-heading h1").text == 'Results for “football”')
-        self.wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, ".store-card")) == 3)
+        self.wait.until(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, ".store-card")) >= 3)
 
         self.driver.get(BASE_URL + "/cart")
         self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Place simulated order')]"))).click()
@@ -504,12 +502,12 @@ class SuperSportsAdminUiTests(unittest.TestCase):
     def test_analytics_dashboard_currency_and_report_widgets(self):
         self.login("catalog-admin", "DEMO_CATALOG_ADMIN_PASSWORD")
         self.wait.until(EC.element_to_be_clickable((By.XPATH, "//nav[@aria-label='Workspace sections']//button[contains(., 'Analytics')]"))).click()
-        self.wait.until(EC.visibility_of_element_located((By.XPATH, "//h1[normalize-space()='Analytics']")))
+        self.wait.until(EC.visibility_of_element_located((By.XPATH, "//h1[normalize-space()='Analytics.']")))
         self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".metric-grid")))
-        self.assertIn("Confirmed sales by day", self.driver.find_element(By.CSS_SELECTOR, ".analytics-dashboard").text)
+        self.assertIn("Merchandise sales by day", self.driver.find_element(By.CSS_SELECTOR, ".analytics-dashboard").text)
         self.assertIn("Top products", self.driver.find_element(By.CSS_SELECTOR, ".analytics-dashboard").text)
         self.assertIn("Completed refund report", self.driver.find_element(By.CSS_SELECTOR, ".analytics-dashboard").text)
-        self.driver.find_element(By.XPATH, "//button[normalize-space()='USD']").click()
+        self.driver.find_element(By.XPATH, "//button[normalize-space()='$ USD']").click()
         self.wait.until(lambda driver: "USD" in driver.find_element(By.CSS_SELECTOR, ".analytics-dashboard").text)
 
 

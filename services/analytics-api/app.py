@@ -74,11 +74,11 @@ def daily_sales(currency: str = Query("INR", min_length=3, max_length=3), days: 
 
 @app.get("/api/reports/top-products")
 def top_products(currency: str = Query("INR", min_length=3, max_length=3), days: int = Query(30, ge=7, le=365), limit: int = Query(10, ge=1, le=50)):
-    return query("""SELECT productId, productTitle, SUM(quantity) AS \"unitsSold\",
-      SUM(lineTotalMinor) AS \"salesMinor\", SUM(discountMinor) AS \"discountsMinor\"
+    return query("""SELECT l.productId, l.productTitle, SUM(l.quantity) AS \"unitsSold\",
+      SUM(l.lineTotalMinor) AS \"salesMinor\", SUM(l.discountMinor) AS \"discountsMinor\"
       FROM lakehouse.supersports.order_lines l JOIN lakehouse.supersports.order_sales s USING (aggregateId)
       WHERE l.currency=? AND s.confirmed AND s.occurredAt >= current_timestamp - INTERVAL '$DAYS' DAY
-      GROUP BY productId,productTitle ORDER BY salesMinor DESC LIMIT $LIMIT""", currency, days=days, limit=limit)
+      GROUP BY l.productId,l.productTitle ORDER BY salesMinor DESC LIMIT $LIMIT""", currency, days=days, limit=limit)
 
 
 @app.get("/api/reports/refunds")
