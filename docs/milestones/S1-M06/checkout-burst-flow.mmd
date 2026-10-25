@@ -1,0 +1,20 @@
+sequenceDiagram
+  participant B as Local burst probe
+  participant I as Inventory API
+  participant O as Orders API
+  participant P as Payment simulator
+  participant F as Fulfillment simulator
+  participant K as Kafka/History
+  participant R as Result report
+
+  B->>I: Read SKU availability and add keyed safety stock if needed
+  B->>O: Submit bounded concurrent unique checkouts
+  O-->>B: Accepted order IDs and request latencies
+  O->>P: Simulated authorize/capture
+  O->>I: Reserve then commit stock
+  O->>F: Schedule simulated fulfillment
+  O->>K: Publish lifecycle outbox events
+  B->>O: Poll each owned order to terminal state
+  B->>I: Verify nonnegative SKU availability
+  B->>K: Verify consumer lag returns to zero
+  B->>R: Persist latency, memory, counts and limits locally
