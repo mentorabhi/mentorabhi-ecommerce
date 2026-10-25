@@ -1,7 +1,15 @@
 # Project status
-Updated: 2026-10-25 02:10 UTC.
+Updated: 2026-10-25 · M06 sustained/retention and rollback acceptance completed.
 
-## Current measured state — Stage 1 consolidated acceptance
+## Current measured state
+
+S1-M01–M10 implementation and the recorded automated local gates are verified within their stated scope. M06's final 15-minute soak accepted 60 unique checkouts plus idempotency replays, with all terminal, exact stock 90→30, acceptance p95 563.58 ms and terminal p95 14.10 s. Thirty memory samples peaked at 5,559.69 MiB; all 16 measured containers stayed running without restart/OOM. Retention stopped an isolated connector/slot and idle group for 900.01 seconds, recovered 120 deferred changes in 11.26 seconds, and replayed 140 records to exactly 80 source rows. An actual confirmation outbox-insert failure proved transaction rollback and recovery (1/1, 51.482 s). Final full retained-source/Kafka/inbox/timeline reconciliation passed for 36,413 events and 18,041 orders, zero errors. Fourteen focused tooling tests and the 111-discovered Devops suite passed (34 live-only skips).
+
+All 20 defined Selenium journeys have passing evidence across the broad and fixture/profile-specific runs. The original owner-run manual checklists remain unchecked; no owner sign-off is implied. The 15-minute windows establish measured local behavior, not maximum traffic, seven-day disk survival or multi-broker HA. See [M06 verification](../milestones/S1-M06/verification.md) and [matrix](../milestones/S1-M06/acceptance-matrix.md).
+
+Six optional UIs/analytics containers were restored after the resource probes; 22 containers are running. Storefront http://localhost:3000, current Admin http://localhost:3000/admin, Kafka UI http://localhost:8091, Grafana http://localhost:3001. New user-requested catalog/review/frontend/credential and OpenTelemetry work expands Stage 1 beyond this verified base; its design intake is underway. Keep future work and owner sign-off distinct from these measured passes.
+
+## Historical consolidation snapshot — 2026-10-25 02:10 UTC
 
 Implementation across S1-M01–M10 is present on local branch `stage1`; release/push still needs the milestone checkpoint commits after verification. Stage 1 is **not yet closed**: automated service, M06 stream/recovery, M07 live post-purchase, M09 restore/ingress and dashboard Selenium checks have passed; M08 reconciliation is still being finished, the broad UI suite still needs fixture-backed execution, and all owner-run manual acceptance checklists remain unchecked.
 

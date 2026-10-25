@@ -68,6 +68,81 @@ class StreamingIntegrationTests(unittest.TestCase):
             time.sleep(1)
         self.fail("Order History consumer did not drain to zero lag before fault injection")
 
+    @unittest.skipUnless(os.environ.get("SUPERSPORTS_OUTBOX_ROLLBACK") == "1",
+                         "Enable only for the UUID-scoped Orders/outbox rollback probe")
+    def test_order_transition_rolls_back_when_outbox_insert_fails(self):
+        from acceptance_probe import sql
+        code, products = manage.request_json("http://127.0.0.1:8081/api/v1/catalog/products?q=football")
+        self.assertEqual(code, 200)
+        sku = products[0]["skus"][0]["id"]
+        inventory = f"http://127.0.0.1:8084/api/v1/inventory/availability/{sku}"
+        code, before = manage.request_json(inventory)
+        self.assertEqual(code, 200)
+        self.assertGreaterEqual(before["available"], 1)
+        code, accepted = manage.request_json("http://127.0.0.1:8086/api/v1/orders/checkout",
+            token=self.customer, method="POST", headers={"Idempotency-Key": "s1-rollback-" + uuid.uuid4().hex},
+            data=json.dumps({"lines": [{"skuId": sku, "quantity": 1}], "couponCode": None}).encode())
+        self.assertEqual(code, 202, accepted)
+        order = str(uuid.UUID(accepted["orderId"]))
+        fault = "s1_rollback_" + uuid.uuid4().hex[:12]
+
+        def snapshot():
+            result = sql(self.project, "orders", f"""SELECT json_build_object(
+                'step',s.current_step,'error',s.last_error_code,'state',o.state,
+                'sequence',(SELECT last_sequence FROM order_event_sequence WHERE aggregate_id=o.id),
+                'events',(SELECT json_agg(json_build_object('sequence',aggregate_sequence,'type',event_type)
+                    ORDER BY aggregate_sequence) FROM order_outbox WHERE aggregate_id=o.id))
+                FROM checkout_saga s JOIN customer_order o ON o.id=s.order_id WHERE o.id='{order}'""")
+            return json.loads(result.stdout.strip())
+
+        try:
+            sql(self.project, "orders", f"""CREATE FUNCTION public.{fault}() RETURNS trigger LANGUAGE plpgsql AS $$
+                BEGIN RAISE EXCEPTION 'S1_ATOMIC_OUTBOX_PROBE'; END $$;
+                CREATE TRIGGER {fault} BEFORE INSERT ON order_outbox FOR EACH ROW
+                WHEN (NEW.aggregate_id='{order}'::uuid AND NEW.event_type='OrderConfirmed')
+                EXECUTE FUNCTION public.{fault}();""")
+            deadline = time.monotonic() + 60
+            while time.monotonic() < deadline:
+                observed = snapshot()
+                if observed["step"] == "CONFIRM" and observed["error"] == "CHECKOUT_STEP_RETRY":
+                    break
+                time.sleep(.25)
+            else:
+                self.fail("Confirmation write fault did not reach a recorded Saga retry")
+            self.assertEqual(observed["state"], "PENDING_PAYMENT")
+            self.assertEqual(observed["sequence"], 1)
+            self.assertEqual(observed["events"], [{"sequence": 1, "type": "OrderAccepted"}])
+            self.wait_for_zero_lag()
+            code, history = manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{order}", token=self.customer)
+            self.assertEqual(code, 200)
+            self.assertEqual((history["state"], history["lastSequence"]), ("PENDING_PAYMENT", 1))
+        finally:
+            sql(self.project, "orders", f"DROP TRIGGER IF EXISTS {fault} ON order_outbox; DROP FUNCTION IF EXISTS public.{fault}();")
+
+        deadline = time.monotonic() + 120
+        while time.monotonic() < deadline:
+            code, result = manage.request_json(f"http://127.0.0.1:8086/api/v1/orders/{order}", token=self.customer)
+            if code == 200 and result.get("state") == "FULFILLMENT_SCHEDULED":
+                break
+            time.sleep(.5)
+        else:
+            self.fail("Order did not recover after the scoped trigger was removed")
+        final = snapshot()
+        self.assertEqual(final["sequence"], 3)
+        self.assertEqual(final["events"], [{"sequence": 1, "type": "OrderAccepted"},
+            {"sequence": 2, "type": "OrderConfirmed"}, {"sequence": 3, "type": "FulfillmentScheduled"}])
+        self.wait_for_zero_lag()
+        code, history = manage.request_json(f"http://127.0.0.1:8089/api/v1/order-history/{order}", token=self.customer)
+        self.assertEqual(code, 200)
+        self.assertEqual((history["state"], history["lastSequence"]), ("FULFILLMENT_SCHEDULED", 3))
+        code, after = manage.request_json(inventory)
+        self.assertEqual(code, 200)
+        self.assertEqual(after["available"], before["available"] - 1)
+        code, payment = manage.request_json(f"http://127.0.0.1:8087/api/v1/internal/checkout/payments/{order}/status",
+                                          token=manage.checkout_worker_token())
+        self.assertEqual(code, 200)
+        self.assertEqual(sum(operation["state"] == "CAPTURED" for operation in payment["operations"]), 1)
+
     @unittest.skipUnless(os.environ.get("SUPERSPORTS_CDC_SNAPSHOT_OVERLAP") == "1",
                          "Enable only for the isolated Debezium snapshot/WAL-overlap acceptance probe")
     def test_initial_snapshot_overlaps_concurrent_wal_changes(self):

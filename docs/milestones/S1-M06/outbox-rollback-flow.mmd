@@ -1,0 +1,16 @@
+sequenceDiagram
+    participant T as Integration probe
+    participant O as Orders API and Saga
+    participant D as Orders database
+    participant H as History
+    T->>O: Accept one synthetic checkout
+    T->>D: Arm UUID-scoped confirmation outbox exception
+    O->>D: Update order and sequence, insert OrderConfirmed
+    D-->>O: Exception rolls transaction back
+    O->>D: Record retry in separate transaction
+    T->>D: Assert PENDING_PAYMENT, accepted event only, sequence 1
+    T->>H: Assert accepted state/sequence after zero lag
+    T->>D: Finally remove trigger and function
+    O->>D: Retry commits confirmation and later fulfillment
+    T->>O: Assert terminal order, single capture, one-unit stock use
+    T->>H: Assert terminal projection and contiguous sequences

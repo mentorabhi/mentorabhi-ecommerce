@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant S as Paced checkout probe
+    participant C as Commerce and History
+    participant R as Retention probe
+    participant P as Disposable PostgreSQL source
+    participant D as Disposable Debezium connector
+    participant K as Disposable Kafka topic/group
+    S->>C: 60 one-unit checkouts over 900 seconds
+    S->>C: Replay keys, poll completion/freshness, sample stock/lag/memory
+    R->>P: Create 20 fixture rows, publication and slot
+    R->>D: Initial snapshot
+    D->>K: 20 records; group checkpoint 20
+    R->>D: Stop connector; wait for inactive slot
+    loop 900-second retention interval
+      R->>P: Commit update + insert every 15 seconds
+      R->>P: Check retained WAL and unchanged confirmed LSN
+      R->>K: Check unchanged bounds and consumer checkpoint
+    end
+    R->>D: Resume connector
+    D->>K: Publish 120 retained changes
+    R->>K: Read saved group and replay all 140 records
+    R->>P: Compare exact folded state; remove owned resources
+    S->>C: Require all terminal, exact stock, owner isolation and zero lag

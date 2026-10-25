@@ -80,7 +80,7 @@ docker stats --no-stream
 
 ## Scope still pending
 
-Automated source/consumer failure-boundary probes, sequence-gap/freshness demonstrations, snapshot/WAL overlap, and the bounded 20-order checkout probe are recorded in [verification](verification.md). Remaining M06 acceptance includes extended WAL/offset retention, sustained/soak load and freshness measurements, and the owner-run manual results. The separate [acceptance matrix](acceptance-matrix.md) records the open gates; keep this guide unchecked until a person completes it.
+Automated source/consumer failure-boundary probes, sequence-gap/freshness demonstrations, snapshot/WAL overlap, state/outbox rollback, the bounded 20-order burst and explicit 15-minute soak/retention windows are recorded in [verification](verification.md). The separate [acceptance matrix](acceptance-matrix.md) records the measured limits. Keep this owner-run guide unchecked until a person completes it; longer production retention or higher traffic is outside the measured local window.
 
 ## Human result
 

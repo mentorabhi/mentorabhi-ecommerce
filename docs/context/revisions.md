@@ -1,6 +1,10 @@
 # Revision history
 Append dated entries with reason, changed artifacts, evidence and remaining work.
 
+## 2026-10-25 — M06 sustained workload, retention and actual transaction rollback
+
+Reviewed new design/diagrams before adding paced checkout, isolated retention and owner-scoped outbox-failure probes. Measured 60 orders/15 minutes, exact idempotency/stock/ownership/projection facts, 900.01-second inactive-slot/idle-group recovery (120 deferred changes in 11.26 seconds), 140-record exact replay, and application state/sequence/outbox rollback with safe retry. Final reconciliation passed 36,413 events / 18,041 orders with zero errors. A separate session review found false-pass and cleanup risks; fixes have 14 focused regressions, and the earlier loaded full-run reports received explicit timing/partition/resource/lifecycle post-audits. Devops discovery passed 111 tests with 34 live-only skips. Optional profiles were restored; manual owner sign-off remains separate. The recorded local acceptance windows replace unbounded 'long retention/soak pending' language without claiming production-scale retention or HA.
+
 ## 2026-10-24 — M07 Unit 1 Payment ledger bounds
 
 Source intake showed that new operation keys could duplicate captures, exceed cumulative captures through refunds, capture after void and reuse one global idempotency key across orders. Reviewed the focused design/diagram first. Added owner-side deterministic ledger rules, full amount/currency capture, positive bounded cumulative refunds, single-decision authorization/void/capture database indexes, order-aware replay and conflict-safe global-key insert. Existing Payment DB preflight found 67 AUTHORIZE and 54 CAPTURE rows with no duplicate operation cardinality; migration V2 applied. Ten Java tests, live API boundary/concurrency/reuse test, and normal checkout regression passed; deployed service readiness UP. M07 remains in progress and M06 gates remain open.
