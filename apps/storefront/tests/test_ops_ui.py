@@ -37,6 +37,15 @@ class OperationsDashboardUiTests(unittest.TestCase):
                    "/d/supersports-service-health/supersports-local-service-health")
         wait.until(EC.visibility_of_element_located((By.XPATH, "//*[contains(., 'SuperSports local service health')]")))
         self.assertIn("Readiness by service", driver.find_element(By.TAG_NAME, "body").text)
+        if os.getenv("SUPERSPORTS_TELEMETRY") == "1":
+            driver.get(os.getenv("SUPERSPORTS_GRAFANA_URL", "http://localhost:3001") +
+                       "/d/supersports-requests/supersports-request-performance")
+            wait.until(EC.visibility_of_element_located((By.XPATH, "//*[contains(., 'Requests per second')]")))
+            text = driver.find_element(By.TAG_NAME, "body").text
+            for title in ("Server errors per second", "Response time p95", "Mean response time"):
+                self.assertIn(title, text)
+            driver.find_element(By.LINK_TEXT, "Explore traces and request logs").click()
+            wait.until(lambda browser: "/explore" in browser.current_url)
 
 
 if __name__ == "__main__":

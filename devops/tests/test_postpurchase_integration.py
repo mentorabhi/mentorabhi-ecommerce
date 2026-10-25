@@ -36,7 +36,7 @@ class PostPurchaseIntegrationTest(unittest.TestCase):
     def order(self):
         status,products=self.call(8081,'catalog/products?q=football')
         self.assertEqual(status,200)
-        product=next(p for p in products if p['slug']=='ss-control-football')
+        product=next(p for p in products if p['skus'])
         sku=product['skus'][0]['id']
         status,_=self.call(8084,'inventory/adjustments',self.admin,'POST',{'skuId':sku,'delta':5,'reason':'Post-purchase acceptance capacity','idempotencyKey':'postpurchase-'+uuid.uuid4().hex})
         self.assertEqual(status,200)

@@ -11,6 +11,7 @@
 - [ ] Use similar-product arrows and keyboard focus on desktop/mobile; cards exclude the current/retired product and open working details.
 - [ ] Perform owner-side Catalog database checks for active product/SKU counts by sport and uniqueness; Pricing/Inventory/Reviews checks for complete currencies, nonnegative stock and published demo provenance. Do not use cross-service private-table joins.
 - [ ] Reopen an older order created before catalog replacement; historical items, currency and money remain unchanged.
+- [ ] Apply REALCR10/REALFB10 to a selected eligible model and an unselected model. Repeat with REALCR10USD/REALFB10USD after switching currency. Check owner-side Pricing coupon product allowlists and confirm discounts apply only to eligible lines. Seeded prices, stock, options and reviews must be labelled simulated.
 
 Date/operator: __________  Outcome: __________  Issues: __________
 

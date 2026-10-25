@@ -51,7 +51,7 @@ class PricingCheckoutRepository {
             if(coupons.isEmpty())throw new QuoteRejectedException("COUPON_INVALID");var row=coupons.getFirst();
             if(!currency.equals(row.get("currency").toString().trim()))throw new QuoteRejectedException("COUPON_CURRENCY_MISMATCH");
             Map<String,Object> rules=Json.readMap((String)row.get("rules"));long eligibleSubtotal=0;
-            for(var entry:lineFacts.entrySet())if(CouponEligibilityRules.eligible(entry.getValue().categorySlug(),rules)){
+            for(var entry:lineFacts.entrySet())if(CouponEligibilityRules.eligible(entry.getValue().productId(),entry.getValue().categorySlug(),rules)){
                 long value=Math.multiplyExact(prices.get(entry.getKey()),entry.getValue().quantity());eligibleSubtotals.put(entry.getKey(),value);eligibleSubtotal=Math.addExact(eligibleSubtotal,value);
             }
             if(eligibleSubtotal<((Number)row.get("minimum_subtotal_minor")).longValue())throw new QuoteRejectedException("COUPON_MINIMUM_NOT_MET");

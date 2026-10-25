@@ -1,0 +1,29 @@
+server:
+  http_listen_port: 3200
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+live_store:
+  max_block_duration: 1m
+  max_block_bytes: 10485760
+  max_live_traces_bytes: 16777216
+  complete_block_concurrency: 1
+backend_scheduler:
+  provider:
+    compaction:
+      compaction:
+        block_retention: 24h
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /var/tempo/wal
+    local:
+      path: /var/tempo/blocks
+querier:
+  max_concurrent_queries: 2
+usage_report:
+  reporting_enabled: false

@@ -240,6 +240,10 @@ def deployment_env(root: Path, version: str = DEFAULT_VERSION, images: dict | No
         environment[key] = lock[key]
     for key in ("STOREFRONT_NODE_IMAGE", "STOREFRONT_NGINX_IMAGE"):
         environment[key] = lock[key]
+    for key in ("OTEL_COLLECTOR_IMAGE", "TEMPO_IMAGE", "LOKI_IMAGE"):
+        environment[key] = lock[key]
+    from telemetry import enabled
+    environment["OTEL_SDK_DISABLED"] = "false" if enabled(root, project) else "true"
     environment["RELEASE_VERSION"] = validated_version(version)
     target = history_target(root, project)
     environment["ORDER_HISTORY_DATABASE_NAME"] = target["database"]
@@ -638,6 +642,8 @@ def wait_status(url: str, expected: int = 200, timeout: int = 120):
 
 def unit(root=ROOT, project="supersports"):
     run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
+         "-s", "data/pipelines/real-catalog/tests", "-v"], cwd=root)
+    run([str(root / ".venv/bin/python"), "-m", "unittest", "discover",
          "-s", "devops/tests", "-p", "test_*.py", "-v"], cwd=root)
     for service in ("analytics-api", "relationship-graph", "health-exporter"):
         environment = os.environ.copy()
@@ -659,7 +665,11 @@ def unit(root=ROOT, project="supersports"):
 
 
 def integration(root=ROOT, project="supersports"):
-    run([str(root / ".venv/bin/python"), str(root / "data/pipelines/catalog-fixtures/import.py")], cwd=root)
+    real_catalog = root / "data/pipelines/real-catalog/manifest.json"
+    if real_catalog.exists():
+        run([str(root / ".venv/bin/python"), str(root / "data/pipelines/real-catalog/import_catalog.py"), str(real_catalog)], cwd=root)
+    else:
+        run([str(root / ".venv/bin/python"), str(root / "data/pipelines/catalog-fixtures/import.py")], cwd=root)
     environment = os.environ.copy()
     environment["SUPERSPORTS_PROJECT"] = validated_project_name(project)
     environment["SUPERSPORTS_INTEGRATION"] = "1"
@@ -810,7 +820,7 @@ def main(argv=None):
     parser.add_argument("action", choices=[
         "doctor", "configure", "validate", "build", "up", "down", "status",
         "unit", "test", "reset", "release", "rollback",
-        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "stream-dlq-fault", "restart", "stream-demo-poison", "stream-replay", "stream-reconcile", "stream-rebuild", "analytics-up", "analytics-run", "analytics-down", "graph-up", "graph-down", "dashboard-studio-up", "dashboard-studio-down", "observability-up", "observability-down", "backup", "restore-drill",
+        "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "stream-dlq-fault", "restart", "stream-demo-poison", "stream-replay", "stream-reconcile", "stream-rebuild", "analytics-up", "analytics-run", "analytics-down", "graph-up", "graph-down", "dashboard-studio-up", "dashboard-studio-down", "observability-up", "observability-down", "telemetry-up", "telemetry-down", "backup", "restore-drill",
     ])
     parser.add_argument("release_version", nargs="?")
     parser.add_argument("--project", default="supersports")
@@ -882,11 +892,18 @@ def main(argv=None):
             superset(running_container("superset"))
         elif action == "dashboard-studio-down":
             compose(["--profile", "dashboards", "stop", "superset"], project=project, version=version)
+        elif action in ("telemetry-up", "telemetry-down"):
+            import telemetry
+            print(json.dumps(telemetry.switch(sys.modules[__name__], root=ROOT, project=project,
+                             version=version, enable=action == "telemetry-up"), indent=2))
         elif action == "observability-up":
             compose(["--profile", "observability", "up", "-d", "--build", "--wait", "--wait-timeout", "180", "health-exporter", "prometheus", "prometheus-ui", "grafana"], project=project, version=version)
             from ui_access import grafana, running_container
             grafana(running_container("grafana"))
         elif action == "observability-down":
+            from telemetry import enabled
+            if enabled(ROOT, project):
+                raise ValueError("Use telemetry-down to disable exporters before stopping request telemetry")
             compose(["--profile", "observability", "stop", "health-exporter", "prometheus", "prometheus-ui", "grafana"], project=project, version=version)
         elif action == "backup":
             import recovery_operations

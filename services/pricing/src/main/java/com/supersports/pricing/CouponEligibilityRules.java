@@ -4,10 +4,13 @@ import java.util.Map;
 
 final class CouponEligibilityRules {
     private CouponEligibilityRules() {}
-    static boolean eligible(String categorySlug,Map<String,Object> rules){
-        Object raw=rules==null?null:rules.get("categorySlugs");
+    static boolean eligible(String productId,String categorySlug,Map<String,Object> rules){
+        return matches(productId,rules==null?null:rules.get("productIds"))
+            && matches(categorySlug,rules==null?null:rules.get("categorySlugs"));
+    }
+    private static boolean matches(String candidate,Object raw){
         if(raw==null)return true;
         if(!(raw instanceof List<?> categories)||categories.isEmpty())return false;
-        return categories.stream().anyMatch(value->categorySlug.equals(value));
+        return categories.stream().anyMatch(value->candidate.equals(value));
     }
 }

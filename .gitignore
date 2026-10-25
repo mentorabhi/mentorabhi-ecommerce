@@ -42,3 +42,5 @@ devops/volumes/
 .vscode/
 *.log
 .compound-engineering/config.local.yaml
+# Sourced photographs are restored from the attributed hash manifest.
+apps/storefront/public/catalog-real/

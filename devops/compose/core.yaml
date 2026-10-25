@@ -1,5 +1,15 @@
 name: supersports
 x-app-environment: &app-environment
+  OTEL_SDK_DISABLED: "${OTEL_SDK_DISABLED:-true}"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_METRIC_EXPORT_INTERVAL: "10000"
+  OTEL_BSP_MAX_QUEUE_SIZE: "512"
+  OTEL_BLRP_MAX_QUEUE_SIZE: "512"
+  OTEL_TRACES_SAMPLER: parentbased_always_on
+  OTEL_INSTRUMENTATION_LOGBACK_APPENDER_EXPERIMENTAL_CAPTURE_MDC_ATTRIBUTES: http.route,http.request.method,http.response.status_code,elapsed_ms
+  OTEL_INSTRUMENTATION_JDBC_STATEMENT_SANITIZER_ENABLED: "true"
+  OTEL_PROPAGATORS: tracecontext
   JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m -XX:MaxMetaspaceSize=160m"
   SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
   SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
@@ -467,6 +477,7 @@ services:
     mem_limit: 768m
     cpus: 1.0
     environment:
+      <<: *app-environment
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx512m -XX:MaxMetaspaceSize=128m"
       SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${ORDER_HISTORY_DATABASE_NAME:-order_history}"
       ORDER_HISTORY_CONSUMER_GROUP: "${ORDER_HISTORY_CONSUMER_GROUP:-order-history-v1}"

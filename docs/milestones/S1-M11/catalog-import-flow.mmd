@@ -1,0 +1,16 @@
+flowchart LR
+    A[Attributed real-model candidates] --> B[Decode photographs and record source hashes]
+    B --> C[Accepted public manifest]
+    B --> D[Ignored local photo bundle]
+    C --> E[Manifest and local asset preflight]
+    D --> E
+    E --> F[Catalog drafts and exact variants]
+    F --> G[Pricing INR and USD books]
+    G --> I[Catalog sourced facts and activation at zero stock]
+    I --> H[Inventory stable initial-adjustment keys]
+    H --> J[Reviews labelled demo seed]
+    J --> K[Replacement completeness gate]
+    K --> L[Retire legacy active fixtures through Catalog]
+    C --> M[Restore exact local photos on a clean host]
+    M --> D
+    L --> N[Consolidated tests after code and data phases]

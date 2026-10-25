@@ -17,6 +17,8 @@ Reference: user-attached `/Users/abhijitkumarsingh/Documents/Screenshot 2026-10-
 - Retire the old fictional active fixtures after replacement data passes checks. Preserve old product/SKU identities, order snapshots, prices/audits and historical records. No destructive database reset is required.
 - Ensure complete INR/USD prices and initial stock before activation. Idempotent imports use stable source/model/variant keys. Repeat import must not duplicate stock movements, products or reviews.
 
+2026-10-25 U3 implementation refinement supersedes the activation ordering in the preceding original design bullet: Inventory requires an active SKU. Create both price books, activate at zero stock, then apply stable initial-stock adjustments. Require full replacement stock/price/assets before legacy retirement. See catalog-import-design.md and catalog-import-flow.mmd; no draft-stock bypass is introduced.
+
 ## APIs and ownership
 
 - Catalog owns product facts, categories, variants, photographic asset keys, paginated browse/detail and bounded similar-product selection. Add direct detail lookup so products beyond the first page open from bookmarks. Similar selection excludes the current/retired model and ranks same equipment type/sport with useful brand/price-independent diversity.

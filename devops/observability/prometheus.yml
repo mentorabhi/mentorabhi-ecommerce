@@ -10,3 +10,6 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ["health-exporter:9108"]
+  - job_name: supersports-requests
+    static_configs:
+      - targets: ["otel-collector:9464"]

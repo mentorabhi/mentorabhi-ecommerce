@@ -1,5 +1,39 @@
 name: supersports
 services:
+  otel-collector:
+    profiles: ["observability"]
+    image: "${OTEL_COLLECTOR_IMAGE:?Use devops/scripts/supersports configure}"
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes: ["./devops/observability/collector.yaml:/etc/otelcol/config.yaml:ro"]
+    mem_limit: 192m
+    cpus: 0.5
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      tempo: {condition: service_started}
+      loki: {condition: service_started}
+    restart: unless-stopped
+  tempo:
+    profiles: ["observability"]
+    image: "${TEMPO_IMAGE:?Use devops/scripts/supersports configure}"
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes: ["./devops/observability/tempo.yaml:/etc/tempo.yaml:ro", "tempo-data:/var/tempo"]
+    mem_limit: 384m
+    cpus: 0.5
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+  loki:
+    profiles: ["observability"]
+    image: "${LOKI_IMAGE:?Use devops/scripts/supersports configure}"
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes: ["./devops/observability/loki.yaml:/etc/loki/local-config.yaml:ro", "loki-data:/loki"]
+    mem_limit: 256m
+    cpus: 0.5
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
   health-exporter:
     profiles: ["observability"]
     build:
@@ -102,6 +136,8 @@ services:
       start_period: 10s
     restart: "no"
 volumes:
+  tempo-data:
+  loki-data:
   prometheus-data:
   grafana-data:
   restore-drill-data:

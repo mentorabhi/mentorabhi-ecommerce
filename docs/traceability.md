@@ -23,6 +23,8 @@ Detailed endpoint/event names, automated test paths and numeric targets will be 
 
 Current additions (2026-10-25): R23–R27 / AE23–AE27 map to docs/milestones/S1-M11/design.md, flow.mmd, implementation-units.md and manual-acceptance.md; U1 separate applications/access and U2 product/review APIs/UX have measured incremental evidence in M11 verification. U3 real catalog/scale and U4 expanded-data/restart/consolidated checks remain pending; AE23–AE27 are not closed solely by the U1/U2 passes. R28 / AE28 maps to S1-M12 intake and requires a reviewed local telemetry design before implementation. M06's final automated finite-window evidence is in its latest verification/matrix: 60-order/900-second soak, 900-second retained-WAL/idle-group recovery, actual state/outbox rollback and exact retained-history reconciliation. Earlier tables below retain their historical checkpoint meanings.
 
+New unverified source: R07/R25 importer and product-scoped coupon rules map to S1-M11/catalog-import-design.md and data/pipelines/real-catalog; R28 maps to reviewed S1-M12/design.md, telemetry-flow.mmd, dependencies.md, ADR 0011, telemetry configuration/lifecycle and Java request filters. Authored tests are pending execution under coding → data → testing. No acceptance row closes from code or dependency metadata alone.
+
 | Requirement / acceptance | Design coverage | Evidence target |
 |---|---|---|
 | R03 / AE02 | India-default address form and server-side state/PIN validation | `design/S1-M04/storefront.md`; Customer tests and manual checklist |
