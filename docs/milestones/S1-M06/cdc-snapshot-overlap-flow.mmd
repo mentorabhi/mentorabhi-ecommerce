@@ -1,0 +1,23 @@
+sequenceDiagram
+  participant T as Integration test
+  participant P as Disposable PostgreSQL DB
+  participant D as Disposable Debezium connector
+  participant K as UUID Kafka topic
+  participant C as Kafka console consumer
+  participant O as Orders connector/topic
+
+  T->>O: Capture production connector, slot and high-water marks
+  T->>P: Create bounded table, seed rows, publication
+  T->>D: Register initial snapshot with unique slot/prefix
+  D->>P: Open consistent snapshot and read table
+  D->>K: Emit snapshot READ records
+  T->>K: Observe partial snapshot high-water
+  T->>P: Update existing keys and insert new keys
+  P-->>D: WAL changes after snapshot position
+  D->>K: Emit overlapping UPDATE/CREATE records
+  C->>K: Read full partition in offset order
+  T->>P: Read authoritative final table
+  T->>T: Fold records and compare final keyed state
+  T->>D: Delete only UUID connector
+  T->>P: Drop only UUID slot/publication/database
+  T->>O: Verify production connector and topic are unchanged
