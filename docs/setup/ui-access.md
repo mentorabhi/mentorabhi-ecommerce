@@ -4,7 +4,7 @@ S1-M11 U1 / R23 / AE23 · 2026-10-25
 
 Every human operational UI uses **admin / admin**, as explicitly requested for this local demo. Customer storefront accounts are separate. Keep all published ports bound to `127.0.0.1`; use `localhost` in the browser for existing OIDC callbacks. No generated infrastructure password belongs in this guide or terminal output.
 
-The separate Admin and the operational logins below have been checked locally. Optional profiles are started selectively on the 16 GB host; a listed URL does not imply its profile is running at every moment. Browser checks covered Admin, Keycloak master, Kafka UI, Prometheus, Trino, Neo4j and Superset; Grafana native credentials were verified by its authenticated API, with existing browser evidence from M09. Normal restart persistence remains an explicit final M11 acceptance check. See [dated verification](../milestones/S1-M11/verification.md).
+The separate Admin and the operational logins below have been checked locally. Optional profiles are started selectively on the 16 GB host; a listed URL does not imply its profile is running at every moment. Current browser checks cover Admin, Keycloak master, Kafka UI, Prometheus, Trino, Neo4j, Superset and Grafana after selective profile restarts. Wait for each complete lifecycle command, including account provisioning, before testing login; container startup alone is not sufficient. The final post-identity-restart gate is recorded in M11 verification. See [dated verification](../milestones/S1-M11/verification.md).
 
 | UI | Browser URL | Login | Configuration/status |
 | --- | --- | --- | --- |

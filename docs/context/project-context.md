@@ -1,9 +1,13 @@
 # SuperSports and Nova — project context
 
-Revision 3 · 2026-10-24 · Source of truth for continuing work.
+Revision 5 · 2026-10-26 · Source of truth for continuing work.
 
 ## Read order
 Read this file, repository AGENTS.md when present, the current milestone, its design review, and the decision log before changing the project. Read requirements/accepted-requirements.md for product constraints. Update context, milestone evidence, and revision history at every meaningful checkpoint.
+
+## Latest engineering checkpoint — 2026-10-26
+
+Stage 1 implementation/data work through M12 is delivered. M11's 216 sourced products/2,160 SKUs, both currencies, 751 DEMO reviews, separate Admin and related shopping UX are deployed. M12 live signal/privacy/fault/lifecycle acceptance is committed as 4620651; the final cross-milestone browser/history gate passed within its recorded finite scope. Follow-up card/banner fixes are 9304c08 and relevant equipment search is a933ed2; final closure documentation records the operational restoration and limits. Read [status](status.md), [Stage 1 acceptance](stage1-completion.md), [M11 evidence](../milestones/S1-M11/verification.md) and [M12 evidence](../milestones/S1-M12/verification.md). Earlier development/source-only snapshots below are historical. Owner manual checklists remain unchecked; Nova is a later stage and host Ollama only.
 
 ## Objective and sources
 Build a realistic local ecommerce platform (SuperSports), then design and implement an Ollama-powered shopping assistant (Nova), for self-learning and teaching intermediate students. Concepts, alternatives, deployment, execution, and failure behavior matter as much as code.

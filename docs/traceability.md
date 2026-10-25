@@ -1,3 +1,27 @@
+# Current Stage 1 traceability
+
+2026-10-25 · Stage 1 local engineering gate complete through M12 and R29/R30 corrections. Owner manual sign-off remains separate. Earlier tables are retained as historical snapshots.
+
+| Requirements | Current delivery and evidence |
+| --- | --- |
+| R01/R02/R09/R18/R25 | Extensible Catalog/administration and sourced replacement: [M11 data](milestones/S1-M11/data-population.md), [verification](milestones/S1-M11/verification.md); 103/113 models, 1,030/1,130 SKUs, prices/stock/photo hashes and replay. R25 supersedes generated active artwork. |
+| R03/R04/R05/R21 | English/India defaults, currencies, customer storefront and identity/ownership isolation: M04/M05 and current M11 unit/contracts/API/Selenium evidence. |
+| R06/R07/R08 | Deterministic checkout/coupons/stock/payment/fulfillment and post-purchase: M05–M07, current core 25/25, post-purchase 3/3 and fixture-backed browser gates in [M11](milestones/S1-M11/verification.md). |
+| R10 | Categorized configuration, validation/revisions and supported activation: M02–M05, current Admin UI/API audit checks. Migration-only adapter limits remain explicit. |
+| R11/R12/R13 | Independent monorepo projects, devops ownership, local Docker/ARM64 profiles and alternate deployment artifacts: M02/M09 plus [M12 resource/lifecycle evidence](milestones/S1-M12/verification.md). No cloud runtime or Ollama container. |
+| R14 | Owner databases, Saga/outbox/Debezium/Kafka, History, graph/lakehouse/reporting: [M06 matrix](milestones/S1-M06/acceptance-matrix.md), [M08 reconciliation](milestones/S1-M08/verification.md), final retained-history gate in Stage 1 acceptance. |
+| R16/R17/R19 | Tests, reviewed designs/editable diagrams, exact compatible pins, context/ADRs/revisions and Git: [design index](../design/README.md) and each milestone's evidence. Independent review-tool limits are recorded. |
+| R20 | Commerce → Nova design → Nova integration: [Stage 1 acceptance](context/stage1-completion.md); next-stage branch/design remains separate. |
+| R22 | Host DBeaver/PostgreSQL access: [database guide](setup/database-access.md), live host-auth/loopback/owner-role checks. GUI owner review remains manual. |
+| R23/R27 | admin/admin operational interfaces and separate frontend origins/themes: [access guide](setup/ui-access.md), M11 selective restart/API/Selenium evidence. Customer/service identities remain separate. |
+| R24/R26 | Ratings/DEMO provenance/verified reviews/moderation/similar products: M11 real PostgreSQL, contract, unit and desktop/mobile browser evidence. |
+| R28 | Local request latency/error metrics, linked traces and safe logs: [M12](milestones/S1-M12/verification.md), five live cases, dashboard values/browser, disable/re-enable and resources. |
+| R29 | Banner removal and card photograph containment: [reviewed design and desktop/mobile red/green evidence](milestones/S1-M11/card-layout-refinement.md); deployed/pushed as 9304c08. |
+| R30 | Search relevance: [reviewed design and unit/PostgreSQL/browser evidence](milestones/S1-M11/search-relevance.md); equipment intent, whole words and stable pagination. |
+| R15 | Nova inference/tools/RAG/approval/evaluations: next-stage scope; host Ollama prerequisite documented, no Nova runtime claimed. |
+
+## Historical traceability snapshots
+
 # Traceability register
 Revision 6 · 2026-10-24. S1-M02 bootstrap and S1-M03 implementation/runtime checks are verified; S1-M03 code is committed. Owner manual acceptance and peak/load memory checks remain pending. S1-M04 has design traceability below; runtime is not implemented.
 

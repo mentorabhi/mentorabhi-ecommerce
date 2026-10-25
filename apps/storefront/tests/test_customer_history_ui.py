@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import unittest
+import uuid
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -122,14 +123,14 @@ class CustomerOrderHistoryUiTests(unittest.TestCase):
     def test_customer_can_create_and_reply_to_owned_support_ticket(self):
         self._login_orders()
         self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR,'a[href="/account#support"]'))).click()
-        subject="Selenium support request"
+        subject="Selenium support request "+uuid.uuid4().hex[:10]
         self.wait.until(EC.visibility_of_element_located((By.NAME,"subject"))).send_keys(subject)
         self.driver.find_element(By.NAME,"message").send_keys("Please explain the local delivery estimate.")
         self.driver.find_element(By.XPATH,"//button[normalize-space()='Create support request']").click()
         self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR,".order-detail")))
         self.assertIn(subject.casefold(),self.driver.find_element(By.CSS_SELECTOR,".order-detail").text.casefold())
         self.driver.find_element(By.CSS_SELECTOR,".order-detail textarea[name='message']").send_keys("Adding a follow-up question.")
-        self.driver.find_element(By.XPATH,"//button[normalize-space()='Send reply']").click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,"//button[normalize-space()='Send reply']"))).click()
         self.wait.until(EC.text_to_be_present_in_element((By.CSS_SELECTOR,".order-detail"),"Adding a follow-up question."))
 
     def test_customer_can_submit_review_for_delivered_purchase(self):

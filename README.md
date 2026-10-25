@@ -7,9 +7,11 @@ See the [design index for all Stage 1 milestones](design/README.md), [current ar
 The [original architecture gallery](architecture/index.html) is preserved as historical planning input; current decisions supersede its cloud and Rufus terminology.
 
 ## Current state
-Stage 1 commerce, simulated checkout/post-purchase, CDC/history, reporting and recovery have recorded automated evidence through M10. M11 catalog/review enhancements and M12 OpenTelemetry are in progress; Nova remains later. See [current status](docs/context/status.md) for measured results and limitations.
+Stage 1 implementation through M12 is delivered: sourced catalog/reviews, separate frontends, simulated commerce, CDC/history, analytics/recovery and local OpenTelemetry. The finite local engineering release gate is complete; Nova remains Stage 2. Owner manual sign-off and independent-review limitations are recorded separately. See [current status](docs/context/status.md) for measured results and limitations.
 
 Storefront: http://localhost:3000. Separate Admin: http://localhost:3002/admin, using the requested local demo login **admin / admin**. Customer accounts remain separate. Operational UI URLs, credentials and optional profiles are in the [access guide](docs/setup/ui-access.md).
+
+Use the [Stage 1 owner test guide](docs/testing/stage1-release-checks.md) for the separate manual service/UI/feature/database checks.
 
 Read [operations](devops/README.md), [setup prerequisites](docs/setup/prerequisites.md), and [original bootstrap evidence](docs/milestones/S1-M02/README.md).
 Start with devops/scripts/supersports doctor, configure, validate and up; then run devops/scripts/supersports test. No host Java or cloud account is needed.
@@ -26,7 +28,7 @@ Runtime dependencies and tested image pins are recorded in their owning projects
 3. Stage 3: Nova integration, grounded chat, approved actions, memory and measured quality.
 
 Initial sports: Cricket and Football. English, INR and Indian addresses by default. Local services only; no hosted model or cloud runtime.
-All infrastructure and operational automation belongs to [devops](devops/README.md). Independent service projects will be added during bootstrap.
+All infrastructure and operational automation belongs to [devops](devops/README.md). Independent service projects live under services/, frontends under apps/, data projects under data/pipelines and public schemas under contracts/.
 
 ## Frontend delivery
 S1-M03: catalog/inventory admin and product assets/content.

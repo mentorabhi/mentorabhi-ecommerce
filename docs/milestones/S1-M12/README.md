@@ -10,7 +10,7 @@ Read the [design](design.md), [editable flow](telemetry-flow.mmd), [dependency p
 
 # S1-M12 — Local request telemetry and logs
 
-2026-10-25 · Requirement intake · R28 / AE28
+2026-10-25 · Local engineering acceptance complete · R28 / AE28
 
 The user's updated requirements/project_requirement.txt explicitly requests OpenTelemetry plus response-time/log visualization. ADR 0009's implemented Prometheus readiness dashboard does not satisfy this follow-up. Plan local instrumentation, a bounded OpenTelemetry pipeline and local metrics/trace/log storage with Grafana; verify official stable compatible versions and ARM64/resource support before implementation.
 
@@ -18,4 +18,4 @@ Required before implementation: reviewed design, editable data flow, dependency/
 
 Coding checkpoint: [reviewed design](design.md), [editable flow](telemetry-flow.mmd), [dependency metadata](dependencies.md), [manual checklist](manual-acceptance.md) and [verification record](verification.md) now exist. Source adds pinned agent integration, safe Java request logging, Collector privacy pipelines, local Tempo/Loki, Grafana data sources/request dashboard and explicit image-preserving telemetry lifecycle. Unit/integration/Selenium cases are authored; no new test/build execution has occurred under the user's coding → data → testing order. Runtime compatibility, configuration parsing, cross-service signal linkage, privacy, restart and memory gates remain open.
 
-Latest testing checkpoint: pinned images and agent are built/deployed, native config parsing passes, five live signal/privacy/cross-service/error/outage/restart cases pass, and Grafana Selenium passes. A 24-container/120-second commerce regression observation peaked at 6,369.28 MiB. Explicit telemetry disable preserved actual images/History target and left all eleven Java services ready. Re-enable/final operations checks and closure documentation remain underway; the original source-only paragraph above is historical.
+Latest testing checkpoint: pinned images and agent are built/deployed, native config parsing passes, five live signal/privacy/cross-service/error/outage/restart cases pass, and Grafana Selenium passes. A 24-container/120-second commerce regression observation peaked at 6,369.28 MiB. Explicit telemetry disable preserved actual images/History target and left all eleven Java services ready. Actual image-preserving re-enable, final dashboard operations checks and closure documentation are recorded in the verification record and Stage 1 acceptance. The intake/source-only paragraphs above preserve the original planning history, not current pending work.

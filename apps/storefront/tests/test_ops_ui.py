@@ -27,12 +27,17 @@ class OperationsDashboardUiTests(unittest.TestCase):
         driver.find_element(By.NAME, "password").send_keys("admin\n")
         # A persisted local Grafana volume may retain the first-run password
         # prompt even though the configured demo credentials authenticate.
-        try:
-            skip = WebDriverWait(driver, 5).until(EC.element_to_be_clickable(
-                (By.XPATH, "//button[normalize-space()='Skip'] | //a[normalize-space()='Skip']")))
-            skip.click()
-        except Exception:
-            pass
+        def signed_in_screen(browser):
+            if not browser.get_cookie("grafana_session"):
+                return False
+            skip = browser.find_elements(By.XPATH, "//button[normalize-space()='Skip'] | //a[normalize-space()='Skip']")
+            if skip and skip[0].is_displayed() and skip[0].is_enabled():
+                return skip[0]
+            return "/login" not in browser.current_url
+        ready = wait.until(signed_in_screen)
+        if ready is not True:
+            ready.click()
+            wait.until(lambda browser: "/login" not in browser.current_url)
         driver.get(os.getenv("SUPERSPORTS_GRAFANA_URL", "http://localhost:3001")+
                    "/d/supersports-service-health/supersports-local-service-health")
         wait.until(EC.visibility_of_element_located((By.XPATH, "//*[contains(., 'SuperSports local service health')]")))
