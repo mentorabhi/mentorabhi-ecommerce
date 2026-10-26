@@ -3,7 +3,7 @@
 All infrastructure, container builds, deployment and operational automation live here. Catalog and Configuration remain independently buildable projects under services/.
 
 ## Prerequisites and startup
-Read [local prerequisites](../docs/setup/prerequisites.md). Use the repository .venv; Java/Maven execute in pinned containers. Docker must be running. Existing host Ollama is a Nova prerequisite and is not part of this Compose profile.
+Read [local prerequisites](../docs/setup/prerequisites.md) and the [complete cross-platform KT/DevOps runbook](../docs/explainers/supersports-stage1-kt.md#7-devops-fresh-machine-setup-startup-and-troubleshooting). Use the repository .venv; Java/Maven execute in pinned containers. Docker must be running. Existing host Ollama is a Nova prerequisite and is not part of this Compose profile.
 
 Run from the repository root:
 ```sh
@@ -22,8 +22,10 @@ Loopback endpoints:
 - Catalog readiness: http://127.0.0.1:8081/actuator/health/readiness
 - Configuration readiness: http://127.0.0.1:8082/actuator/health/readiness
 - Local Keycloak: http://localhost:8180 (bootstrap administrator username bootstrap-admin; password remains in the private local file).
+- Storefront: http://localhost:3000; separate customer self-registration.
+- SuperSports Admin: http://localhost:3002/admin; local operational login admin/admin.
 - Protected APIs: GET /api/v1/catalog/status (customer/catalog-admin), GET /api/v1/configuration (platform-admin).
-There is no storefront or configuration editing UI yet. PostgreSQL has no published host port.
+PostgreSQL host access is optional and uses the configured loopback-only 15432 mapping; see the [DBeaver guide](../docs/setup/database-access.md). Admin's Configuration section edits the owner-operated runtime settings.
 
 The synthetic users customer, catalog-admin and platform-admin use separate generated passwords. The regression script obtains tokens in memory; it never logs credentials/tokens. The password-grant CLI client is a local fixture, not the future browser authentication flow.
 

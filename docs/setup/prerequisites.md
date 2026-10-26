@@ -2,14 +2,14 @@
 Revision 1 · 2026-10-23.
 
 ## Stage 1 commerce/bootstrap
-- 16 GB Mac (ARM64 baseline) or a larger self-hosted machine.
-- Docker Desktop/Engine running, with Compose and at least 4 GiB allocated for this bootstrap; this Mac has about 7.75 GiB allocated. Full future commerce/data/model workloads require separate measurements.
+- 16 GB Mac (ARM64 baseline) or a larger self-hosted machine. Allocate about 8 GiB to Docker when available; the validated host had 7.75 GiB allocated and the full runtime snapshot used about 6.45 GiB. Run heavy optional profiles selectively.
+- Docker Desktop/Engine running, with Compose v2 and at least 4 GiB allocated for the bootstrap profile. Docker memory should be increased for the complete commerce profile.
 - A compatible Python interpreter and repository-local .venv for operational scripts. This checkout uses Python 3.14.7. Do not install project packages globally.
 - Git and initial internet access for pinned image/dependency downloads. Runtime uses local services and does not require cloud accounts.
 - Google Chrome installed on the host for the Selenium UI suite. Selenium Manager downloads the matching ChromeDriver on first test run; runtime services do not need Chrome.
 Java/Maven and all app/dependency workloads for this milestone run in Docker. Host Java, Maven, PostgreSQL, Keycloak, Redis or Kafka installations are unnecessary.
 
-From the repository root:
+For the complete macOS/Windows/Linux fresh-machine instructions and separate Admin/Storefront startup profiles, see the [KT DevOps runbook](../explainers/supersports-stage1-kt.md#7-devops-fresh-machine-setup-startup-and-troubleshooting). From the repository root:
 ```sh
 python3 -m venv .venv
 .venv/bin/python --version
@@ -26,7 +26,7 @@ printf 'ADMIN_PASSWORD=admin\n' > devops/.local/admin-login.env
 chmod 600 devops/.local/admin-login.env
 ```
 
-Customer storefront: `http://localhost:3000`. Admin workspace: `http://localhost:3000/admin`, username `admin`, password `admin`. The ignored file is local-only; the identity provisioning step synchronizes it on each `supersports up`. Infrastructure/database credentials stay in the separate generated bootstrap file.
+Customer storefront: `http://localhost:3000`. Separate Admin workspace: `http://localhost:3002/admin`, username `admin`, password `admin`. The ignored file is local-only; the identity provisioning step synchronizes it on each `supersports up`. Infrastructure/database credentials stay in the separate generated bootstrap file.
 
 Install the pinned UI test dependency in the repository environment:
 

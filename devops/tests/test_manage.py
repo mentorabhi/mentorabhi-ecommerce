@@ -361,6 +361,39 @@ class ReleaseRegistryTests(unittest.TestCase):
             integration.assert_called_once_with(root, "supersports")
 
 
+class ApplicationProfileTests(unittest.TestCase):
+    def test_shared_service_set_excludes_frontends_and_includes_storefront_customer_path(self):
+        self.assertNotIn("admin", manage.SHARED_COMMERCE_SERVICES)
+        self.assertNotIn("storefront", manage.SHARED_COMMERCE_SERVICES)
+        for service in ("postgres", "identity", "catalog", "pricing", "inventory", "configuration",
+                        "customer", "orders", "payment-simulator", "fulfillment-simulator", "reviews", "support"):
+            with self.subTest(service=service):
+                self.assertIn(service, manage.SHARED_COMMERCE_SERVICES)
+
+    def test_app_profile_start_is_shared_then_selected_frontend_and_health(self):
+        from unittest.mock import patch, call
+        for app, port in (("admin", 3002), ("storefront", 3000)):
+            with self.subTest(app=app), patch.object(manage, "provision_databases") as provision_db, \
+                 patch.object(manage, "compose") as compose, \
+                 patch.object(manage, "provision_local_identity") as provision_identity, \
+                 patch.object(manage, "wait_status") as wait_status:
+                manage.app_profile_up(app, project="supersports", version="local")
+                provision_db.assert_called_once_with(root=manage.ROOT, project="supersports", version="local")
+                self.assertEqual(compose.call_count, 2)
+                self.assertEqual(compose.call_args_list[0].args[0][-len(manage.SHARED_COMMERCE_SERVICES):],
+                                 list(manage.SHARED_COMMERCE_SERVICES))
+                self.assertEqual(compose.call_args_list[1].args[0][-1], app)
+                provision_identity.assert_called_once_with(root=manage.ROOT)
+                wait_status.assert_called_once_with(f"http://127.0.0.1:{port}/healthz")
+
+    def test_unknown_app_profile_is_rejected_before_side_effects(self):
+        from unittest.mock import patch
+        with patch.object(manage, "provision_databases") as provision_db:
+            with self.assertRaises(ValueError):
+                manage.app_profile_up("analytics")
+            provision_db.assert_not_called()
+
+
 class DeploymentGateTests(unittest.TestCase):
     def test_negative_gate_requires_the_expected_constraint(self):
         from unittest.mock import patch

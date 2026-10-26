@@ -40,6 +40,10 @@ SERVICES = ("catalog", "configuration", "pricing", "inventory", "customer", "ord
 STREAMING_SERVICES = ("order-history",)
 DEPLOYABLES = (*SERVICES, *STREAMING_SERVICES, "storefront", "admin")
 SERVICE_PORTS = (8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 8092, 8093)
+SHARED_COMMERCE_SERVICES = (
+    "postgres", "identity", "catalog", "configuration", "pricing", "inventory",
+    "customer", "orders", "payment-simulator", "fulfillment-simulator", "reviews", "support",
+)
 DEFAULT_VERSION = "s1-m07"
 TOKEN_URL = "http://127.0.0.1:8180/realms/supersports/protocol/openid-connect/token"
 CUSTOMER_TOKEN_URL = "http://127.0.0.1:8180/realms/supersports-customers/protocol/openid-connect/token"
@@ -291,6 +295,19 @@ def provision_databases(root=ROOT, project="supersports", version=DEFAULT_VERSIO
     command = compose_command(root, project, ["exec", "-T", "postgres", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"])
     command.extend(["-f", "/opt/supersports/provision.sql"])
     run(command, cwd=root)
+
+
+def app_profile_up(app: str, *, root=ROOT, project="supersports", version=DEFAULT_VERSION):
+    """Start the shared commerce dependencies followed by exactly one frontend."""
+    if app not in ("admin", "storefront"):
+        raise ValueError("Select the admin or storefront application.")
+    provision_databases(root=root, project=project, version=version)
+    compose(["up", "-d", "--build", "--wait", "--wait-timeout", "180", *SHARED_COMMERCE_SERVICES],
+            root=root, project=project, version=version)
+    provision_local_identity(root=root)
+    compose(["up", "-d", "--build", "--wait", "--wait-timeout", "180", app],
+            root=root, project=project, version=version)
+    wait_status("http://127.0.0.1:%d/healthz" % (3002 if app == "admin" else 3000))
 
 
 def register_orders_connector(root=ROOT, project="supersports", version=DEFAULT_VERSION):
@@ -823,6 +840,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=[
         "doctor", "configure", "validate", "build", "up", "down", "status",
+        "common-up", "admin-up", "admin-down", "storefront-up", "storefront-down",
         "unit", "test", "reset", "release", "rollback",
         "ui-test", "streaming-up", "streaming-down", "stream-status", "stream-fault", "stream-dlq-fault", "restart", "stream-demo-poison", "stream-replay", "stream-reconcile", "stream-rebuild", "analytics-up", "analytics-run", "analytics-down", "graph-up", "graph-down", "dashboard-studio-up", "dashboard-studio-down", "observability-up", "observability-down", "telemetry-up", "telemetry-down", "backup", "restore-drill",
     ])
@@ -864,6 +882,15 @@ def main(argv=None):
             compose(["up", "-d", "--build", "--force-recreate", "--wait", "--wait-timeout", "180"],
                     project=project, version=version)
             provision_local_identity()
+        elif action == "common-up":
+            provision_databases(project=project, version=version)
+            compose(["up", "-d", "--build", "--wait", "--wait-timeout", "180", *SHARED_COMMERCE_SERVICES],
+                    project=project, version=version)
+            provision_local_identity()
+        elif action in ("admin-up", "storefront-up"):
+            app_profile_up("admin" if action == "admin-up" else "storefront", project=project, version=version)
+        elif action in ("admin-down", "storefront-down"):
+            compose(["stop", "admin" if action == "admin-down" else "storefront"], project=project, version=version)
         elif action == "down":
             compose(["down"], project=project, version=version)
         elif action == "status":
