@@ -1,0 +1,11 @@
+flowchart LR
+  List[54 requested equipment rows] --> Audit[Curated source-key coverage audit]
+  Audit --> Existing[Retain supported existing models]
+  Audit --> Source[Source at least two models for missing rows]
+  Source --> Photos[Original local photo validation and visual review]
+  Photos --> Manifest[Append validated models and realistic fixture options]
+  Existing --> Manifest
+  Manifest --> Import[Catalog / Pricing / Inventory / Reviews owning APIs]
+  Import --> Build[Rebuild local storefront photo bundle]
+  Build --> Verify[Coverage / replay / integration / Selenium]
+  Verify --> Docs[Evidence / owner checklist / commit and push]

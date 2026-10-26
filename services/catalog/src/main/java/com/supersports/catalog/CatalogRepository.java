@@ -40,7 +40,7 @@ class CatalogRepository {
             } else {
                 if(query.equipment()!=null) {
                     where.append(" AND (p.details->>'equipmentType' ~* ? OR (coalesce(p.details->>'equipmentType','')='' AND p.title ~* ?))");
-                    args.add(query.equipmentWords().replace("\\m", "^").replace("\\M", "$")); args.add(query.equipmentWords());
+                    args.add(query.equipmentTypePattern()); args.add(query.equipmentWords());
                 }
                 if(!query.terms().isEmpty()) {
                     where.append(" AND "+searchable+" @@ plainto_tsquery('simple',?)"); args.add(query.terms());

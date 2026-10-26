@@ -1,5 +1,5 @@
 # Accepted requirements
-Revision 5 · 2026-10-25. User decisions override the original planning baseline. IDs are stable; append or supersede rather than silently renumber.
+Revision 6 · 2026-10-26. User decisions override the original planning baseline. IDs are stable; append or supersede rather than silently renumber.
 
 | ID | Requirement | Delivery / acceptance |
 |---|---|---|
@@ -33,6 +33,7 @@ Revision 5 · 2026-10-25. User decisions override the original planning baseline
 | R28 | Add local OpenTelemetry integration with request response-time/error metrics, distributed trace visualization and searchable application logs through open-source tooling. The user's updated requirement file reaffirms this earlier request; it supersedes ADR 0009's health-only scope for the follow-up implementation. | S1-M12; AE28 |
 | R29 | Keep all storefront card photographs, especially tall pads, contained above card text on desktop/mobile. Remove the large promotional banner from storefront pages while retaining the header logo. | 2026-10-25 user revision; S1-M11 follow-up; AE29 |
 | R30 | Storefront search must return relevant equipment: bat/bats excludes kits and batting accessories; ball/balls excludes football apparel. Support whole-word brand/model/sport terms and deterministic relevance before pagination. | 2026-10-25 user revision; S1-M11; AE30 |
+| R31 | Audit all 50 supplied Cricket equipment families plus four maintenance families; add at least two distinct sourced equipment models for every missing family, preserve existing source/history identities, and document exact coverage. | 2026-10-26 user follow-up; S1-M13; AE31 |
 
 ## Actors and initial journeys
 Customer: browse → compare → cart → quote → approve purchase → track → review/return.
@@ -76,6 +77,8 @@ Nova: delegated caller scoped to a signed-in actor, never a privileged bypass.
 - AE29: Real portrait-shaped pad photos fit within their image frames without intersecting card text at desktop and 390px mobile widths. Home/category/search have no promotional banner; the header logo and product navigation remain.
 
 - AE30: Bat/ball/pad queries return matching equipment, plurals and brand/sport combinations work, title/model hits rank ahead of description-only matches, and pagination/counts reflect the same filters.
+
+- AE31: The 54-row curated coverage registry has supported distinct Cricket source-model identities, with at least two models per completed family, genuine reviewed local photos, realistic simulated SKU options/INR-USD prices/stock and labelled DEMO reviews. Existing catalog/history and bat/accessory search distinction remain valid.
 
 ## Non-goals and deferred choices
 

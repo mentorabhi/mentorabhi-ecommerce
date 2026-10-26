@@ -21,6 +21,18 @@ class CatalogSearchTest {
         assertThat(CatalogSearch.parse("bat bag").equipment()).isNull();
         assertThat(CatalogSearch.parse("batting gloves").terms()).isEqualTo("batting");
     }
+    @Test void specificAccessoryIntentPrecedesTheGenericBatAndPreservesBrandTerms() {
+        for(String[] pair:new String[][]{{"SG bat grips","bat-grip"},{"DSC bat oil","bat-oil"},{"bat toe guard","toe-guard"},{"batting tee","batting-tee"},{"bat care kit","bat-care-kit"},{"padded shorts","padded-inners"},{"inner thigh pad","inner-thigh-guard"},{"shin guards","fielding-shin-guards"}}) {
+            var query=CatalogSearch.parse(pair[0]);
+            assertThat(query.equipment()).isEqualTo(pair[1]);
+            assertThat(query.equipmentTypePattern()).contains(pair[1]);
+            assertThat(query.terms()).doesNotContain("bat");
+        }
+        assertThat(CatalogSearch.parse("SG bat grips").terms()).isEqualTo("sg");
+        assertThat(CatalogSearch.parse("bat grip bat oil").equipment()).isNull();
+        assertThat(CatalogSearch.parse("wicketkeeping gloves").terms()).isEqualTo("wicket keeping");
+        assertThat(CatalogSearch.parse("rubber shoes").equipment()).isEqualTo("boots");
+    }
     @Test void handlesCaseWhitespacePunctuationAndEmptyInputWithoutWildcardExpansion() {
         assertThat(CatalogSearch.parse("  BALLS  ").equipment()).isEqualTo("ball");
         assertThat(CatalogSearch.parse("%_!'&").noMatch()).isTrue();

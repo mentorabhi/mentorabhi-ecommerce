@@ -15,3 +15,5 @@ Each checklist covers:
 Use milestone-specific service names, ports, data and actions. Document test credentials by username and the ignored local credential key/file they come from; never place generated passwords or tokens in tracked documentation. Update the guide as the milestone changes, and link it from that milestone's README.
 
 - [S1-M10 — Local analytics dataset](S1-M10/README.md): 1,000 synthetic customers, 100 sellable variants, realistic product photography, and bounded prior-year order history for reports.
+
+- [S1-M13 — Cricket equipment-family expansion](S1-M13/README.md), user follow-up after the Stage 1 release; design, source/coverage audit, owner-API/replay/Selenium evidence and separate manual checks.

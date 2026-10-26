@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-26",
+  "phase": "Source/photo preparation; live import/browser verification recorded separately",
+  "acceptedModels": 96,
+  "originalBaselineModels": 216,
+  "baselineManifestSha256": "dd3dbec2bcb8cc857b44677c33d695f9eaf3c1cc9043384a7d7d371ac9735f96",
+  "mergedManifestSha256": "bd5ba032aa5e46981d939ad0f7754aea14ed8ea86971f75a79a3758fc52075da",
+  "method": "Inspected three browser-rendered original-photo sheets covering 96 new models and an additional complete lower-row sheet. Verified distinct photo hashes across the full 312-model manifest. No image retouching, synthetic substitution or remote runtime image requests.",
+  "excluded": [
+    {
+      "title": "CricHeroes Vintage Cricket Toss Coin CTC01",
+      "sourceUrl": "https://store.cricheroes.com/product/34/cricket-toss-coin",
+      "reason": "Public source-photo redirect returned HTTP 502; excluded and replaced by a distinct Vixen/Bhalla Sports model, not replacement artwork."
+    }
+  ],
+  "sourceLimitations": [
+    "CE54 includes one explicit ball towel and one soft cricket sports towel; the latter source advertises sweat/hand drying, not match-approved ball polishing. No artificial shiner or permission is claimed.",
+    "CE52 contains a separate mallet and a clearly labelled bat-care KIT including sandpaper; no kit component is represented as a separately sold model.",
+    "CE38 includes team and individual water carriers, not a claim of two wheeled drinks trolleys.",
+    "URL slugs with historical years or inherited unrelated names are retained for provenance; actual page title/model/photo determines the listing.",
+    "Prices, stock, SKU option ranges and DEMO reviews are simulated. Source availability, protective certification and warranty are not inferred."
+  ],
+  "imageRights": "Photographs and trademarks remain source-owner property; local educational attribution is not an open licence or ownership claim."
+}

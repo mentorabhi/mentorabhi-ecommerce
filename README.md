@@ -9,7 +9,7 @@ The [original architecture gallery](architecture/index.html) is preserved as his
 The [Stage 1 knowledge-transfer guide](docs/explainers/supersports-stage1-kt.md) maps every service, API, infrastructure component, URL/login and overall flow. Its sanitized runtime inventory distinguishes running services from optional profiles.
 
 ## Current state
-Stage 1 implementation through M12 is delivered: sourced catalog/reviews, separate frontends, simulated commerce, CDC/history, analytics/recovery and local OpenTelemetry. The finite local engineering release gate is complete; Nova remains Stage 2. Owner manual sign-off and independent-review limitations are recorded separately. See [current status](docs/context/status.md) for measured results and limitations.
+Stage 1 implementation through M13 is delivered: sourced catalog/reviews, separate frontends, simulated commerce, CDC/history, analytics/recovery and local OpenTelemetry. The equipment follow-up covers 54 requested Cricket families with 312 total models/2,256 SKUs. The finite local engineering release gate is complete; Nova remains Stage 2. Owner manual sign-off and independent-review limitations are recorded separately. See [current status](docs/context/status.md) for measured results and limitations.
 
 Storefront: http://localhost:3000. Separate Admin: http://localhost:3002/admin, using the requested local demo login **admin / admin**. Customer accounts remain separate. Operational UI URLs, credentials and optional profiles are in the [access guide](docs/setup/ui-access.md).
 

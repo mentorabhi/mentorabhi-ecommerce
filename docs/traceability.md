@@ -18,6 +18,7 @@
 | R28 | Local request latency/error metrics, linked traces and safe logs: [M12](milestones/S1-M12/verification.md), five live cases, dashboard values/browser, disable/re-enable and resources. |
 | R29 | Banner removal and card photograph containment: [reviewed design and desktop/mobile red/green evidence](milestones/S1-M11/card-layout-refinement.md); deployed/pushed as 9304c08. |
 | R30 | Search relevance: [reviewed design and unit/PostgreSQL/browser evidence](milestones/S1-M11/search-relevance.md); equipment intent, whole words and stable pagination. |
+| R31 | All 54 requested Cricket equipment families: [M13 coverage](milestones/S1-M13/coverage.md), [source/owner-API/replay/quote/Selenium evidence](milestones/S1-M13/verification.md); 96 additions, current Cricket 199 models/1,126 SKUs, preserved baseline/history. |
 | R15 | Nova inference/tools/RAG/approval/evaluations: next-stage scope; host Ollama prerequisite documented, no Nova runtime claimed. |
 
 ## Historical traceability snapshots

@@ -51,3 +51,11 @@ The [Stage 1 owner verification guide](../testing/stage1-release-checks.md) link
 Storefront: http://localhost:3000, separate customer account/self-registration. Admin: http://localhost:3002/admin. Grafana: http://localhost:3001. Kafka UI: http://localhost:8091. Enabled operational UIs use **admin/admin**; [access/profile guide](../setup/ui-access.md).
 
 The next stage is Nova requirements/design, tools, evaluation and commerce gap assessment. Start new stage work on a published `stage2` branch. No Nova implementation or owner sign-off is claimed here.
+
+## M13 follow-up acceptance — 2026-10-26
+
+A subsequent user request expanded Stage 1 to 50 Cricket equipment families plus four maintenance families. [M13 coverage](../milestones/S1-M13/coverage.md) and [executed evidence](../milestones/S1-M13/verification.md) establish **54/54** supported families, **96 added source models** and current totals of **312 products/2,256 SKUs**, Cricket **199/1,126**, Football unchanged **113/1,130**, **1,088 published DEMO reviews**. The earlier release counts and test receipts above are historical, not overwritten measurements.
+
+Pipeline units 24/24; Catalog real-PostgreSQL verify 28/28; new owner/photo/replay/quote integration 3/3; full 312-model source regression 4/4; new equipment Selenium 3/3; catalog Selenium 4/4; product-experience three executed passes/one explicit delivered-review-fixture skip. Both frontends were rebuilt to package new photos, with hash checks at each origin. Admin login, restored runtime and exact timing/limitations are in M13 verification. No accepted source baseline model/history was deleted or replaced; stock/price/coupon replay and owned history preservation passed. The cloth/maintenance-kit/carrier interpretations and source availability/rights limits remain explicit. Owner manual checklists remain unchecked; Nova remains next-stage scope.
+
+The M13 Grafana restoration rerun is a separate recorded exception: authenticated access to the provisioned service-health dashboard API returned HTTP 200 after a designed CPU-ceiling increase, but Selenium dashboard checks timed out amid measured host memory reclaim/CPU throttling. This is not counted as an M13 browser pass; see its retained logs and limits in the M13 verification file. Earlier Grafana browser receipts above remain historical Stage 1 evidence.

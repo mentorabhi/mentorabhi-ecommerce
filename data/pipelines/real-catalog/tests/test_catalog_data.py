@@ -56,6 +56,24 @@ class CatalogDataTest(unittest.TestCase):
         self.assertEqual({"1", "2", "3", "4", "5"}, {v["attributes"]["pack"] for v in bags})
         self.assertNotIn("size", bags[0]["attributes"])
 
+    def test_explicit_equipment_type_keeps_bat_accessories_and_training_tee_out_of_bats_and_shirts(self):
+        for title,kind in (("SG Bat Oil","bat-oil"),("Cricket Batting Tee","batting-tee"),("Cricket Bat Toe Guard","toe-guard")):
+            source={"sport":"Cricket","brand":"SG","title":title,"equipmentType":kind,
+                    "sourceUrl":"https://cricketershop.com/products/"+kind,"imageUrl":"https://cdn.shopify.com/test.jpg",
+                    "capturedOn":"2026-10-26","sourcePriceMinor":10000,"sourceCurrency":"INR",
+                    "fixtureOptions":[{"attributes":{"configuration":"As pictured","pack":"1"}}]}
+            model=prepare_model(source,{"sha256":"a"*64,"assetKey":"catalog-real/test.jpg"})
+            self.assertEqual(kind,model["equipmentType"])
+            self.assertEqual(1,len(model["variants"]))
+            self.assertNotIn("size",model["variants"][0]["attributes"])
+    def test_ground_equipment_options_do_not_invent_clothing_sizes_and_reject_duplicates(self):
+        options=[{"attributes":{"configuration":"Heavy roller","pack":"1"}}]
+        result=variants("a"*64,"cricket","roller",25000000,"INR",options)
+        self.assertEqual(1,len(result));self.assertEqual(25000000,result[0]["prices"]["INR"])
+        for invalid in ([],options+options,[{"attributes":{"size":"<unsafe>"}}],[{"attributes":{"configuration":"bad\x00text"}}],[{"attributes":{},"pack":1}],[{"attributes":{"pack":"1"},"pack":0}]):
+            with self.subTest(invalid=invalid),self.assertRaises(ValueError):
+                variants("a"*64,"cricket","roller",10000,"INR",invalid)
+
     def test_default_scale_rejects_small_dataset(self):
         with self.assertRaisesRegex(ValueError, "100 genuine"):
             validate_manifest({"version": 1, "products": [self.model()]})

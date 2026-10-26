@@ -41,11 +41,27 @@ def money(value):
     return int(Decimal(value).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
-def variants(key, sport, kind, base_minor, source_currency):
+def variants(key, sport, kind, base_minor, source_currency, fixture_options=None):
     if type(base_minor) is not int or base_minor <= 0 or source_currency not in ("INR", "USD"):
         raise ValueError("Source fixture prices require positive integer minor units and INR/USD")
     inr = Decimal(base_minor) if source_currency == "INR" else Decimal(base_minor) * DEMO_INR_PER_USD
-    if kind == "ball":
+    if fixture_options is not None:
+        if not isinstance(fixture_options,list) or not 1 <= len(fixture_options) <= 20:
+            raise ValueError("Explicit fixture options must contain 1 to 20 configurations")
+        options=[]
+        seen=set()
+        for option in fixture_options:
+            attributes=option.get("attributes") if isinstance(option,dict) else None
+            pack=option.get("pack",1) if isinstance(option,dict) else None
+            if not isinstance(attributes,dict) or not 1 <= len(attributes) <= 8 or type(pack) is not int or not 1 <= pack <= 100:
+                raise ValueError("Fixture configuration needs bounded attributes and positive pack quantity")
+            if any(not isinstance(k,str) or not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9_-]{0,39}",k)
+                   or not isinstance(v,str) or not 1 <= len(v) <= 100 or any(ord(c)<32 or c in "<>" for c in v) for k,v in attributes.items()):
+                raise ValueError("Fixture configuration attributes must be bounded plain text")
+            identity=tuple(sorted(attributes.items()))
+            if identity in seen:raise ValueError("Duplicate fixture configuration")
+            seen.add(identity);options.append((dict(attributes),pack))
+    elif kind == "ball":
         options = [(dict(pack=str(pack), size=size), pack) for pack in (1, 3, 6, 12, 24) for size in ("Adult", "Youth")]
     elif kind == "gloves" and sport == "football":
         options = [(dict(size=str(size), colour="Source colourway", pack="Pair"), 1) for size in range(4, 14)]
@@ -83,7 +99,9 @@ def prepare_model(source, image):
     if len(title) > 200 or len(source["brand"]) > 120:
         raise ValueError("Source name exceeds catalog bounds")
     name = re.sub(r"[^a-z0-9]+", "-", unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode().lower()).strip("-")
-    kind = equipment(title, source.get("equipmentType", "equipment"))
+    kind = source.get("equipmentType") or equipment(title, "equipment")
+    if not isinstance(kind,str) or not re.fullmatch(r"[a-z][a-z0-9-]{0,79}",kind):
+        raise ValueError("Curated equipment type must be a bounded canonical name")
     model = source.get("model", title)
     return {"sourceKey": key, "sport": sport, "slug": name[:78] + "-" + key[:12], "brand": source["brand"],
             "model": model, "title": title, "equipmentType": kind,
@@ -92,7 +110,7 @@ def prepare_model(source, image):
                        **({"recordId": source["recordId"], "catalogYear": source["catalogYear"], "page": source["pdfImage"]["page"]} if source.get("recordId") else {})},
             "image": {**image, **({"pdfImage": source["pdfImage"]} if source.get("pdfImage") else {"url": source["imageUrl"]}), "altText": title},
             "sourcedFacts": source.get("sourcedFacts", {}),
-            "variants": variants(key, sport, kind, source.get("fixtureBaseMinor", source.get("sourcePriceMinor")), source.get("fixtureCurrency", source.get("sourceCurrency"))),
+            "variants": variants(key, sport, kind, source.get("fixtureBaseMinor", source.get("sourcePriceMinor")), source.get("fixtureCurrency", source.get("sourceCurrency")), source.get("fixtureOptions")),
             "reviewsPerProduct": 3 + int(key[0], 16) % 2}
 
 

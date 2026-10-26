@@ -120,6 +120,15 @@ class CatalogBoundaryTest {
         for(String q:List.of("%","_","!","show me a","missing-model"))
             assertThat(body(response(get("/api/v1/catalog/public/products").param("q",q))).get("total")).isEqualTo(0);
     }
+    @Test void compoundAccessoryQueriesFindAccessoriesWithoutLeakingThemIntoBatSearch() throws Exception {
+        add(category,"sg-grip","SG Cricket Bat Grip","active","bat-grip");
+        add(category,"dsc-oil","DSC Linseed Cricket Bat Oil","active","bat-oil");
+        add(category,"practice-tee","Cricket Batting Tee","active","batting-tee");
+        for(String q:List.of("bat grip","bat grips","bat oil","linseed oil","batting tee"))
+            assertThat(body(response(get("/api/v1/catalog/public/products").param("q",q))).get("total")).isEqualTo(1);
+        assertThat(body(response(get("/api/v1/catalog/public/products").param("q","bat"))).get("total")).isEqualTo(55);
+        assertThat(body(response(get("/api/v1/catalog/public/products").param("q","missingbrand bat grip"))).get("total")).isEqualTo(0);
+    }
     @Test void similarRanksDeterministicallyAndExcludesCurrentRetiredAndInactiveParents() throws Exception {
         UUID same=add(category,"same-equipment","Z same equipment","active","bat");
         UUID cross=add(otherCategory,"cross-equipment","A cross sport","active","bat");

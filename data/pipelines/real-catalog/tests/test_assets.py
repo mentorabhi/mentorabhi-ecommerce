@@ -38,6 +38,14 @@ class PhotographValidationTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 local_path({"assetKey": key})
 
+    def test_new_supplier_photos_do_not_expand_to_arbitrary_hosts_or_failed_cloud_redirects(self):
+        for host in ('www.ecbacoshop.co.uk','www.cricket-hockey.com','kdsport.com.au','media.newitts.com'):
+            allowed('https://'+host+'/public-model.jpg')
+            with self.assertRaises(ValueError):allowed('https://'+host+'.evil.invalid/model.jpg')
+        for url in ('https://pmkyfapxy3.execute-api.ap-south-1.amazonaws.com/prod/resize',
+                    'https://media.cricheroes.in/dressing_room/coin_product_img_1.png'):
+            with self.assertRaises(ValueError):allowed(url)
+
     def test_html_and_svg_are_not_photographs(self):
         from PIL import UnidentifiedImageError
         for content in (b"<html>Unavailable</html>", b'<svg xmlns="http://www.w3.org/2000/svg"></svg>'):

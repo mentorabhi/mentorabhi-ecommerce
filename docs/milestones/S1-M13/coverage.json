@@ -1,0 +1,494 @@
+{
+  "complete": true,
+  "requirements": [
+    {
+      "id": "CE01",
+      "group": "Batting Gear",
+      "label": "Cricket bat (willow)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE02",
+      "group": "Batting Gear",
+      "label": "Batting gloves",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE03",
+      "group": "Batting Gear",
+      "label": "Batting pads (leg guards)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE04",
+      "group": "Batting Gear",
+      "label": "Helmet (with faceguard/grille)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE05",
+      "group": "Batting Gear",
+      "label": "Thigh guard",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE06",
+      "group": "Batting Gear",
+      "label": "Arm guard (forearm guard)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE07",
+      "group": "Batting Gear",
+      "label": "Chest guard",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE08",
+      "group": "Batting Gear",
+      "label": "Abdominal guard (box)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE09",
+      "group": "Batting Gear",
+      "label": "Inner thigh guard",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE10",
+      "group": "Batting Gear",
+      "label": "Elbow guard",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE11",
+      "group": "Batting Gear",
+      "label": "Bat grip",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE12",
+      "group": "Batting Gear",
+      "label": "Bat toe guard",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE13",
+      "group": "Batting Gear",
+      "label": "Batting inners (padded undergarments)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE14",
+      "group": "Bowling and Fielding Gear",
+      "label": "Cricket ball (red, leather)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE15",
+      "group": "Bowling and Fielding Gear",
+      "label": "White cricket ball (limited-overs)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE16",
+      "group": "Bowling and Fielding Gear",
+      "label": "Pink cricket ball (day-night Tests)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE17",
+      "group": "Bowling and Fielding Gear",
+      "label": "Practice/tennis ball",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE18",
+      "group": "Bowling and Fielding Gear",
+      "label": "Shin guards (fielding)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE19",
+      "group": "Bowling and Fielding Gear",
+      "label": "Fielding gloves",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE20",
+      "group": "Bowling and Fielding Gear",
+      "label": "Catching gloves (slip fielding)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE21",
+      "group": "Wicketkeeping Gear",
+      "label": "Wicketkeeping gloves",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE22",
+      "group": "Wicketkeeping Gear",
+      "label": "Wicketkeeping inner gloves",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE23",
+      "group": "Wicketkeeping Gear",
+      "label": "Wicketkeeping pads",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE24",
+      "group": "Wicketkeeping Gear",
+      "label": "Wicketkeeping helmet",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE25",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Stumps",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE26",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Bails",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE27",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Wicket set/stump stand",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE28",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Boundary rope",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE29",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Sight screens",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE30",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Pitch covers",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE31",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Roller (heavy and light)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE32",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Pitch marker/crease markers",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE33",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Scoreboard",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE34",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Umpire’s counter",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE35",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Umpire’s coat/hat",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE36",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Umpire’s light meter",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE37",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Match coins (for the toss)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE38",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Drinks trolley/water carrier",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE39",
+      "group": "Apparel and Footwear",
+      "label": "Cricket shoes (spiked)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE40",
+      "group": "Apparel and Footwear",
+      "label": "Rubber-soled cricket shoes",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE41",
+      "group": "Apparel and Footwear",
+      "label": "Cricket whites (trousers)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE42",
+      "group": "Apparel and Footwear",
+      "label": "Cricket shirts/jerseys",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE43",
+      "group": "Apparel and Footwear",
+      "label": "Sweater/vest",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE44",
+      "group": "Apparel and Footwear",
+      "label": "Cricket cap/sun hat",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE45",
+      "group": "Apparel and Footwear",
+      "label": "Sunscreen/zinc cream",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE46",
+      "group": "Practice and Training Gear",
+      "label": "Cricket kit bag",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE47",
+      "group": "Practice and Training Gear",
+      "label": "Practice nets",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE48",
+      "group": "Practice and Training Gear",
+      "label": "Bowling machine",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE49",
+      "group": "Practice and Training Gear",
+      "label": "Batting tee",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE50",
+      "group": "Practice and Training Gear",
+      "label": "Slip cradle/catching trainer",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE51",
+      "group": "Bonus Maintenance Items",
+      "label": "Bat oil and linseed oil",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE52",
+      "group": "Bonus Maintenance Items",
+      "label": "Bat mallet and sandpaper",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE53",
+      "group": "Bonus Maintenance Items",
+      "label": "Anti-scuff sheet (bat protection)",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    },
+    {
+      "id": "CE54",
+      "group": "Bonus Maintenance Items",
+      "label": "Ball shiner/polish cloth",
+      "models": 2,
+      "minimumModels": 2,
+      "missingModels": 0,
+      "complete": true
+    }
+  ],
+  "coveredFamilies": 54,
+  "totalFamilies": 54,
+  "missingModels": 0
+}

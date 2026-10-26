@@ -1,0 +1,979 @@
+{
+  "version": 1,
+  "requestedOn": "2026-10-26",
+  "scope": "50 main equipment families plus 4 maintenance families; distinct sourced Cricket models, not SKU options",
+  "requirements": [
+    {
+      "id": "CE01",
+      "group": "Batting Gear",
+      "label": "Cricket bat (willow)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "11776bf72c6b3ccd5a9c017cf93c173e22c2255c4c013afaf19ebd358c4674af",
+          "sourceUrl": "https://cricketershop.com/products/gortonshire-armour-kashmir-willow-cricket-bat-size-sh",
+          "evidence": "Accepted source model Gortonshire Armour Kashmir Willow Cricket Bat Size SH identifies this requested equipment; the retained photograph depicts the model."
+        },
+        {
+          "sourceKey": "0d04c4889e300c2ddf89cfff93290703e516887ec75d7a12f3264ad260d4ff96",
+          "sourceUrl": "https://cricketershop.com/products/mrf-champ-kashmir-willow-cricket-bat-size",
+          "evidence": "Accepted source model MRF Champ Kashmir Willow Cricket Bat identifies this requested equipment; the retained photograph depicts the model."
+        }
+      ]
+    },
+    {
+      "id": "CE02",
+      "group": "Batting Gear",
+      "label": "Batting gloves",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "b444dff139af95dd599e1d5cfedc6aa14f656b29cd057b096f79be71b6685512",
+          "sourceUrl": "https://cricketershop.com/products/bas-vampire-player-edition-cricket-batting-gloves-mens-size-right-and-left-handed",
+          "evidence": "Accepted source model BAS Vampire Player Edition Cricket Batting Gloves Adult Size Right and Left Handed identifies this requested equipment; the retained photograph depicts the model."
+        },
+        {
+          "sourceKey": "b13c9063b7308dddac7b822f9ca07db7a2e2253ce602882ab50249f752ae1352",
+          "sourceUrl": "https://cricketershop.com/products/dsc-condor-motion-cricket-batting-gloves",
+          "evidence": "Accepted source model DSC Condor Motion Cricket Batting Gloves identifies this requested equipment; the retained photograph depicts the model."
+        }
+      ]
+    },
+    {
+      "id": "CE03",
+      "group": "Batting Gear",
+      "label": "Batting pads (leg guards)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "c9b449c93632ab48066175e2ce203eb446442234505972c49173575fe1d34463",
+          "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=28",
+          "evidence": "Accepted source model DSC Bull 31 Batting Pads identifies this requested equipment; the retained photograph depicts the model."
+        },
+        {
+          "sourceKey": "bca474f0f73182c1bc5c584c91090d7a3836647664e33a3e6deae15d68064b97",
+          "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=32",
+          "evidence": "Accepted source model DSC Flip 2.0 Batting Pads identifies this requested equipment; the retained photograph depicts the model."
+        }
+      ]
+    },
+    {
+      "id": "CE04",
+      "group": "Batting Gear",
+      "label": "Helmet (with faceguard/grille)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "332faddab9c1fd321978af4f879dceb4db22baa38e53b4ba9a0c4bffdbdf2733",
+          "sourceUrl": "https://cricketershop.com/products/forma-little-master-mst-cricket-helmet",
+          "evidence": "Accepted source model Forma Little Master MST Cricket Helmet identifies this requested equipment; the retained photograph depicts the model."
+        },
+        {
+          "sourceKey": "daf30c209024b60e4155f744c4cbe4f24f40e5ba574c88c4febf0edf41f9475c",
+          "sourceUrl": "https://cricketershop.com/products/gray-nicolls-ultimate-360-cricket-helmet-size",
+          "evidence": "Accepted source model Gray Nicolls Ultimate 360 Cricket Helmet identifies this requested equipment; the retained photograph depicts the model."
+        }
+      ]
+    },
+    {
+      "id": "CE05",
+      "group": "Batting Gear",
+      "label": "Thigh guard",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "afb17a297465f20c4af9fd97bdcc2a77ba6ad7d23ee1d1caa02ef02612f99808",
+          "sourceUrl": "https://cricketershop.com/products/kookaburra-players-cricket-batting-thigh-guard-pad-mens-size",
+          "evidence": "Supplier product title and description identify Kookaburra Players Cricket Batting Thigh Guard Pad for the requested Thigh guard."
+        },
+        {
+          "sourceKey": "03f5fe525203924a1eecc37afd85212e66cca96d2113f0824a014464724fc1f8",
+          "sourceUrl": "https://cricketershop.com/products/sg-test-cricket-batting-thigh-guard-pad-boys",
+          "evidence": "Supplier product title and description identify SG Test Cricket Batting Thigh Guard Pad for the requested Thigh guard."
+        }
+      ]
+    },
+    {
+      "id": "CE06",
+      "group": "Batting Gear",
+      "label": "Arm guard (forearm guard)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "9e9db231786b6d8aa2623517d127e5d61205113d0abb28b2aa1106a19a2824a8",
+          "sourceUrl": "https://cricketershop.com/products/shrey-legacy-cricket-batting-arm-guard",
+          "evidence": "Supplier product title and description identify Shrey Legacy Cricket Batting Arm Guard for the requested Arm guard (forearm guard)."
+        },
+        {
+          "sourceKey": "43449b68b8bac85517cc9a09ceea2eeb1c9ea23789050d5121274a4f1998c86c",
+          "sourceUrl": "https://cricketershop.com/products/sg-club-cricket-batting-arm-guard",
+          "evidence": "Supplier product title and description identify SG Club Cricket Batting Arm Guard for the requested Arm guard (forearm guard)."
+        }
+      ]
+    },
+    {
+      "id": "CE07",
+      "group": "Batting Gear",
+      "label": "Chest guard",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "1ad9082a377b068357e3fdf43049dfb37c1c1f1fde263b66b5850d711ab99c3f",
+          "sourceUrl": "https://cricketershop.com/products/ss-test-cricket-batting-chest-guard-mens-size",
+          "evidence": "Supplier product title and description identify SS Test Cricket Batting Chest Guard Mens Size for the requested Chest guard."
+        },
+        {
+          "sourceKey": "afef663740e1bc5ed4960a41ac656216c0e86fd128ff0dd0d6b3f703587471c8",
+          "sourceUrl": "https://cricketershop.com/products/sf-excel-cricket-batting-chest-guard-size-mens",
+          "evidence": "Supplier product title and description identify SF Excel Cricket Batting Chest Guard Size for the requested Chest guard."
+        }
+      ]
+    },
+    {
+      "id": "CE08",
+      "group": "Batting Gear",
+      "label": "Abdominal guard (box)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "554cc03f26ffa18148891216ebac1432d33b65558d0671eb424d6dd27aa90125",
+          "sourceUrl": "https://cricketershop.com/products/sg-profile-cricket-abdominal-guard-mens-and-youth",
+          "evidence": "Supplier product title and description identify SG Profile Cricket Abdominal Guard Mens and Youth for the requested Abdominal guard (box)."
+        },
+        {
+          "sourceKey": "e4f28315e5082445222723c0d8ecb02625d9854b497652266517f4b2dfe6a32a",
+          "sourceUrl": "https://cricketershop.com/products/sg-tournament-cricket-abdominal-guard",
+          "evidence": "Supplier product title and description identify SG Tournament Cricket Abdominal Guard for the requested Abdominal guard (box)."
+        }
+      ]
+    },
+    {
+      "id": "CE09",
+      "group": "Batting Gear",
+      "label": "Inner thigh guard",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "49c08f568e5a9f5359aeb3662bcfc1fcf7feb397071aa6bc7e77bf38d0a0a645",
+          "sourceUrl": "https://cricketershop.com/products/sg-radix-cricket-batting-inner-thigh-guard-pad-mens",
+          "evidence": "Supplier product title and description identify SG Radix Cricket Batting Inner Thigh Guard Pad Adult for the requested Inner thigh guard."
+        },
+        {
+          "sourceKey": "e0d9eb1a36fb5566bded6fbb5d617eb81c35741f3a520609a0ecef7675c4a0d2",
+          "sourceUrl": "https://kookaburrasport.co.in/products/kookaburra-inner-thigh-pad-pro-6-0",
+          "evidence": "Kookaburra India lists Pro 6.0 specifically as an inner thigh pad, distinct from outer thigh guards."
+        }
+      ]
+    },
+    {
+      "id": "CE10",
+      "group": "Batting Gear",
+      "label": "Elbow guard",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "bdb82a8b440e3fd7bbc1790efb5bf434fe0c132d61f1e0d569b975cccf035c63",
+          "sourceUrl": "https://cricketershop.com/products/sg-super-test-cricket-batting-elbow-guard-mens",
+          "evidence": "Supplier product title and description identify SG Super Test Cricket Batting Elbow Guard for the requested Elbow guard."
+        },
+        {
+          "sourceKey": "09a1731082b7dbf218e1e3ab4ebff4ba2c5041c8e76e1c5a3c2c72b7941a52b4",
+          "sourceUrl": "https://cricketershop.com/products/ss-player-cricket-elbow-guard-size",
+          "evidence": "Supplier product title and description identify SS Player Cricket Elbow Guard for the requested Elbow guard."
+        }
+      ]
+    },
+    {
+      "id": "CE11",
+      "group": "Batting Gear",
+      "label": "Bat grip",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "42d36af071870213a0bf42c8c72197025c3522aa022b3ec7d5434eeba8f547c8",
+          "sourceUrl": "https://cricketershop.com/products/sg-chevtech-cricket-bat-handle-grip-for-size-sh-3pcs",
+          "evidence": "Supplier product title and description identify SG CHEVTECH Cricket Bat Handle Grip for Size SH (3Pcs) for the requested Bat grip."
+        },
+        {
+          "sourceKey": "1ca6f3d9f9849f2a04570d28a51b1756a520403ebef7442935b946b8165ee7c5",
+          "sourceUrl": "https://cricketershop.com/products/sf-tringo-cricket-bat-grip-single",
+          "evidence": "Supplier product title and description identify SF Tringo Cricket Bat Grip Single for the requested Bat grip."
+        }
+      ]
+    },
+    {
+      "id": "CE12",
+      "group": "Batting Gear",
+      "label": "Bat toe guard",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "a24dfb66bfadd197187d869ea8c6e9d2daa90bb37ca6e9df49fb512503af7ae5",
+          "sourceUrl": "https://cricketdirect.co.uk/products/gray-nicolls-protectoe",
+          "evidence": "Supplier product title and description identify Gray-Nicolls Protectoe for the requested Bat toe guard."
+        },
+        {
+          "sourceKey": "178371472e5f51b40bc408b32d7b7a628c921f8eea295b31035b8010b3dcff06",
+          "sourceUrl": "https://cricketdirect.co.uk/products/kookaburra-toe-protector",
+          "evidence": "Supplier product title and description identify Kookaburra Toe Protector for the requested Bat toe guard."
+        }
+      ]
+    },
+    {
+      "id": "CE13",
+      "group": "Batting Gear",
+      "label": "Batting inners (padded undergarments)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "ae643b04a8d1176e0e720b222f100e1166931171329324164fe6c2ca95bd7616",
+          "sourceUrl": "https://www.cricket-hockey.com/en/gm-909-protective-shorts-2020",
+          "evidence": "Supplier lists GM 909 protective cricket shorts as padded batting undergarments; the dated URL slug differs from the current displayed 2026 range."
+        },
+        {
+          "sourceKey": "f6d7c66c10e3bd63c3a9d5f1e68608d043cd6a5414444a7a458aea62f7cb624f",
+          "sourceUrl": "https://www.cricket-hockey.com/en/kookaburra-protective-shorts-inc-padding-2022",
+          "evidence": "Supplier explicitly lists the version INCLUDING padding; the separate no-padding shorts are excluded from coverage. URL year and displayed range year are preserved as source history."
+        }
+      ]
+    },
+    {
+      "id": "CE14",
+      "group": "Bowling and Fielding Gear",
+      "label": "Cricket ball (red, leather)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "a7718a80890b2a51364d8ecc313d7788fc1bd3f12edb7a472b5e8d6943fb5a2a",
+          "sourceUrl": "https://cricketershop.com/products/gortonshire-club-cricket-ball-red",
+          "evidence": "Accepted source model Gortonshire Club Cricket Ball Red identifies this requested equipment; the retained photograph depicts the model."
+        },
+        {
+          "sourceKey": "0070397383d8ead39c2f7ee024010a708c665eaf350981344486dc6740d62945",
+          "sourceUrl": "https://cricketershop.com/products/gortonshire-leather-heavy-cricket-ball-250-300-grams-copy",
+          "evidence": "Accepted source model Gortonshire Leather Heavy Cricket Ball Red 250-300 Grams identifies this requested equipment; the retained photograph depicts the model."
+        }
+      ]
+    },
+    {
+      "id": "CE15",
+      "group": "Bowling and Fielding Gear",
+      "label": "White cricket ball (limited-overs)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "042ee91f1ce1c9db6b75db5c411c2d6e26825d6b520538d6d5209d2677394ac7",
+          "sourceUrl": "https://cricketershop.com/products/kookaburra-turf-white-official-odi-and-t20-cricket-ball",
+          "evidence": "Supplier product title and description identify Kookaburra Turf White Official ODI and T20 Cricket Ball for the requested White cricket ball (limited-overs)."
+        },
+        {
+          "sourceKey": "495735685511912a20dbeeb2e4ccb1c702f8207d1e334b7a614156695463449e",
+          "sourceUrl": "https://cricketershop.com/products/sg-test-le-cricket-ball-colour-white",
+          "evidence": "Supplier product title and description identify SG Test LE Cricket Ball Colour White for the requested White cricket ball (limited-overs)."
+        }
+      ]
+    },
+    {
+      "id": "CE16",
+      "group": "Bowling and Fielding Gear",
+      "label": "Pink cricket ball (day-night Tests)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "0d61a567f6b6c7afe96c3ad9323971fa4f08f7cee11060af167ed15f9c45c5c9",
+          "sourceUrl": "https://cricketershop.com/products/kookaburra-turf-pink-official-test-cricket-ball",
+          "evidence": "Supplier product title and description identify Kookaburra Turf Pink Official Test Cricket Ball for the requested Pink cricket ball (day-night Tests)."
+        },
+        {
+          "sourceKey": "2a971d6dbbfe9a5cac7981a8ff2cdf72edfcd7f0e10336b5366a2a157fa587cb",
+          "sourceUrl": "https://cricketershop.com/products/sg-test-le-cricket-ball-pink",
+          "evidence": "Supplier product title and description identify SG Test LE Cricket Ball Pink for the requested Pink cricket ball (day-night Tests)."
+        }
+      ]
+    },
+    {
+      "id": "CE17",
+      "group": "Bowling and Fielding Gear",
+      "label": "Practice/tennis ball",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "a432a62ef63b1927f157204f3eff107c1fafcbab89c36e017305bf8250d0177c",
+          "sourceUrl": "https://cricketershop.com/products/shrey-flipper-cricket-tennis-ball-green-pack-of-12",
+          "evidence": "Supplier product title and description identify Shrey Flipper Cricket Tennis Ball Green Pack Of 12 for the requested Practice/tennis ball."
+        },
+        {
+          "sourceKey": "823d7fc4dfa5e78dd7c1c96fb6cbced11d8f9b0cd07cc5d1f16763dc4a9d1015",
+          "sourceUrl": "https://cricketershop.com/products/nivia-ct-3812-cricket-hard-tennis-ball",
+          "evidence": "Supplier product title and description identify Nivia CT 3812 Cricket Hard Tennis Ball for the requested Practice/tennis ball."
+        }
+      ]
+    },
+    {
+      "id": "CE18",
+      "group": "Bowling and Fielding Gear",
+      "label": "Shin guards (fielding)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "f42fffddafeeab22197eb67173e7ee0e0576f9ee143559198490c118a8d7b908",
+          "sourceUrl": "https://www.cricketarabia.com/products/ca-fielding-pads",
+          "evidence": "Supplier identifies CA moulded shin guards for close fielders, worn beneath trousers; not generic batting pads."
+        },
+        {
+          "sourceKey": "be8b6117dece71e53f33d87a11a6aebea4227083ba8513845396cdec017821d3",
+          "sourceUrl": "https://sjsports.com.au/products/ss-players-fielding-shin-guard",
+          "evidence": "Supplier explicitly identifies SS Players Fielding shin guard; retained original SS product photograph."
+        }
+      ]
+    },
+    {
+      "id": "CE19",
+      "group": "Bowling and Fielding Gear",
+      "label": "Fielding gloves",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "2ed52cc667fe2f3e079edc92a3122e6ae5d6787a9ae05bdc9f142a0e2d1beaed",
+          "sourceUrl": "https://cricketdirect.co.uk/products/aero-fielding-practice-gloves",
+          "evidence": "Supplier product title and description identify Aero Fielding Practice Gloves for the requested Fielding gloves."
+        },
+        {
+          "sourceKey": "defd44083707fe668fe68ad92dda89febb40509de3b8ef75c2337470cf1b5f90",
+          "sourceUrl": "https://cricketdirect.co.uk/products/kookaburra-fielding-practice-gloves",
+          "evidence": "Supplier product title and description identify Kookaburra Fielding Practice Gloves for the requested Fielding gloves."
+        }
+      ]
+    },
+    {
+      "id": "CE20",
+      "group": "Bowling and Fielding Gear",
+      "label": "Catching gloves (slip fielding)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "21918ea2aceaed9d72a9144033eb7fe2e9186089921786eae0fb799df0d8b377",
+          "sourceUrl": "https://cricketershop.com/products/gortonshire-mcp-protection-batting-inner-gloves-size",
+          "evidence": "Supplier product title and description identify Gortonshire MCP Protection Catching Gloves for the requested Catching gloves (slip fielding)."
+        },
+        {
+          "sourceKey": "7679344f291de971552825d435660106d5eba3958e9586c17fb8cc3d23de58d3",
+          "sourceUrl": "https://cricketershop.com/products/ss-mitt-cricket-catching-gloves-black",
+          "evidence": "Supplier product title and description identify SS MITT Cricket Catching Gloves Black for the requested Catching gloves (slip fielding)."
+        }
+      ]
+    },
+    {
+      "id": "CE21",
+      "group": "Wicketkeeping Gear",
+      "label": "Wicketkeeping gloves",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "b3a09b34d94ac6b084dcbc996e86665c149d6fbccd179f49db3b4ff8ce767524",
+          "sourceUrl": "https://cricketershop.com/products/ss-professional-cricket-wicket-keeping-gloves-youth-size",
+          "evidence": "Supplier product title and description identify SS Professional Cricket Wicket Keeping Gloves Size for the requested Wicketkeeping gloves."
+        },
+        {
+          "sourceKey": "49d87ed1420c21c09a7e49d838dd00213eaba691d45d1401e259b1d64018d4c3",
+          "sourceUrl": "https://cricketershop.com/products/sg-hilite-cricket-wicket-keeping-gloves-mens-size",
+          "evidence": "Supplier product title and description identify SG Hilite Cricket Wicket Keeping Gloves Adult Size for the requested Wicketkeeping gloves."
+        }
+      ]
+    },
+    {
+      "id": "CE22",
+      "group": "Wicketkeeping Gear",
+      "label": "Wicketkeeping inner gloves",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "abbec0ebcd2dfa935986d03fbb4e17d6b0396f319916c2bf8ec201b639872f9e",
+          "sourceUrl": "https://cricketershop.com/products/dsc-pro-padded-cricket-inner-gloves-for-wicket-keeping",
+          "evidence": "Supplier product title and description identify Dsc Pro Padded Cricket Inner Gloves for Wicket Keeping for the requested Wicketkeeping inner gloves."
+        },
+        {
+          "sourceKey": "c721b623a82a57b1d5403026eedc8f8d83d1034003fa98f203e3261281cc3460",
+          "sourceUrl": "https://cricketershop.com/products/sg-test-cricket-inner-gloves-for-wicket-keeping",
+          "evidence": "Supplier product title and description identify SG Test Cricket Inner Gloves for Wicket Keeping for the requested Wicketkeeping inner gloves."
+        }
+      ]
+    },
+    {
+      "id": "CE23",
+      "group": "Wicketkeeping Gear",
+      "label": "Wicketkeeping pads",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "216c623db8ea2479b13a8b8f7aa47887ee1ec58ed8b0a01b57651e5e47c6d0f3",
+          "sourceUrl": "https://cricketershop.com/products/ss-players-series-cricket-wicket-keeping-leg-guard-pads-size",
+          "evidence": "Supplier product title and description identify SS Players Series Cricket Wicket Keeping Leg Guard Pads Size for the requested Wicketkeeping pads."
+        },
+        {
+          "sourceKey": "a8ac815483d550496845ae9a4b888e17fe778a545c4b4f0113af136cef72aba2",
+          "sourceUrl": "https://cricketershop.com/products/sg-savage-lite-wicket-keeping-leg-guard-pads",
+          "evidence": "Supplier product title and description identify SG Savage lite Wicket Keeping Leg Guard Pads for the requested Wicketkeeping pads."
+        }
+      ]
+    },
+    {
+      "id": "CE24",
+      "group": "Wicketkeeping Gear",
+      "label": "Wicketkeeping helmet",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "59f4523b11b44268c1ffb1fa2f19ebf6dd1c1c101b528c3416467bb614e4bada",
+          "sourceUrl": "https://cricketershop.com/products/dsc-stump-guard-wicket-keeping-cricket-helmet",
+          "evidence": "Supplier product title and description identify Dsc Stump Guard Wicket Keeping Cricket Helmet for the requested Wicketkeeping helmet."
+        },
+        {
+          "sourceKey": "3370a6d53092254703fae63e03f97b2e4749af8b1451e2b090545947fb2245e9",
+          "sourceUrl": "https://cricketershop.com/products/forma-wicket-keeping-mst-cricket-helmet",
+          "evidence": "Supplier product title and description identify Forma Wicket Keeping MST Cricket Helmet for the requested Wicketkeeping helmet."
+        }
+      ]
+    },
+    {
+      "id": "CE25",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Stumps",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "08f03a27e4fdb3b8c3400377ce76f4b85239a8c2bf5574e6d965e5c421aceb47",
+          "sourceUrl": "https://cricketershop.com/products/sg-club-cricket-stumps-full-size",
+          "evidence": "Supplier product title and description identify SG Club Cricket Stumps Full Size for the requested Stumps."
+        },
+        {
+          "sourceKey": "683aadab72d6288fae021bb9773ed4472352615c844228101d8d0b87b5f77800",
+          "sourceUrl": "https://cricketershop.com/products/dsc-spring-wooden-cricket-stumps-full-size",
+          "evidence": "Supplier product title and description identify DSC Spring Wooden Cricket Stumps Full Size for the requested Stumps."
+        }
+      ]
+    },
+    {
+      "id": "CE26",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Bails",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "7afc6840d4b473bbc956a3e9c6e8ac6f0d9eceedc53c7a2a65a7d7a4f587eca9",
+          "sourceUrl": "https://cricketdirect.co.uk/products/gray-nicolls-bails-m",
+          "evidence": "Supplier product title and description identify Gray-Nicolls Bails for the requested Bails."
+        },
+        {
+          "sourceKey": "9ba63e11de11ff38c71a767a5d46f36d8791d73961ad9c7efbe0ef68dd5bd250",
+          "sourceUrl": "https://cricketdirect.co.uk/products/heavy-bails",
+          "evidence": "Supplier product title and description identify Heavy Bails for the requested Bails."
+        }
+      ]
+    },
+    {
+      "id": "CE27",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Wicket set/stump stand",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "eaa36f6ebf0952faceb5ba852c4fbcf596d24bf1ac5f1e1d4525b698ff03f11d",
+          "sourceUrl": "https://cricketdirect.co.uk/products/kookaburra-plastic-practice-stump-set",
+          "evidence": "Supplier product title and description identify Kookaburra Plastic Practice Stump Set for the requested Wicket set/stump stand."
+        },
+        {
+          "sourceKey": "c905dd15b74fe739bb3dd5f942297265847f02fd00a29f0bbf95cac7e3b05a98",
+          "sourceUrl": "https://cricketdirect.co.uk/products/gunn-moore-multi-surface-stump-set",
+          "evidence": "Supplier product title and description identify Gunn & Moore Multi Surface Stump Set for the requested Wicket set/stump stand."
+        }
+      ]
+    },
+    {
+      "id": "CE28",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Boundary rope",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "079e8cf40664be8296308122765624fb8b43f9df026ab5087e01b78c96acdc14",
+          "sourceUrl": "https://cricketershop.com/products/cricket-rope",
+          "evidence": "Supplier product title and description identify Cricket Boundary Rope for the requested Boundary rope."
+        },
+        {
+          "sourceKey": "0e691413cbc0f05113db9faabacb7aa8d689993033a5d81710fe3306f693ab00",
+          "sourceUrl": "https://cricketdirect.co.uk/products/huck-test-boundary-rope",
+          "evidence": "Supplier product title and description identify Huck Test Boundary Rope for the requested Boundary rope."
+        }
+      ]
+    },
+    {
+      "id": "CE29",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Sight screens",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "91f7e98d346a9da79653bc5b81d618d3651984bc777ea7486763bdffaba39227",
+          "sourceUrl": "https://www.martinberrillsports.com/products/portable-sightscreen",
+          "evidence": "Supplier explicitly lists Portable Sightscreen in this equipment family; source model and original product photograph are retained."
+        },
+        {
+          "sourceKey": "50892d978455e4ad986bfaf8ebff662cc867c53da05654a5d68e72456234b889",
+          "sourceUrl": "https://www.martinberrillsports.com/products/polypropylene-sightscreen",
+          "evidence": "Supplier explicitly lists Polypropylene Sightscreen in this equipment family; source model and original product photograph are retained."
+        }
+      ]
+    },
+    {
+      "id": "CE30",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Pitch covers",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "bee5ec45a81d74e422f6677efab27619ac555cbfab126fd26b5a14e2a44785cd",
+          "sourceUrl": "https://cricketdirect.co.uk/products/huck-pitch-cover-sheet-25m-x-8m",
+          "evidence": "Supplier product title and description identify Huck Pitch Cover Sheet 25M X 8M for the requested Pitch covers."
+        },
+        {
+          "sourceKey": "ada5cb6be5a2c3657dd3f3531712e21abfe9a3be9a6338f19dc1a951d33063b6",
+          "sourceUrl": "https://www.martinberrillsports.com/products/flatlay-lightweight-pitch-covers-25m-x-6m",
+          "evidence": "Supplier explicitly lists Flatlay Lightweight Pitch Covers (25m x 6m) in this equipment family; source model and original product photograph are retained."
+        }
+      ]
+    },
+    {
+      "id": "CE31",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Roller (heavy and light)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "843ba9d343db48f9c5ab6b32c24c3bf31042aaea1ee106551ea0dd6a182afea0",
+          "sourceUrl": "https://www.sportswing.in/products/metco-cricket-sports-ground-pitch-roller-0-5-ton",
+          "evidence": "Supplier product title and description identify Metco Cricket Sports Ground Pitch Roller (0.5 Ton) for the requested Roller (heavy and light)."
+        },
+        {
+          "sourceKey": "beccaf006e2acb33de48901f01419ff40c6e894649500824ae2756bcb5d4d057",
+          "sourceUrl": "https://www.sportswing.in/products/koxtons-cricket-pitch-tennis-court-roller-1-ton",
+          "evidence": "Supplier product title and description identify Koxtons Cricket Pitch/Tennis Court Roller (1 Ton) for the requested Roller (heavy and light)."
+        }
+      ]
+    },
+    {
+      "id": "CE32",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Pitch marker/crease markers",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "3b06a27c7fd73a613ddd2a5fd6ed998d424d0b62a31fe64a4be04ae050313f4a",
+          "sourceUrl": "https://cricketdirect.co.uk/products/gray-nicolls-bowlers-markers",
+          "evidence": "Supplier explicitly lists Gray-Nicolls Bowlers Markers in this equipment family; source model and original product photograph are retained."
+        },
+        {
+          "sourceKey": "8ac49be46cc9daddb954fc86c25ad55c2f555b3094a2710df13284fc753471af",
+          "sourceUrl": "https://www.newitts.com/cricket-crease-marker",
+          "evidence": "Newitts lists a folding crease marker frame for laying out the pitch, distinct from the Gray-Nicolls bowler markers."
+        }
+      ]
+    },
+    {
+      "id": "CE33",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Scoreboard",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "ab4281ab72e7d2b844abf7b3f7eb395fdecbc5b44fdaf2af112a2b9638930c5f",
+          "sourceUrl": "https://cricketershop.com/products/gray-nicolls-cricket-scoreboard",
+          "evidence": "Supplier product title and description identify Gray Nicolls Cricket Scoreboard for the requested Scoreboard."
+        },
+        {
+          "sourceKey": "e77815713c67c7526cfe35d5c53d8903c6f83caa1958990433ed113052c31456",
+          "sourceUrl": "https://cricketershop.com/products/gray-nicolls-scoreboard",
+          "evidence": "Supplier product title and description identify Gray Nicolls Delux Cricket Scoreboard for the requested Scoreboard."
+        }
+      ]
+    },
+    {
+      "id": "CE34",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Umpire’s counter",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "07f0a48bf7cd95127c9da297670988b9c706e83455478d4d26fd74b08fef1b92",
+          "sourceUrl": "https://cricketdirect.co.uk/products/gray-nicolls-umpires-counter",
+          "evidence": "Supplier product title and description identify Gray-Nicolls Umpires Counter for the requested Umpire’s counter."
+        },
+        {
+          "sourceKey": "03904d832cd06468542d8ef289c1a16c437b0c47ede65327fa007d3037d88bd2",
+          "sourceUrl": "https://cricketdirect.co.uk/products/umpires-ball-counter",
+          "evidence": "Supplier product title and description identify Umpires Ball Counter for the requested Umpire’s counter."
+        }
+      ]
+    },
+    {
+      "id": "CE35",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Umpire’s coat/hat",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "f2b98a4ce1901d858f1bd7aa9c780f4d4c2e15034a6dcb7f0c955cf1a8e72781",
+          "sourceUrl": "https://www.ecbacoshop.co.uk/listings/100093-aco-match-iii-jacket-ivory.html",
+          "evidence": "The ECB ACO shop lists this umpire match jacket in ivory; covers the coat/jacket portion of the requested umpire apparel family."
+        },
+        {
+          "sourceKey": "04065a4008211c779ebf5874c5dc520f300c089edb53941d5578c7ea0261710f",
+          "sourceUrl": "https://www.ecbacoshop.co.uk/listings/985-aco-sun-hat.html",
+          "evidence": "The ECB ACO shop lists this umpire sun hat, a distinct product from its match jacket."
+        }
+      ]
+    },
+    {
+      "id": "CE36",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Umpire’s light meter",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "772a9e1b69db46263292ddd7fa4e86c925059a9c953528dfc0f712c9dd156748",
+          "sourceUrl": "https://www.cricketumpires.co.uk/products/cricket-umpire-light-meter",
+          "evidence": "MNH supplier identifies a cricket umpire light/lux meter; supplier specification ranges are not a match approval/certification claim."
+        },
+        {
+          "sourceKey": "854eff6ab01720128c15455e720e803a73dd129391a6410b97c57800b84bca4a",
+          "sourceUrl": "https://kdsport.com.au/product/umpire-light-meter/",
+          "evidence": "KD Sport lists the UMD905 cricket umpire light/lux meter with a distinct original device photograph. No match approval or calibration claim is inferred."
+        }
+      ]
+    },
+    {
+      "id": "CE37",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Match coins (for the toss)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "54452f908a7835cf8abbe5157de24c0541ad5d59c7573042ebefbc6c17e521c1",
+          "sourceUrl": "https://cricketershop.com/products/ss-toss-cricket-coin",
+          "evidence": "Supplier product title and description identify SS Toss Cricket Coin for the requested Match coins (for the toss)."
+        },
+        {
+          "sourceKey": "135c9d2530480fd8c14798f8e3f3b9eb3af7e5a9d00d6b9c1002cd7a26bde978",
+          "sourceUrl": "https://romjee.com/products/koxtons-chinese-checker-coin-copy",
+          "evidence": "The source page and original photograph identify the Vixen Head-Tail Tossing Coin by Bhalla Sports. The inherited unrelated URL slug is not used as the model name; this is distinct from the SS toss coin."
+        }
+      ]
+    },
+    {
+      "id": "CE38",
+      "group": "Playing Surface and Match Equipment",
+      "label": "Drinks trolley/water carrier",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "05163220e08404f6f2337b8ed625cd358cc9cc6dd22939ff2be438d7665f88e0",
+          "sourceUrl": "https://www.ramcricket.co.uk/products/12-bottle-plastic-water-bottle-carrier",
+          "evidence": "Ram Cricket lists this twelve-bottle water carrier set for team hydration; bottles/options are represented as the sourced package."
+        },
+        {
+          "sourceKey": "b48c015aca36b7a7445f13d83e3be0de60ab282248b80eee03c2968b29385c4f",
+          "sourceUrl": "https://greenlands.biz/products/bottle-carrier-super-black",
+          "evidence": "SG/Greenlands lists this bottle carrier; this covers the water-carrier alternative, not a wheeled drinks trolley."
+        }
+      ]
+    },
+    {
+      "id": "CE39",
+      "group": "Apparel and Footwear",
+      "label": "Cricket shoes (spiked)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "ffdf490d2b64ac450e84ab3061b24352807853d486386b4858fea43263474aae",
+          "sourceUrl": "https://cricketershop.com/products/puma-24-fh-10769802-cricket-spikes-shoes-fire-orchid-size",
+          "evidence": "Supplier product title and description identify Puma 24 FH 10769802 Cricket Spikes Shoes Fire Orchid for the requested Cricket shoes (spiked)."
+        },
+        {
+          "sourceKey": "1faf28711bd2dd1b5959e9f97ed694e78a824e2e8a89415a52578a62c350cc47",
+          "sourceUrl": "https://cricketershop.com/products/asics-350-not-out-ff-spikes-white-midnight-cricket-shoes-size",
+          "evidence": "Supplier product title and description identify Asics 350 Not Out FF Spikes White Midnight Cricket Shoes Size for the requested Cricket shoes (spiked)."
+        }
+      ]
+    },
+    {
+      "id": "CE40",
+      "group": "Apparel and Footwear",
+      "label": "Rubber-soled cricket shoes",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "1334ed8c4cae5b5a7abd1e052622c4979c3885a11dc73bcb6b036a3ede3cc74f",
+          "sourceUrl": "https://cricketershop.com/products/dnine-blaster-2-rubber-stud-navy-blue-diva-blue-white-cricket-shoes",
+          "evidence": "Supplier product title and description identify Dnine Blaster 2 Rubber Studs Cricket Shoes for the requested Rubber-soled cricket shoes."
+        },
+        {
+          "sourceKey": "8278498607b5b0c861cd46d62670c0b9c657262506662122d5a46cb274b64bfe",
+          "sourceUrl": "https://cricketershop.com/products/tyka-champ-16-rubber-cricket-shoes-white-red-size",
+          "evidence": "Supplier product title and description identify Tyka Champ 16 Rubber Cricket Shoes White Red for the requested Rubber-soled cricket shoes."
+        }
+      ]
+    },
+    {
+      "id": "CE41",
+      "group": "Apparel and Footwear",
+      "label": "Cricket whites (trousers)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "f13111b71e9a2414c26e46406ef026e952fae22759c7375a670e23325fc06b3d",
+          "sourceUrl": "https://cricketershop.com/products/gortonshire-club-cricket-white-trouser-size",
+          "evidence": "Supplier product title and description identify Gortonshire Club Cricket White Trouser for the requested Cricket whites (trousers)."
+        },
+        {
+          "sourceKey": "30496a4833ab0bd029c3b2094c54c60f962b6c04d7841087f71782375e921968",
+          "sourceUrl": "https://cricketershop.com/products/tyka-pioneer-cricket-trouser-junior-off-white",
+          "evidence": "Supplier product title and description identify Tyka Pioneer Cricket Trouser Junior Off White for the requested Cricket whites (trousers)."
+        }
+      ]
+    },
+    {
+      "id": "CE42",
+      "group": "Apparel and Footwear",
+      "label": "Cricket shirts/jerseys",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "bb4c3c0c1d69c41dacafd7e265afde63b462a1e99a527d599884a9310e78b030",
+          "sourceUrl": "https://cricketershop.com/products/gortonshire-club-cricket-white-t-shirt-half-sleeve-size",
+          "evidence": "Supplier product title and description identify Gortonshire Club Cricket White T Shirt Half Sleeves for the requested Cricket shirts/jerseys."
+        },
+        {
+          "sourceKey": "5bb45fed537438c9bca5ccd6502ce8454b1c88ea22985bfd5ed8019a4b8f5c72",
+          "sourceUrl": "https://cricketershop.com/products/sg-club-cricket-shirt-half-sleeves",
+          "evidence": "Supplier product title and description identify SG Club Cricket Shirt Half Sleeves for the requested Cricket shirts/jerseys."
+        }
+      ]
+    },
+    {
+      "id": "CE43",
+      "group": "Apparel and Footwear",
+      "label": "Sweater/vest",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "21513b65ea2db19fca8de0b5e53ede995c466fdb4747aa77359ffd36e48f5054",
+          "sourceUrl": "https://cricketershop.com/products/gortonshire-cricket-performance-fleece-sweater-sleeveless-in-mens-sizes",
+          "evidence": "Supplier product title and description identify Gortonshire Cricket Performance Fleece Sweater (Sleeveless) for the requested Sweater/vest."
+        },
+        {
+          "sourceKey": "a7540b2260c69cd3bfe0c333441a93799addc6c10a2eb4dc469958e9c5a31871",
+          "sourceUrl": "https://cricketershop.com/products/ss-professional-cricket-sweater-half-sleeves",
+          "evidence": "Supplier product title and description identify SS Professional Cricket V Shape Sweater Half Sleeves for the requested Sweater/vest."
+        }
+      ]
+    },
+    {
+      "id": "CE44",
+      "group": "Apparel and Footwear",
+      "label": "Cricket cap/sun hat",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "983b5a954bc7473870e6ad9a781888ee227032dda8dd67a9409f5adb111893e8",
+          "sourceUrl": "https://cricketershop.com/products/tyka-cricket-panama-hat-off-white",
+          "evidence": "Supplier product title and description identify Tyka Cricket Panama Hat Off White for the requested Cricket cap/sun hat."
+        },
+        {
+          "sourceKey": "da2641735abe2641500381d5aa1fcfa35f9488c21521fe324ca40f105d083bdf",
+          "sourceUrl": "https://cricketershop.com/products/ss-custom-cricket-cap",
+          "evidence": "Supplier product title and description identify SS Custom Cricket Cap for the requested Cricket cap/sun hat."
+        }
+      ]
+    },
+    {
+      "id": "CE45",
+      "group": "Apparel and Footwear",
+      "label": "Sunscreen/zinc cream",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "aa2e3d6f99be4027640d82e0d76fae69581eb765bf3fb0b67f0d8a1e52684fdb",
+          "sourceUrl": "https://cricketershop.com/products/sun-zapper-zinc-stick-white",
+          "evidence": "Supplier product title and description identify Sun Zapper Zinc Stick White for the requested Sunscreen/zinc cream."
+        },
+        {
+          "sourceKey": "582b3dc756c16f94dbb0126ad83d90b321bdb7070fa9fe157922dfb24fdbd7a7",
+          "sourceUrl": "https://cricketershop.com/products/canar-white-grip-control-cream-100-ml-spf75",
+          "evidence": "Supplier product title and description identify CANAR White Grip control Cream 100 ML SPF75 for the requested Sunscreen/zinc cream."
+        }
+      ]
+    },
+    {
+      "id": "CE46",
+      "group": "Practice and Training Gear",
+      "label": "Cricket kit bag",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "9cd70e7a2b65e2baf7fc834cbc892460f75c43108588dd08bab66f9c85bd2909",
+          "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=53",
+          "evidence": "Accepted source model DSC Krunch Club Cricket Kit Bag identifies this requested equipment; the retained photograph depicts the model."
+        },
+        {
+          "sourceKey": "6956befba3fa84fe1e380c697f47e5bbee945a7743f52fd0c1c7806cbb3d2630",
+          "sourceUrl": "https://dsc-cricket.co.uk/media/ecatalog/UK-CATALOG-2022.pdf#page=53",
+          "evidence": "Accepted source model DSC Krunch Duffle Cricket Kit Bag identifies this requested equipment; the retained photograph depicts the model."
+        }
+      ]
+    },
+    {
+      "id": "CE47",
+      "group": "Practice and Training Gear",
+      "label": "Practice nets",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "1c11d6d2dd36231f6f91d45c70aac357f9c3fe361544de6934c9347a0ddbc11f",
+          "sourceUrl": "https://cricketdirect.co.uk/products/huck-pro-club-mobile-cricket-cage",
+          "evidence": "Supplier product title and description identify Huck Pro Club Mobile Cricket Cage for the requested Practice nets."
+        },
+        {
+          "sourceKey": "75005abafbdb3f66a70b9aadc746094b742e733814e9868ccff84d7762963003",
+          "sourceUrl": "https://cricketdirect.co.uk/products/home-ground-fs5-batting-net",
+          "evidence": "Supplier product title and description identify Home Ground FS5 Batting Net for the requested Practice nets."
+        }
+      ]
+    },
+    {
+      "id": "CE48",
+      "group": "Practice and Training Gear",
+      "label": "Bowling machine",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "a4a59659b3d931771a57ee8b8bf3a117f7e7f40cb99db42b5c973c2a074c837a",
+          "sourceUrl": "https://cricketdirect.co.uk/products/paceman-176-bowling-machine",
+          "evidence": "Supplier product title and description identify Paceman 176 XT Bowling Machine for the requested Bowling machine."
+        },
+        {
+          "sourceKey": "fe548a33edc5c0305978da64d19d4a0eac898a2c19641784069e56a299ee6963",
+          "sourceUrl": "https://cricketdirect.co.uk/products/bola-professional-bowling-machine",
+          "evidence": "Supplier product title and description identify Bola Professional Bowling Machine for the requested Bowling machine."
+        }
+      ]
+    },
+    {
+      "id": "CE49",
+      "group": "Practice and Training Gear",
+      "label": "Batting tee",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "f8cfcff19eaa5e9b8338699684d52e38d3e3f660e2e1cd60f051162edeebd012",
+          "sourceUrl": "https://cricketershop.com/products/gortonshire-cricket-batting-tee",
+          "evidence": "Supplier product title and description identify Gortonshire Cricket Batting Tee for the requested Batting tee."
+        },
+        {
+          "sourceKey": "54b0fe2ea7beaa21d64ccf621555528539c9affeb02659114046b82316f76b7e",
+          "sourceUrl": "https://cricketdirect.co.uk/products/aero-quicktech-batting-tee-pack-of-5",
+          "evidence": "Supplier product title and description identify Aero QuickTech Batting Tee (pack of 5) for the requested Batting tee."
+        }
+      ]
+    },
+    {
+      "id": "CE50",
+      "group": "Practice and Training Gear",
+      "label": "Slip cradle/catching trainer",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "d1dd4e29c7afbca4245b1133466bb14e8c8306677f57659cbe51c040f84ff946",
+          "sourceUrl": "https://www.sportswing.in/products/omtex-cricket-katchet-board",
+          "evidence": "Supplier explicitly lists Omtex Cricket Katchet Board in this equipment family; source model and original product photograph are retained."
+        },
+        {
+          "sourceKey": "5ca8f368b0d78355a7026f6cba261429756e98232e2d10f727af67598bfeb189",
+          "sourceUrl": "https://www.sportswing.in/products/vixen-cricket-compact-rebounder",
+          "evidence": "Supplier explicitly lists Vixen Cricket Compact Rebounder in this equipment family; source model and original product photograph are retained."
+        }
+      ]
+    },
+    {
+      "id": "CE51",
+      "group": "Bonus Maintenance Items",
+      "label": "Bat oil and linseed oil",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "bdb619349559916456cc1580d0124ddf5e3be1dc855106241d383ee9b91c4023",
+          "sourceUrl": "https://cricketershop.com/products/dsc-linseed-cricket-bat-oil",
+          "evidence": "Supplier product title and description identify DSC Linseed Cricket Bat Oil for the requested Bat oil and linseed oil."
+        },
+        {
+          "sourceKey": "ab360a5d81340a08a564ca1c8d8521fa8bbdecdb70171db9cfcab396a2022b2d",
+          "sourceUrl": "https://cricketdirect.co.uk/products/gray-nicolls-linseed-oil",
+          "evidence": "Supplier product title and description identify Gray-Nicolls Linseed Oil for the requested Bat oil and linseed oil."
+        }
+      ]
+    },
+    {
+      "id": "CE52",
+      "group": "Bonus Maintenance Items",
+      "label": "Bat mallet and sandpaper",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "fe30bb69e1ba190070777588a4191f8d15f4dd6fe60d40769f95813c027667fc",
+          "sourceUrl": "https://cricketershop.com/products/gortonshire-delux-bat-knocking-wooden-mallet",
+          "evidence": "Supplier product title and description identify Gortonshire Delux Bat Knocking Wooden Mallet for the requested Bat mallet and sandpaper."
+        },
+        {
+          "sourceKey": "748d6ef92c73299c6f579451dbbaac76c4b70567d4eb621b66192da805533ed3",
+          "sourceUrl": "https://sjsports.com.au/products/gray-nicolls-bat-care-kit-oil-cloth-sandpaper",
+          "evidence": "This is a clearly labelled Gray-Nicolls bat-care KIT containing oil, sandpaper and a soft cloth, not a separately sold sandpaper sheet. It covers the maintenance family alongside the separate mallet."
+        }
+      ]
+    },
+    {
+      "id": "CE53",
+      "group": "Bonus Maintenance Items",
+      "label": "Anti-scuff sheet (bat protection)",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "dfa423c962f6d5e0acea0c6d013c5da4e55b6358c9c78b7c531181aa42b3580d",
+          "sourceUrl": "https://cricketershop.com/products/ss-players-antiscuff-sheet-face-tape",
+          "evidence": "Supplier product title and description identify SS Players Antiscuff Sheet Face Tape for the requested Anti-scuff sheet (bat protection)."
+        },
+        {
+          "sourceKey": "b7356b697a3e17ed8e166608e0fffdb143dd175bbbc6f1e8eefa7b2cabe4edbc",
+          "sourceUrl": "https://cricketdirect.co.uk/products/kookaburra-armourtec-sheet",
+          "evidence": "Supplier product title and description identify Kookaburra Armourtec Sheet for the requested Anti-scuff sheet (bat protection)."
+        }
+      ]
+    },
+    {
+      "id": "CE54",
+      "group": "Bonus Maintenance Items",
+      "label": "Ball shiner/polish cloth",
+      "minimumModels": 2,
+      "models": [
+        {
+          "sourceKey": "ac847003d172f7e97c40178646a974c3dae826c419f0b15fa94a106d901810a1",
+          "sourceUrl": "https://coolbeansembroidery.com/products/sports-cricket-microfibre-towel-personalised",
+          "evidence": "Supplier lists a soft, absorbent cricket microfibre sports towel. Curated as the cloth alternative for practice-kit care; the source advertises hand/sweat drying, not match-approved ball polishing or chemical shiner."
+        },
+        {
+          "sourceKey": "f31f2c89c072d83e4cc245e687f387952671abfc6b38aa0a9cf6f09ac8745361",
+          "sourceUrl": "https://www.ecbacoshop.co.uk/listings/36-aco-ball-towel.html",
+          "evidence": "The ECB ACO shop explicitly lists a ball towel, AC159010, cotton terry loop construction; covers the ball-care cloth family without asserting artificial polish or match permission."
+        }
+      ]
+    }
+  ]
+}

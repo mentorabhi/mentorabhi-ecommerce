@@ -20,3 +20,5 @@ Designs describe intended behavior. Use each milestone verification record and c
 | S1-M12 | [OpenTelemetry metrics, traces and logs](S1-M12/README.md) |
 
 See also [ADRs](../docs/decisions/), [requirements traceability](../docs/traceability.md) and [current status](../docs/context/status.md). M11 data population/consolidated tests and M12 runtime acceptance remain open; see the dated records for exact scope.
+
+- [S1-M13 — Cricket equipment-family coverage](S1-M13/README.md): reviewed source/option/search design and editable flow for the 54-family follow-up.

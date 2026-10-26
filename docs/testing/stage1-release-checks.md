@@ -11,7 +11,7 @@
 
 ## Shopping and administration
 
-- [ ] Browse both sports, search and use pagination. Expect 103 Cricket models/1,030 SKUs and 113 Football models/1,130 SKUs at this release checkpoint, with locally served sourced photographs. New owner-created products can change these counts.
+- [ ] Browse both sports, search and use pagination. Expect 199 Cricket models/1,126 SKUs and 113 Football models/1,130 SKUs after M13 (the earlier release was 103/1,030 Cricket), with locally served sourced photographs. New owner-created products can change these counts.
 - [ ] Confirm the large storefront banner is absent and the small header logo remains. Search `bat`/`bats`, `ball`/`balls`, `pads` and `SG cricket bat`; verify equipment relevance, product links and portrait-photo containment above card text on desktop/mobile.
 - [ ] Open a product beyond page one. Read its specifications/provenance, choose an exact option and confirm that SKU, price and stock in cart/checkout. Test INR and USD; restore INR afterward. Option ranges, prices, stock and delivery/payment are simulations.
 - [ ] Compare rating/count across category, search, detail and Similar Products. Read the DEMO labels. Use arrows/keyboard on desktop and mobile; related cards must open the correct product.
@@ -61,3 +61,5 @@ Each milestone has its own service/UI/feature/database checks and space for your
 | M12 request telemetry | [Manual acceptance](../milestones/S1-M12/manual-acceptance.md) |
 
 Tester/date, branch/commit, profiles, results and issue references: ____________________
+
+- [ ] Complete the [M13 manual equipment/service/UI/database checklist](../milestones/S1-M13/manual-acceptance.md) against the [54-family coverage table](../milestones/S1-M13/coverage.md). Supplier/cloth/kit interpretations are recorded separately from automatic checks.

@@ -12,7 +12,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 ROOT = Path(__file__).resolve().parents[3]
 ASSETS = ROOT / "apps/storefront/public/catalog-real"
-HOSTS = frozenset(("cricketershop.com", "soccer90.com", "cdn.shopify.com"))
+HOSTS = frozenset(("cricketershop.com", "soccer90.com", "cdn.shopify.com", "www.ecbacoshop.co.uk", "www.cricket-hockey.com", "kdsport.com.au", "media.newitts.com"))
 MAX_BYTES = 12 * 1024 * 1024
 
 

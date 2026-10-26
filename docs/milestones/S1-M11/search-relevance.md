@@ -53,3 +53,5 @@ PY
 ```
 
 Run heavy test/build jobs sequentially on the baseline host; optional telemetry stores may be stopped temporarily while retaining their volumes, then restored. Customer commerce/history services and their data remain intact.
+
+Follow-up: [M13](../S1-M13/verification.md) extends specific multiword accessory/protection intent ahead of the generic bat word, including grips/oil/tee/toe guard/maintenance kits, padded shorts and fielding shin guards. It preserves bound SQL/whole words/filter-count pagination and verifies all earlier bat/ball cases plus new PostgreSQL/browser acceptance. The earlier counts/receipts above are historical baseline evidence.
